@@ -85,11 +85,5 @@
 </script>
 
 <h2 class="font-bold text-xl mb-2">Typst preview</h2>
-<div>
-	<!-- {#if isLoading}
-		<p>Loading...</p>
-	{:else}
-		<TypstDocument {artifact} />
-	{/if} -->
-	<TypstDocument {source} />
-</div>
+
+<TypstDocument {source} />

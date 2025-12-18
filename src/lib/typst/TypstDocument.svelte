@@ -144,16 +144,16 @@
 				data: finalArtifact
 			});
 
-			const docWidth = rHandler.session.docWidth;
-			if (docWidth && docWidth > 0) {
-				const dw = `${docWidth * window.devicePixelRatio}`;
-				if (wrapElem.dataset.width !== dw) {
-					wrapElem.dataset.width = dw;
-					wrapElem.style.width = `calc(min(${dw}px, 100%))`;
-				}
-			}
-
 			// #1
+			// const docWidth = rHandler.session.docWidth;
+			// if (docWidth && docWidth > 0) {
+			// 	const dw = `${docWidth * window.devicePixelRatio}`;
+			// 	if (wrapElem.dataset.width !== dw) {
+			// 		wrapElem.dataset.width = dw;
+			// 		wrapElem.style.width = `calc(min(${dw}px, 100%))`;
+			// 	}
+			// }
+
 			// rHandler.renderer.renderToCanvas({
 			// 	renderSession: rHandler.session,
 			// 	format: 'vector',
@@ -174,7 +174,7 @@
 					renderSession: rHandler.session
 				})
 				.then((svg) => {
-					divElem.innerHTML = svg;
+					divElem.innerHTML = svg.replace('<svg ', '<svg style="width: 100%; height: auto"');
 				});
 		}
 	});

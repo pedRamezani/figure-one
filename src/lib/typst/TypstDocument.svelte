@@ -21,6 +21,7 @@
 	let {
 		// fill,
 		source,
+		sourceShadowMappings,
 		artifact,
 		compiler,
 		renderer,
@@ -28,6 +29,7 @@
 	}: {
 		// fill?: string;
 		source?: string;
+		sourceShadowMappings?: { [key: string]: Uint8Array };
 		artifact?: Uint8Array;
 		compiler?: typst.TypstCompiler;
 		renderer?: typst.TypstRenderer;
@@ -94,6 +96,11 @@
 			if (!source) return;
 
 			c.addSource('/main.typ', source);
+			if (sourceShadowMappings !== undefined) {
+				for (const [key, value] of Object.entries(sourceShadowMappings)) {
+					c.mapShadow(key, value);
+				}
+			}
 			const result = await c.compile({ mainFilePath: '/main.typ' });
 
 			if (result.diagnostics) {

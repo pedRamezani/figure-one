@@ -12,10 +12,10 @@
 	<!-- fitView -->
 	<!-- You need the SvelteFlowProvider so you can useSvelteFlow  -->
 	<SvelteFlowProvider>
-		<div style:width="50vw" class="max-h-screen">
+		<div style:width="65vw" class="max-h-screen">
 			<Flow />
 		</div>
-		<div style:width="50vw" class="border-l-2 border-zinc-200 p-8 max-h-screen overflow-y-auto">
+		<div style:width="35vw" class="border-l-2 border-zinc-200 p-8 max-h-screen overflow-y-auto">
 			<Tabs.Root value="typst">
 				<Tabs.List>
 					<Tabs.Trigger value="typst">Typst</Tabs.Trigger>

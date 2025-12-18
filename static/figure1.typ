@@ -14,7 +14,7 @@
 	..args,
 )
 
-#let figure-1(data) = diagram(
+#let figure-1(data, groups) = diagram(
   spacing: 8pt,
 	cell-size: (8mm, 10mm),
 	edge-stroke: 1pt,
@@ -38,7 +38,47 @@
         }
       )
     }
+  },
+
+  for (start, end) in groups {
+    blob(
+      (-1, -1), 
+      rotate(data.at(start).group, -90deg, reflow: true),
+      tint: green,
+      width: auto,
+      enclose: ((-1, 2*start - 0.25), (-1, 2*end + 1 + 0.25))
+    )
   }
 )
 
-#figure-1(json("/assets/flowchart.json"))
+#let groups(data) = {
+  let result = ();
+  let current = none;
+
+  for (i, key) in data.enumerate() {
+    if key.group == "" {
+      if current != none {
+        result.push((current, i - 1));
+        current = none;
+      }
+    } else {
+      if current == none {
+        current = i;
+      } else if key.group != data.at(i - 1).group {
+        result.push((current, i - 1));
+        current = i;
+      }
+    }
+  }
+
+  if current != none {
+    result.push((current, data.len() - 1));
+  }
+
+  result
+}
+
+
+#let data = json("/assets/flowchart.json")
+#let groups = groups(data);
+#figure-1(data, groups)

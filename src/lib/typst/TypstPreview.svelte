@@ -9,7 +9,7 @@
 	const source: string = $derived.by(() => {
 		const jsonData = convertFlowchartToTypstJson(toObject());
 
-		const typstObject = JSON.stringify(jsonData)
+		let typstObject = JSON.stringify(jsonData)
 			.replace(/{/g, '(')
 			.replace(/}/g, ')')
 			.replace(/\("/g, '(')
@@ -17,6 +17,9 @@
 			.replace(/,"/g, ',')
 			.replace(/\[/g, '(')
 			.replace(/\]/g, ')');
+
+		typstObject = typstObject.slice(0, typstObject.length - 1) + ',)';
+		typstObject = typstObject.replace(/\)\),/g, ',)),').replace(/\(,\)/g, '()');
 
 		return `
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge

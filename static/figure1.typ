@@ -5,9 +5,9 @@
 
 = Figure 1
 
-#let blob(pos, label, tint: white, ..args) = node(
+#let blob(pos, label, width: 80mm, tint: white, ..args) = node(
 	pos, align(left, label),
-	width: 80mm,
+	width: width,
 	fill: tint.lighten(60%),
 	stroke: 1pt + tint.darken(20%),
 	corner-radius: 5pt,
@@ -41,4 +41,4 @@
   }
 )
 
-#figure-1(json("./test.json"))
+#figure-1(json("/assets/flowchart.json"))

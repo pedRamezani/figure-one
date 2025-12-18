@@ -173,7 +173,9 @@
 				.renderSvg({
 					renderSession: rHandler.session
 				})
-				.then((svg) => (divElem.innerHTML = svg));
+				.then((svg) => {
+					divElem.innerHTML = svg;
+				});
 		}
 	});
 </script>

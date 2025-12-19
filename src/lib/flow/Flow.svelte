@@ -32,7 +32,7 @@
 		{
 			id: '0',
 			type: 'start',
-			data: { label: 'Start population', value: 1000 },
+			data: { label: 'Start population', value: 1000, group: '' },
 			position: { x: 0, y: 0 },
 			deletable: false
 		}

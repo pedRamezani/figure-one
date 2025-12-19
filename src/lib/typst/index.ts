@@ -56,7 +56,7 @@ export function convertFlowchartToTypstJson(raw: {
 	output.push({
 		stepLabel: (start?.data.label as string) ?? '',
 		droppedLabel: '',
-		group: '',
+		group: (start?.data.group as string) ?? '',
 		value: (start?.data.value as number) ?? 0,
 		delta: 0,
 		substepDeltas: []

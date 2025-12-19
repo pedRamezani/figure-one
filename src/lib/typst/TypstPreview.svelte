@@ -12,8 +12,10 @@
 	const encodedJsonData = $derived(encoder.encode(JSON.stringify(jsonData)));
 
 	let source: string | undefined = $state();
-	onMount(async () => {
-		source = await fetch('figure1.typ').then((response) => response.text());
+	onMount(() => {
+		(async () => {
+			source = await fetch('figure1.typ').then((response) => response.text());
+		})();
 	});
 </script>
 

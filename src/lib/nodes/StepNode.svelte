@@ -27,7 +27,7 @@
 		handleType: 'target'
 	});
 	const connectionsSourceOutput = useNodeConnections({
-		id: 'step-output',
+		handleId: 'step-output',
 		handleType: 'source'
 	});
 	// const connectionsSourceSubsteps = useNodeConnections({
@@ -74,6 +74,8 @@
 			updateNodeData(id, { value: newValue });
 		}
 	});
+
+	$inspect(isConnectableSourceOutput);
 </script>
 
 <NodeWrapper title="Step" description="Inclusion or Exclusion">

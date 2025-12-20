@@ -20,6 +20,37 @@
 		})();
 	});
 
+	let compilePdf = $state<(() => Promise<Uint8Array<ArrayBufferLike> | undefined>) | undefined>();
+	const exportPdf = (pdfData: Uint8Array<ArrayBufferLike> | undefined) => {
+		if (!pdfData) return;
+
+		const pdfDataCopy = new Uint8Array(pdfData.length);
+		pdfDataCopy.set(pdfData);
+		const blob = new Blob([pdfDataCopy], { type: 'application/pdf' });
+
+		// Creates element with <a> tag
+		const link = document.createElement('a');
+
+		// Sets file content in the object URL
+		link.href = URL.createObjectURL(blob);
+
+		// Sets file name
+		link.download = 'flowchart.pdf';
+
+		// Triggers a click event to <a> tag to save file.
+		// document.body.appendChild(link);
+		link.click();
+		// document.body.removeChild(link);
+		URL.revokeObjectURL(link.href);
+	};
+	const downloadPdf = () => {
+		if (compilePdf) {
+			compilePdf().then((pdfData) => {
+				exportPdf(pdfData);
+			});
+		}
+	};
+
 	let currentSvg: string | undefined = $state();
 	const exportSvg = (mainContent: string | undefined) => {
 		if (!mainContent) return;
@@ -41,6 +72,9 @@
 		// document.body.removeChild(link);
 		URL.revokeObjectURL(link.href);
 	};
+	const downloadSvg = () => {
+		exportSvg(currentSvg);
+	};
 </script>
 
 <div class="flex flex-col h-full">
@@ -52,15 +86,13 @@
 		onSvgChange={(svg) => {
 			currentSvg = svg;
 		}}
+		bind:compilePdf
 		class="grow"
 	/>
 
-	<Button
-		variant="outline"
-		class="mt-4 self-end"
-		disabled={!currentSvg}
-		onclick={() => {
-			exportSvg(currentSvg);
-		}}>Download SVG</Button
-	>
+	<div class="flex gap-4 mt-4 self-end">
+		<Button variant="outline" disabled={!currentSvg} onclick={downloadSvg}>Download SVG</Button>
+
+		<Button variant="outline" disabled={!compilePdf} onclick={downloadPdf}>Download PDF</Button>
+	</div>
 </div>

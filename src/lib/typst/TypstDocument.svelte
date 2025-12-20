@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { onMount, onDestroy } from 'svelte';
 
-	import type * as typst from '@myriaddreamin/typst.ts';
+	import * as typst from '@myriaddreamin/typst.ts';
 	import { createGlobalRenderer } from '@myriaddreamin/typst.ts/dist/esm/contrib/global-renderer.mjs';
 	import { createTypstRenderer } from '@myriaddreamin/typst.ts/dist/esm/renderer.mjs';
 	import { withGlobalCompiler } from '@myriaddreamin/typst.ts/dist/esm/contrib/global-compiler.mjs';
 	import { createTypstCompiler } from '@myriaddreamin/typst.ts/dist/esm/compiler.mjs';
 	import { MemoryAccessModel } from '@myriaddreamin/typst.ts/dist/esm/fs/memory.mjs';
 	import { FetchPackageRegistry } from '@myriaddreamin/typst.ts/dist/esm/fs/package.mjs';
+	import { CompileFormatEnum } from '@myriaddreamin/typst.ts/dist/esm/compiler.mjs';
 	import {
 		loadFonts,
 		withAccessModel,
@@ -30,6 +31,7 @@
 		onDiagnostics,
 		onArtifactChange,
 		onSvgChange,
+		compilePdf = $bindable(),
 		class: className
 	}: {
 		// fill?: string;
@@ -41,6 +43,7 @@
 		onDiagnostics?: (diagnostics: unknown) => void;
 		onArtifactChange?: (artifact: Uint8Array | undefined) => void;
 		onSvgChange?: (svg: string) => void;
+		compilePdf?: () => Promise<Uint8Array<ArrayBufferLike> | undefined>;
 		class?: string;
 	} = $props();
 
@@ -115,6 +118,18 @@
 				setDiag(result.diagnostics);
 			} else {
 				onArtifactChange?.(result.result);
+				compilePdf = async () => {
+					const pdfCompileResult = await c.compile({
+						mainFilePath: '/main.typ',
+						format: CompileFormatEnum.pdf
+					});
+
+					if (pdfCompileResult.diagnostics) {
+						setDiag(pdfCompileResult.diagnostics);
+					} else {
+						return pdfCompileResult.result;
+					}
+				};
 				finalArtifact = result.result;
 			}
 		};

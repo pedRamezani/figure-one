@@ -129,15 +129,14 @@
 >
 	<Controls />
 	<Background />
-	<Panel position="top-left" class="w-sm">
-		<Card.Root>
+	<Panel position="top-left" class="hidden md:block w-76">
+		<Card.Root class="text-xs">
 			<Card.Header>
 				<Card.Title class="text-2xl">Flowchart Generator</Card.Title>
 				<Card.Description
 					>Simply drag and drop from the node handles to generate your Flowchart!</Card.Description
 				>
 			</Card.Header>
-			<Card.Content></Card.Content>
 		</Card.Root>
 	</Panel>
 </SvelteFlow>

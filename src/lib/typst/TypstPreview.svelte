@@ -6,7 +6,10 @@
 
 	import { convertFlowchartToTypstJson } from './index.ts';
 
+	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import { Button } from '@/components/ui/button/index.js';
+	import ImageDownloadIcon from '@lucide/svelte/icons/image-down';
+	import FileDownIcon from '@lucide/svelte/icons/file-down';
 
 	const { toObject } = useSvelteFlow();
 	const jsonData = $derived(convertFlowchartToTypstJson(toObject()));
@@ -15,9 +18,7 @@
 
 	let source: string | undefined = $state();
 	onMount(() => {
-		(async () => {
-			source = await fetch('figure1.typ').then((response) => response.text());
-		})();
+		fetch('figure1.typ').then((response) => response.text().then((text) => (source = text)));
 	});
 
 	let compilePdf = $state<(() => Promise<Uint8Array<ArrayBufferLike> | undefined>) | undefined>();
@@ -90,9 +91,13 @@
 		class="grow"
 	/>
 
-	<div class="flex gap-4 mt-4 self-end">
-		<Button variant="outline" disabled={!currentSvg} onclick={downloadSvg}>Download SVG</Button>
+	<ButtonGroup.Root class="self-end" aria-label="Download options">
+		<Button variant="outline" disabled={!currentSvg} onclick={downloadSvg}>
+			<ImageDownloadIcon /> Download SVG
+		</Button>
 
-		<Button variant="outline" disabled={!compilePdf} onclick={downloadPdf}>Download PDF</Button>
-	</div>
+		<Button variant="outline" disabled={!compilePdf} onclick={downloadPdf}
+			><FileDownIcon />Download PDF</Button
+		>
+	</ButtonGroup.Root>
 </div>

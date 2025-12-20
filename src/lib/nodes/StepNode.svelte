@@ -16,7 +16,7 @@
 	import NodeWrapper from './NodeWrapper.svelte';
 
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
-	import { clsx } from 'clsx';
+	// import { clsx } from 'clsx';
 	import { buttonVariants } from '@/components/ui/button/index.js';
 
 	const { id, data }: NodeProps = $props();
@@ -82,12 +82,12 @@
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<!-- Top Section -->
-			<div
+			<!-- <div
 				class={clsx(
 					'absolute top-6 right-6 size-4 rounded-full',
 					noConnection ? 'bg-rose-300' : data.value === null ? 'bg-amber-300' : 'bg-emerald-300'
 				)}
-			></div>
+			></div> -->
 			<WideHandle
 				id="step-input"
 				type="target"

@@ -133,7 +133,9 @@
 		<Card.Root>
 			<Card.Header>
 				<Card.Title class="text-2xl">Flowchart Generator</Card.Title>
-				<Card.Description>Simply generate your Flowchart with this Node Editor.</Card.Description>
+				<Card.Description
+					>Simply drag and drop from the node handles to generate your Flowchart!</Card.Description
+				>
 			</Card.Header>
 			<Card.Content></Card.Content>
 		</Card.Root>

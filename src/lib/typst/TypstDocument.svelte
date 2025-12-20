@@ -15,6 +15,8 @@
 	} from '@myriaddreamin/typst.ts/dist/esm/options.init.mjs';
 	import compilerWasm from '@myriaddreamin/typst-ts-web-compiler/pkg/typst_ts_web_compiler_bg.wasm?url';
 	import rendererWasm from '@myriaddreamin/typst-ts-renderer/pkg/typst_ts_renderer_bg.wasm?url';
+
+	import { cn } from '@/utils';
 	import './typst.css';
 
 	/* ---------------- props ---------------- */
@@ -25,7 +27,10 @@
 		artifact,
 		compiler,
 		renderer,
-		onDiagnostics
+		onDiagnostics,
+		onArtifactChange,
+		onSvgChange,
+		class: className
 	}: {
 		// fill?: string;
 		source?: string;
@@ -34,6 +39,9 @@
 		compiler?: typst.TypstCompiler;
 		renderer?: typst.TypstRenderer;
 		onDiagnostics?: (diagnostics: unknown) => void;
+		onArtifactChange?: (artifact: Uint8Array | undefined) => void;
+		onSvgChange?: (svg: string) => void;
+		class?: string;
 	} = $props();
 
 	if (source && artifact) {
@@ -82,9 +90,9 @@
 			});
 		})();
 
-		onDestroy(() => {
+		return () => {
 			kill?.();
-		});
+		};
 	});
 
 	/* ---------------- compile effect ---------------- */
@@ -106,6 +114,7 @@
 			if (result.diagnostics) {
 				setDiag(result.diagnostics);
 			} else {
+				onArtifactChange?.(result.result);
 				finalArtifact = result.result;
 			}
 		};
@@ -178,14 +187,24 @@
 			// #3
 			rHandler.renderer
 				.renderSvg({
-					renderSession: rHandler.session
+					renderSession: rHandler.session,
+					data_selection: {
+						body: true,
+						css: false,
+						defs: true,
+						js: false
+					}
 				})
 				.then((svg) => {
-					divElem.innerHTML = svg.replace('<svg ', '<svg style="width: 100%; height: auto"');
+					const processedSvg = svg.replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '');
+					onSvgChange?.(processedSvg);
+					divElem.innerHTML = processedSvg.replace(
+						'<svg ',
+						'<svg style="width: 100%; height: auto"'
+					);
 				});
 		}
 	});
 </script>
 
-<!-- markup -->
-<div class="typst-app" bind:this={displayDiv}></div>
+<div class={cn('typst-app', className)} bind:this={displayDiv}></div>

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { SvelteFlowProvider } from '@xyflow/svelte';
 
-	import * as Resizable from '$lib/components/ui/resizable/index.js';
-	import * as Tabs from '$lib/components/ui/tabs/index.js';
+	import * as Resizable from '@/components/ui/resizable/index.js';
+	import * as Tabs from '@/components/ui/tabs/index.js';
 
 	import Flow from '@/flow/Flow.svelte';
 	import JsonPreview from '@/typst/JsonPreview.svelte';

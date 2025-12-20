@@ -19,7 +19,7 @@
 			</Resizable.Pane>
 			<Resizable.Handle />
 			<Resizable.Pane defaultSize={35} class="border-l-2 border-zinc-200 p-8 overflow-y-auto">
-				<Tabs.Root value="typst">
+				<Tabs.Root value="typst" class="h-full">
 					<Tabs.List>
 						<Tabs.Trigger value="typst">Typst</Tabs.Trigger>
 						<Tabs.Trigger value="json">JSON</Tabs.Trigger>

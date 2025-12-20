@@ -10,7 +10,7 @@
 
 	import Label from '@/components/ui/label/label.svelte';
 	import Input from '@/components/ui/input/input.svelte';
-	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
+	import * as Collapsible from '@/components/ui/collapsible/index.js';
 
 	import WideHandle from '@/handles/WideHandle.svelte';
 	import NodeWrapper from './NodeWrapper.svelte';

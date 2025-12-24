@@ -4,7 +4,7 @@
 	import { useSvelteFlow } from '@xyflow/svelte';
 	import TypstDocument from './TypstDocument.svelte';
 
-	import { convertFlowchartToTypstJson } from './index.ts';
+	import { convertFlowchartToTypstJson, downloadBlob } from './index.ts';
 
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
@@ -29,22 +29,8 @@
 
 		const pdfDataCopy = new Uint8Array(pdfData.length);
 		pdfDataCopy.set(pdfData);
-		const blob = new Blob([pdfDataCopy], { type: 'application/pdf' });
 
-		// Creates element with <a> tag
-		const link = document.createElement('a');
-
-		// Sets file content in the object URL
-		link.href = URL.createObjectURL(blob);
-
-		// Sets file name
-		link.download = 'flowchart.pdf';
-
-		// Triggers a click event to <a> tag to save file.
-		// document.body.appendChild(link);
-		link.click();
-		// document.body.removeChild(link);
-		URL.revokeObjectURL(link.href);
+		downloadBlob(pdfDataCopy, 'application/pdf', 'flowchart.pdf');
 	};
 
 	const downloadPdf = () => {
@@ -60,22 +46,7 @@
 	const exportSvg = (mainContent: string | undefined) => {
 		if (!mainContent) return;
 
-		const blob = new Blob([mainContent], { type: 'image/svg+xml' });
-
-		// Creates element with <a> tag
-		const link = document.createElement('a');
-
-		// Sets file content in the object URL
-		link.href = URL.createObjectURL(blob);
-
-		// Sets file name
-		link.download = 'flowchart.svg';
-
-		// Triggers a click event to <a> tag to save file.
-		// document.body.appendChild(link);
-		link.click();
-		// document.body.removeChild(link);
-		URL.revokeObjectURL(link.href);
+		downloadBlob(mainContent, 'application/svg+xml', 'flowchart.svg');
 	};
 
 	const downloadSvg = () => {

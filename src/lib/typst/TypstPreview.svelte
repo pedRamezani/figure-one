@@ -7,6 +7,7 @@
 	import { convertFlowchartToTypstJson } from './index.ts';
 
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
+	import * as Select from '$lib/components/ui/select/index.js';
 	import { Button } from '@/components/ui/button/index.js';
 	import ImageDownloadIcon from '@lucide/svelte/icons/image-down';
 	import FileDownIcon from '@lucide/svelte/icons/file-down';
@@ -21,6 +22,7 @@
 		fetch('figure1.typ').then((response) => response.text().then((text) => (source = text)));
 	});
 
+	// PDF Download
 	let compilePdf = $state<(() => Promise<Uint8Array<ArrayBufferLike> | undefined>) | undefined>();
 	const exportPdf = (pdfData: Uint8Array<ArrayBufferLike> | undefined) => {
 		if (!pdfData) return;
@@ -44,6 +46,7 @@
 		// document.body.removeChild(link);
 		URL.revokeObjectURL(link.href);
 	};
+
 	const downloadPdf = () => {
 		if (compilePdf) {
 			compilePdf().then((pdfData) => {
@@ -52,6 +55,7 @@
 		}
 	};
 
+	// SVG Download
 	let currentSvg: string | undefined = $state();
 	const exportSvg = (mainContent: string | undefined) => {
 		if (!mainContent) return;
@@ -73,9 +77,47 @@
 		// document.body.removeChild(link);
 		URL.revokeObjectURL(link.href);
 	};
+
 	const downloadSvg = () => {
 		exportSvg(currentSvg);
 	};
+
+	// Select options
+	const DOWNLOAD_TYPES = [
+		{
+			value: 'svg',
+			icon: ImageDownloadIcon,
+			label: 'SVG'
+		},
+		{
+			value: 'pdf',
+			icon: FileDownIcon,
+			label: 'PDF'
+		}
+	];
+	let downloadType = $state('pdf');
+	let disabled = $derived.by(() => {
+		if (downloadType == 'pdf') {
+			return !compilePdf;
+		}
+
+		if (downloadType == 'svg') {
+			return !currentSvg;
+		}
+
+		return false;
+	});
+	let onclick = $derived.by(() => {
+		if (downloadType == 'pdf') {
+			return downloadPdf;
+		}
+
+		if (downloadType == 'svg') {
+			return downloadSvg;
+		}
+
+		return () => {};
+	});
 </script>
 
 <div class="flex flex-col h-full">
@@ -92,12 +134,19 @@
 	/>
 
 	<ButtonGroup.Root class="self-end" aria-label="Download options">
-		<Button variant="outline" disabled={!currentSvg} onclick={downloadSvg}>
-			<ImageDownloadIcon /> Download SVG
-		</Button>
-
-		<Button variant="outline" disabled={!compilePdf} onclick={downloadPdf}
-			><FileDownIcon />Download PDF</Button
+		<Button variant="outline" {disabled} {onclick}
+			>Download {DOWNLOAD_TYPES.find((option) => option.value == downloadType)?.label}</Button
 		>
+		<Select.Root type="single" bind:value={downloadType} required={true}>
+			<Select.Trigger class="font-mono" />
+			<Select.Content class="min-w-24">
+				{#each DOWNLOAD_TYPES as downloadOption (downloadOption.value)}
+					<Select.Item value={downloadOption.value}>
+						<svelte:component this={downloadOption.icon} />
+						<span class="text-muted-foreground">{downloadOption.label}</span>
+					</Select.Item>
+				{/each}
+			</Select.Content>
+		</Select.Root>
 	</ButtonGroup.Root>
 </div>

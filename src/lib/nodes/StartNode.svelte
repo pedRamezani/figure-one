@@ -23,7 +23,7 @@
 
 	const connections = useNodeConnections({ handleType: 'source' });
 
-	const isConnectable = $derived(connections.current.length === 0);
+	const isConnectable = $derived<boolean>(connections.current.length === 0);
 
 	const isValidConnection: IsValidConnection = (edge) => edge.targetHandle == 'step-input';
 </script>

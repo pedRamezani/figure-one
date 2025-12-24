@@ -35,8 +35,8 @@
 	// 	handleType: 'source'
 	// });
 
-	const isConnectableTarget = $derived(connectionsTarget.current.length === 0);
-	const isConnectableSourceOutput = $derived(connectionsSourceOutput.current.length === 0);
+	const isConnectableTarget = $derived<boolean>(connectionsTarget.current.length === 0);
+	const isConnectableSourceOutput = $derived<boolean>(connectionsSourceOutput.current.length === 0);
 
 	const isValidConnectionTarget: IsValidConnection = (edge) => {
 		return ['start', 'step-output'].includes(edge.sourceHandle ?? '');
@@ -54,7 +54,7 @@
 		useNodesData(connectionsTarget.current.map((connection) => connection.source))
 	);
 
-	const noConnection = $derived(targetData.current.length === 0);
+	const noConnection = $derived<boolean>(targetData.current.length === 0);
 
 	$effect(function () {
 		if (noConnection) {
@@ -74,8 +74,6 @@
 			updateNodeData(id, { value: newValue });
 		}
 	});
-
-	$inspect(isConnectableSourceOutput);
 </script>
 
 <NodeWrapper title="Step" description="Inclusion or Exclusion">

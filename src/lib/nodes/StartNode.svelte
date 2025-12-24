@@ -25,10 +25,7 @@
 
 	const isConnectable = $derived(connections.current.length === 0);
 
-	const isValidConnection: IsValidConnection = (edge) => {
-		console.log(edge);
-		return true;
-	};
+	const isValidConnection: IsValidConnection = (edge) => edge.targetHandle == 'step-input';
 </script>
 
 <NodeWrapper title="CONSORT Start" description="The flowchart will start from here.">

@@ -1,16 +1,18 @@
 <script lang="ts">
-	import { useSvelteFlow } from '@xyflow/svelte';
-	import { convertFlowchartToTypstJson } from './index.ts';
+	import { useSvelteFlow, useNodes, useEdges } from '@xyflow/svelte';
+	import {
+		convertFlowchartToTypstJson,
+		isTypstFlowchartJSON,
+		parseTypstFlowchartJSON
+	} from './index.ts';
 
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import Button from '@/components/ui/button/button.svelte';
 
 	import { downloadBlob } from './index.ts';
 
-	function isValidJSON(file: File) {
-		// TODO
-	}
-
+	const nodes = useNodes();
+	const edges = useEdges();
 	function importJSON(): void {
 		const fileInput = document.createElement('input');
 		fileInput.type = 'file';
@@ -20,8 +22,16 @@
 
 			const file = target.files ? target.files[0] : null;
 			if (file === null) return;
+			if (file.type !== 'application/json') return;
 
-			console.log(file.name);
+			new Response(file).json().then((json) => {
+				if (!isTypstFlowchartJSON(json)) return;
+				console.log(json);
+				const parsed = parseTypstFlowchartJSON(json);
+				console.log(parsed);
+				nodes.set(parsed.nodes);
+				edges.set(parsed.edges);
+			});
 		};
 		fileInput.click();
 	}
@@ -33,7 +43,7 @@
 	// JSON encode
 	const { toObject } = useSvelteFlow();
 
-	const flowchartStringified = $derived.by(() => {
+	const flowchartStringified = $derived.by<string>(() => {
 		const raw = toObject();
 		const output = convertFlowchartToTypstJson(raw);
 		return JSON.stringify(output, null, 2);

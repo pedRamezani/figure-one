@@ -16,8 +16,8 @@
 	import NodeWrapper from './NodeWrapper.svelte';
 
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
-	// import { clsx } from 'clsx';
 	import { buttonVariants } from '@/components/ui/button/index.js';
+	// import { clsx } from 'clsx';
 
 	const { id, data }: NodeProps = $props();
 
@@ -38,17 +38,14 @@
 	const isConnectableTarget = $derived<boolean>(connectionsTarget.current.length === 0);
 	const isConnectableSourceOutput = $derived<boolean>(connectionsSourceOutput.current.length === 0);
 
-	const isValidConnectionTarget: IsValidConnection = (edge) => {
-		return ['start', 'step-output'].includes(edge.sourceHandle ?? '');
-	};
+	const isValidConnectionTarget: IsValidConnection = (edge) =>
+		['start', 'step-output'].includes(edge.sourceHandle ?? '');
 
-	const isValidConnectionSourceSubsteps: IsValidConnection = (edge) => {
-		return edge.targetHandle == 'substep';
-	};
+	const isValidConnectionSourceSubsteps: IsValidConnection = (edge) =>
+		edge.targetHandle == 'substep';
 
-	const isValidConnectionSourceOutput: IsValidConnection = (edge) => {
-		return edge.targetHandle == 'step-input' && edge.source !== edge.target;
-	};
+	const isValidConnectionSourceOutput: IsValidConnection = (edge) =>
+		edge.targetHandle == 'step-input' && edge.source !== edge.target;
 
 	const targetData = $derived(
 		useNodesData(connectionsTarget.current.map((connection) => connection.source))

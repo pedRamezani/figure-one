@@ -50,8 +50,7 @@
 	});
 </script>
 
-<div class="flex flex-col h-full">
-	<h2 class="font-bold text-xl mb-2">JSON preview</h2>
+<div class="flex flex-col h-full gap-2">
 	<pre class="overflow-y-auto grow">{flowchartStringified}</pre>
 	<ButtonGroup.Root class="self-end" aria-label="Download options">
 		<Button class="self-end" variant="outline" onclick={importJSON}>Import JSON</Button>

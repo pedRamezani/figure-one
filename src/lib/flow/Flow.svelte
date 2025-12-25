@@ -28,6 +28,7 @@
 		step: StepNode,
 		substep: SubstepNode
 	};
+
 	const initialNodes: Node[] = [
 		{
 			id: '0',

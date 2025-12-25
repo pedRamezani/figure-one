@@ -22,17 +22,15 @@
 		handleType: 'target'
 	});
 
-	const isConnectable = $derived(connectionsTarget.current.length === 0);
+	const isConnectable = $derived<boolean>(connectionsTarget.current.length === 0);
+
+	const isValidConnection: IsValidConnection = (edge) => edge.sourceHandle === 'step-substeps';
 
 	const targetData = $derived(
 		useNodesData(connectionsTarget.current.map((connection) => connection.source))
 	);
 
-	const noConnection = $derived(targetData.current.length === 0);
-
-	const isValidConnection: IsValidConnection = (edge) => {
-		return edge.sourceHandle === 'step-substeps';
-	};
+	// const noConnection = $derived<boolean>(targetData.current.length === 0);
 
 	// $effect(function () {
 	// 	if (noConnection) {

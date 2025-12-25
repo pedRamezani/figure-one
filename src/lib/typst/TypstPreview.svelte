@@ -91,9 +91,7 @@
 	});
 </script>
 
-<div class="flex flex-col h-full">
-	<h2 class="font-bold text-xl mb-2">Typst preview</h2>
-
+<div class="flex flex-col h-full gap-2">
 	<TypstDocument
 		{source}
 		sourceShadowMappings={{ '/assets/flowchart.json': encodedJsonData }}

@@ -9,6 +9,7 @@
 		useSvelteFlow,
 		Background,
 		Controls,
+		// ControlButton,
 		Panel,
 		type Node,
 		type Edge,
@@ -20,8 +21,9 @@
 	import SubstepNode from '@/nodes/SubstepNode.svelte';
 
 	import * as Card from '@/components/ui/card/index.js';
+	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
 
-	import '@xyflow/svelte/dist/style.css';
+	import '@xyflow/svelte/dist/base.css';
 
 	const nodeTypes = {
 		start: StartNode,
@@ -128,7 +130,9 @@
 		hideAttribution: true
 	}}
 >
-	<Controls />
+	<Controls class={buttonGroupVariants({ orientation: 'vertical' })}>
+		<!-- <ControlButton onclick={() => console.log('⚡️')}>⚡️</ControlButton> -->
+	</Controls>
 	<Background />
 	<Panel position="top-left" class="hidden md:block w-76">
 		<Card.Root class="text-xs">

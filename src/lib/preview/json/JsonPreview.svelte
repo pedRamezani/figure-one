@@ -9,7 +9,7 @@
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import Button from '@/components/ui/button/button.svelte';
 
-	import { downloadBlob } from './index.ts';
+	import { downloadBlob } from '../../index.ts';
 
 	const nodes = useNodes();
 	const edges = useEdges();
@@ -50,7 +50,7 @@
 	});
 </script>
 
-<div class="flex flex-col h-full gap-2">
+<div class="flex flex-col h-full gap-2 py-4">
 	<pre class="overflow-y-auto grow">{flowchartStringified}</pre>
 	<ButtonGroup.Root class="self-end" aria-label="Download options">
 		<Button class="self-end" variant="outline" onclick={importJSON}>Import JSON</Button>

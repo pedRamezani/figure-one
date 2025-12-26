@@ -1,84 +1,135 @@
-#import "@preview/fletcher:0.5.8" as fletcher: diagram, node, edge
-#import fletcher.shapes: house, hexagon
+// Module imports
+#import "@preview/fletcher:0.5.8" as fletcher: diagram, edge, node
+#import fletcher.shapes: hexagon, house
+
+// Page settings
 #set page(width: auto, height: auto, margin: 5mm, fill: white)
 #set text(font: "New Computer Modern")
 
-= Figure 1
+// Data imports
+#let style = json("/assets/style.json")
+#let data = json("/assets/flowchart.json")
 
-#let blob(pos, label, width: 80mm, tint: white, ..args) = node(
-	pos, align(left, label),
-	width: width,
-	fill: tint.lighten(60%),
-	stroke: 1pt + tint.darken(20%),
-	corner-radius: 5pt,
-	..args,
+// Helpers
+#let tint-mapping = (
+  black: luma(0),
+  gray: luma(170),
+  silver: luma(221),
+  white: luma(255),
+  navy: rgb("#001f3f"),
+  blue: rgb("#0074d9"),
+  aqua: rgb("#7fdbff"),
+  teal: rgb("#39cccc"),
+  eastern: rgb("#239dad"),
+  purple: rgb("#b10dc9"),
+  fuchsia: rgb("#f012be"),
+  maroon: rgb("#85144b"),
+  red: rgb("#ff4136"),
+  orange: rgb("#ff851b"),
+  yellow: rgb("#ffdc00"),
+  olive: rgb("#3d9970"),
+  green: rgb("#2ecc40"),
+  lime: rgb("#01ff70"),
 )
 
-#let figure-1(data, groups) = diagram(
-  spacing: 8pt,
-	cell-size: (8mm, 10mm),
-	edge-stroke: 1pt,
-	edge-corner-radius: 5pt,
-	mark-scale: 70%,
+#let blob(pos, label, width: 80mm, tint: white, ..args) = {
+  let b = style.blob
 
-  for (i, value) in data.enumerate() {
-    blob(
-      (0, 2*i), 
-      data.at(i).stepLabel + "\n" + str(data.at(i).value)
-    )
+  node(
+    pos,
+    align(left, label),
+    width: width,
+    fill: tint.lighten(60%),
+    stroke: b.stroke * 1pt + tint.darken(20%),
+    corner-radius: b.cornerRadius * 1pt,
+    ..args,
+  )
+}
 
-    if i != data.len() - 1 {
-      edge((0, 2*i), (0,2*(i+1)), "-|>")
-      edge("d,r", "-|>")
+#let figure-1(data, groups) = {
+  let d = style.diagram
+  let e = style.edges
+  let m = style.mainBox
+  let s = style.stepBox
+  let g = style.groupBox
+
+  diagram(
+    spacing: d.spacing * 1pt,
+    cell-size: (d.cellWidth * 1mm, d.cellHeight * 1mm),
+    edge-stroke: e.stroke * 1pt,
+    edge-corner-radius: e.cornerRadius * 1pt,
+    mark-scale: d.markScale * 1%,
+
+    for (i, value) in data.enumerate() {
+      // Main Box
       blob(
-        (1,2*i+1),
-        str(data.at(i+1).delta) + " " + data.at(i+1).droppedLabel + 
-        for value in data.at(i+1).substepDeltas {
-          "\n    " + str(value.delta) + " " + value.label
-        }
+        (0, 2 * i),
+        data.at(i).stepLabel + "\n" + str(data.at(i).value),
+        tint: tint-mapping.at(m.tint),
+        width: m.width * 1mm,
       )
-    }
-  },
 
-  for (start, end) in groups {
-    blob(
-      (-1, -1), 
-      rotate(data.at(start).group, -90deg, reflow: true),
-      tint: green,
-      width: auto,
-      enclose: ((-1, 2*start - 0.25), (-1, 2*end + 1 + 0.25))
-    )
-  }
-)
+      if i != data.len() - 1 {
+        // Main to main
+        edge((0, 2 * i), (0, 2 * (i + 1)), e.arrow)
+        // Main to step
+        edge("d,r", e.arrow)
+        // Step Box
+        blob(
+          (1, 2 * i + 1),
+          str(data.at(i + 1).delta)
+            + " "
+            + data.at(i + 1).droppedLabel
+            + for value in data.at(i + 1).substepDeltas {
+              "\n    " + str(value.delta) + " " + value.label
+            },
+          tint: tint-mapping.at(s.tint),
+          width: s.width * 1mm,
+        )
+      }
+    },
+
+    for (start, end) in groups {
+      // Group Box
+      blob(
+        (-1, -1),
+        rotate(data.at(start).group, -90deg, reflow: true),
+        tint: tint-mapping.at(g.tint),
+        width: auto,
+        enclose: ((-1, 2 * start - 0.25), (-1, 2 * end + 1 + 0.25)),
+      )
+    },
+  )
+}
 
 #let groups(data) = {
-  let result = ();
-  let current = none;
+  let result = ()
+  let current = none
 
   for (i, key) in data.enumerate() {
     if key.group == "" {
       if current != none {
-        result.push((current, i - 1));
-        current = none;
+        result.push((current, i - 1))
+        current = none
       }
     } else {
       if current == none {
-        current = i;
+        current = i
       } else if key.group != data.at(i - 1).group {
-        result.push((current, i - 1));
-        current = i;
+        result.push((current, i - 1))
+        current = i
       }
     }
   }
 
   if current != none {
-    result.push((current, data.len() - 1));
+    result.push((current, data.len() - 1))
   }
 
   result
 }
 
-
-#let data = json("/assets/flowchart.json")
 #let groups = groups(data);
+
+= Figure 1
 #figure-1(data, groups)

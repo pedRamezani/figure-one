@@ -4,7 +4,9 @@
 	import { useSvelteFlow } from '@xyflow/svelte';
 	import TypstDocument from './TypstDocument.svelte';
 
-	import { convertFlowchartToTypstJson, downloadBlob } from './index.ts';
+	import { downloadBlob } from '../../index.ts';
+	import { convertFlowchartToTypstJson } from '../json/index.ts';
+	import { styleConfig } from '../style/style-config.svelte.ts';
 
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
@@ -13,9 +15,10 @@
 	import FileDownIcon from '@lucide/svelte/icons/file-down';
 
 	const { toObject } = useSvelteFlow();
-	const jsonData = $derived(convertFlowchartToTypstJson(toObject()));
+	const flowchartData = $derived(convertFlowchartToTypstJson(toObject()));
 	const encoder = new TextEncoder();
-	const encodedJsonData = $derived(encoder.encode(JSON.stringify(jsonData)));
+	const encodedFlowchartJsonData = $derived(encoder.encode(JSON.stringify(flowchartData)));
+	const encodedStyleConfigData = $derived(encoder.encode(JSON.stringify(styleConfig)));
 
 	let source: string | undefined = $state();
 	onMount(() => {
@@ -91,10 +94,13 @@
 	});
 </script>
 
-<div class="flex flex-col h-full gap-2">
+<div class="flex flex-col h-full gap-2 py-4">
 	<TypstDocument
 		{source}
-		sourceShadowMappings={{ '/assets/flowchart.json': encodedJsonData }}
+		sourceShadowMappings={{
+			'/assets/flowchart.json': encodedFlowchartJsonData,
+			'/assets/style.json': encodedStyleConfigData
+		}}
 		onSvgChange={(svg) => {
 			currentSvg = svg;
 		}}

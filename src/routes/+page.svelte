@@ -5,8 +5,9 @@
 	import * as Tabs from '@/components/ui/tabs/index.js';
 
 	import Flow from '@/flow/Flow.svelte';
-	import JsonPreview from '@/typst/JsonPreview.svelte';
-	import TypstPreview from '@/typst/TypstPreview.svelte';
+	import JsonPreview from '@/preview/json/JsonPreview.svelte';
+	import TypstPreview from '@/preview/typst/TypstPreview.svelte';
+	import StyleConfigurator from '@/preview/style/StyleConfigurator.svelte';
 
 	let height = $state<number | null>(null);
 	let width = $state<number | null>(null);
@@ -33,12 +34,16 @@
 					<Tabs.List>
 						<Tabs.Trigger value="typst">Typst</Tabs.Trigger>
 						<Tabs.Trigger value="json">JSON</Tabs.Trigger>
+						<Tabs.Trigger value="style">Settings</Tabs.Trigger>
 					</Tabs.List>
 					<Tabs.Content value="typst">
 						<TypstPreview />
 					</Tabs.Content>
 					<Tabs.Content value="json">
 						<JsonPreview />
+					</Tabs.Content>
+					<Tabs.Content value="style">
+						<StyleConfigurator />
 					</Tabs.Content>
 				</Tabs.Root>
 			</Resizable.Pane>

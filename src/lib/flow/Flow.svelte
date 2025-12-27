@@ -134,7 +134,7 @@
 		<!-- <ControlButton onclick={() => console.log('⚡️')}>⚡️</ControlButton> -->
 	</Controls>
 	<Background />
-	<Panel position="top-left" class="hidden md:block w-76">
+	<Panel position="bottom-right" class="hidden md:block w-76">
 		<Card.Root class="text-xs">
 			<Card.Header>
 				<Card.Title class="text-2xl">Flowchart Generator</Card.Title>

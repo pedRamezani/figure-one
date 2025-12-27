@@ -56,14 +56,14 @@
 <div class="flex flex-col h-full gap-2 py-4">
 	<!-- BLOB SETTINGS -->
 	<Field.Set>
-		<Field.Legend>Blob Settings</Field.Legend>
-		<Field.Description>Customise general node blob appearance.</Field.Description>
-		<Field.Group>
-			<Field.Field>
+		<Field.Legend>Nodes</Field.Legend>
+		<Field.Description>Customise general node appearance.</Field.Description>
+		<Field.Group class="flex flex-row flex-wrap">
+			<Field.Field class="max-w-xs">
 				<Field.Label for="blob-corner-radius">Corner Radius (pt)</Field.Label>
 				<Input name="blob-corner-radius" type="number" bind:value={styleConfig.blob.cornerRadius} />
 			</Field.Field>
-			<Field.Field>
+			<Field.Field class="max-w-xs">
 				<Field.Label for="blob-stroke">Stroke (pt)</Field.Label>
 				<Input name="blob-stroke" type="number" bind:value={styleConfig.blob.stroke} />
 			</Field.Field>
@@ -75,18 +75,18 @@
 	<Field.Set>
 		<Field.Legend>Edges</Field.Legend>
 		<Field.Description>Customise general edge appearance.</Field.Description>
-		<Field.Group>
-			<Field.Field>
+		<Field.Group class="flex flex-row flex-wrap">
+			<Field.Field class="max-w-xs">
 				<Field.Label>Edge Stroke (pt)</Field.Label>
 				<Input type="number" bind:value={styleConfig.edges.stroke} />
 			</Field.Field>
 
-			<Field.Field>
+			<Field.Field class="max-w-xs">
 				<Field.Label>Edge Corner Radius (pt)</Field.Label>
 				<Input type="number" bind:value={styleConfig.edges.cornerRadius} />
 			</Field.Field>
 
-			<Field.Field>
+			<Field.Field class="max-w-xs">
 				<Field.Label>Arrow Body</Field.Label>
 				<Select.Root type="single" bind:value={arrowBody} onValueChange={arrowUpdate}>
 					<Select.Trigger>{arrowBody}</Select.Trigger>
@@ -98,7 +98,7 @@
 				</Select.Root>
 			</Field.Field>
 
-			<Field.Field>
+			<Field.Field class="max-w-xs">
 				<Field.Label>Arrow Head</Field.Label>
 				<Select.Root type="single" bind:value={arrowHead} onValueChange={arrowUpdate}>
 					<Select.Trigger>{arrowHead}</Select.Trigger>
@@ -117,24 +117,24 @@
 	<Field.Set>
 		<Field.Legend>Diagram</Field.Legend>
 		<Field.Description>Customise diagram appearance.</Field.Description>
-		<Field.Group>
-			<Field.Field>
+		<Field.Group class="flex flex-row flex-wrap">
+			<Field.Field class="max-w-xs">
 				<Field.Label>Spacing (pt)</Field.Label>
 				<Input type="number" bind:value={styleConfig.diagram.spacing} />
 			</Field.Field>
 
-			<Field.Field>
-				<Field.Label>Cell Width (mm)</Field.Label>
+			<Field.Field class="max-w-xs">
+				<Field.Label>Minimum Cell Width (mm)</Field.Label>
 				<Input type="number" bind:value={styleConfig.diagram.cellWidth} />
 			</Field.Field>
 
-			<Field.Field>
-				<Field.Label>Cell Height (mm)</Field.Label>
+			<Field.Field class="max-w-xs">
+				<Field.Label>Minimum Cell Height (mm)</Field.Label>
 				<Input type="number" bind:value={styleConfig.diagram.cellHeight} />
 			</Field.Field>
 
-			<Field.Field>
-				<Field.Label>Mark Scale (%)</Field.Label>
+			<Field.Field class="max-w-xs">
+				<Field.Label>Arrow Mark Scale (%)</Field.Label>
 				<Input type="number" min="0" max="100" bind:value={styleConfig.diagram.markScale} />
 			</Field.Field>
 		</Field.Group>
@@ -145,8 +145,8 @@
 	<Field.Set>
 		<Field.Legend>Main Box</Field.Legend>
 		<Field.Description>Customise main box appearance.</Field.Description>
-		<Field.Group>
-			<Field.Field>
+		<Field.Group class="flex flex-row flex-wrap">
+			<Field.Field class="max-w-xs">
 				<Field.Label>Tint</Field.Label>
 				<Select.Root type="single" bind:value={styleConfig.mainBox.tint}>
 					<Select.Trigger>{styleConfig.mainBox.tint}</Select.Trigger>
@@ -158,9 +158,9 @@
 				</Select.Root>
 			</Field.Field>
 
-			<Field.Field>
+			<Field.Field class="max-w-xs">
 				<Field.Label>Width (mm or "auto")</Field.Label>
-				<Input bind:value={styleConfig.mainBox.width} />
+				<Input type="number" min={0} bind:value={styleConfig.mainBox.width} />
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>
@@ -170,8 +170,8 @@
 	<Field.Set>
 		<Field.Legend>Step Box</Field.Legend>
 		<Field.Description>Customise step box appearance.</Field.Description>
-		<Field.Group>
-			<Field.Field>
+		<Field.Group class="flex flex-row flex-wrap">
+			<Field.Field class="max-w-xs">
 				<Field.Label>Tint</Field.Label>
 				<Select.Root type="single" bind:value={styleConfig.stepBox.tint}>
 					<Select.Trigger>{styleConfig.stepBox.tint}</Select.Trigger>
@@ -183,9 +183,9 @@
 				</Select.Root>
 			</Field.Field>
 
-			<Field.Field>
+			<Field.Field class="max-w-xs">
 				<Field.Label>Width (mm or "auto")</Field.Label>
-				<Input bind:value={styleConfig.stepBox.width} />
+				<Input type="number" min={0} bind:value={styleConfig.stepBox.width} />
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>
@@ -195,8 +195,8 @@
 	<Field.Set>
 		<Field.Legend>Group Box</Field.Legend>
 		<Field.Description>Customise group box appearance.</Field.Description>
-		<Field.Group>
-			<Field.Field>
+		<Field.Group class="flex flex-row flex-wrap">
+			<Field.Field class="max-w-xs">
 				<Field.Label>Tint</Field.Label>
 				<Select.Root type="single" bind:value={styleConfig.groupBox.tint}>
 					<Select.Trigger>{styleConfig.groupBox.tint}</Select.Trigger>

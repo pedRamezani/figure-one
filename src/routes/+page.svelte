@@ -5,10 +5,10 @@
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import * as Tabs from '@/components/ui/tabs/index.js';
 
-	import Flow from '@/flow/Flow.svelte';
+	import Flow from '@/preview/flow/Flow.svelte';
 	import JsonPreview from '@/preview/json/JsonPreview.svelte';
-	import TypstPreview from '@/preview/typst/TypstPreview.svelte';
 	import StyleConfigurator from '@/preview/style/StyleConfigurator.svelte';
+	import TypstPreview from '@/preview/typst/TypstPreview.svelte';
 
 	import SettingsIcon from '@lucide/svelte/icons/settings';
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { styleConfig, type Tint, type ArrowBody, type ArrowHead } from './style-config.svelte';
 
+	import Button from '@/components/ui/button/button.svelte';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '@/components/ui/input';
 	import * as Select from '@/components/ui/select';
@@ -49,7 +50,11 @@
 	let arrowHead = $state<ArrowHead>('|>');
 
 	function arrowUpdate() {
-		styleConfig.edges.arrow = `${arrowBody}${arrowHead}`;
+		styleConfig.current.edges.arrow = `${arrowBody}${arrowHead}`;
+	}
+
+	function restoreDefaults() {
+		styleConfig.reset();
 	}
 </script>
 
@@ -61,11 +66,15 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
 				<Field.Label for="blob-corner-radius">Corner Radius (pt)</Field.Label>
-				<Input name="blob-corner-radius" type="number" bind:value={styleConfig.blob.cornerRadius} />
+				<Input
+					name="blob-corner-radius"
+					type="number"
+					bind:value={styleConfig.current.blob.cornerRadius}
+				/>
 			</Field.Field>
 			<Field.Field class="max-w-xs">
 				<Field.Label for="blob-stroke">Stroke (pt)</Field.Label>
-				<Input name="blob-stroke" type="number" bind:value={styleConfig.blob.stroke} />
+				<Input name="blob-stroke" type="number" bind:value={styleConfig.current.blob.stroke} />
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>
@@ -78,12 +87,12 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
 				<Field.Label>Edge Stroke (pt)</Field.Label>
-				<Input type="number" bind:value={styleConfig.edges.stroke} />
+				<Input type="number" bind:value={styleConfig.current.edges.stroke} />
 			</Field.Field>
 
 			<Field.Field class="max-w-xs">
 				<Field.Label>Edge Corner Radius (pt)</Field.Label>
-				<Input type="number" bind:value={styleConfig.edges.cornerRadius} />
+				<Input type="number" bind:value={styleConfig.current.edges.cornerRadius} />
 			</Field.Field>
 
 			<Field.Field class="max-w-xs">
@@ -120,22 +129,22 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
 				<Field.Label>Spacing (pt)</Field.Label>
-				<Input type="number" bind:value={styleConfig.diagram.spacing} />
+				<Input type="number" bind:value={styleConfig.current.diagram.spacing} />
 			</Field.Field>
 
 			<Field.Field class="max-w-xs">
 				<Field.Label>Minimum Cell Width (mm)</Field.Label>
-				<Input type="number" bind:value={styleConfig.diagram.cellWidth} />
+				<Input type="number" bind:value={styleConfig.current.diagram.cellWidth} />
 			</Field.Field>
 
 			<Field.Field class="max-w-xs">
 				<Field.Label>Minimum Cell Height (mm)</Field.Label>
-				<Input type="number" bind:value={styleConfig.diagram.cellHeight} />
+				<Input type="number" bind:value={styleConfig.current.diagram.cellHeight} />
 			</Field.Field>
 
 			<Field.Field class="max-w-xs">
 				<Field.Label>Arrow Mark Scale (%)</Field.Label>
-				<Input type="number" min="0" max="100" bind:value={styleConfig.diagram.markScale} />
+				<Input type="number" min="0" max="100" bind:value={styleConfig.current.diagram.markScale} />
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>
@@ -148,8 +157,8 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
 				<Field.Label>Tint</Field.Label>
-				<Select.Root type="single" bind:value={styleConfig.mainBox.tint}>
-					<Select.Trigger>{styleConfig.mainBox.tint}</Select.Trigger>
+				<Select.Root type="single" bind:value={styleConfig.current.mainBox.tint}>
+					<Select.Trigger>{styleConfig.current.mainBox.tint}</Select.Trigger>
 					<Select.Content>
 						{#each tintOptions as t}
 							<Select.Item value={t}>{t}</Select.Item>
@@ -160,7 +169,7 @@
 
 			<Field.Field class="max-w-xs">
 				<Field.Label>Width (mm or "auto")</Field.Label>
-				<Input type="number" min={0} bind:value={styleConfig.mainBox.width} />
+				<Input type="number" min={0} bind:value={styleConfig.current.mainBox.width} />
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>
@@ -173,8 +182,8 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
 				<Field.Label>Tint</Field.Label>
-				<Select.Root type="single" bind:value={styleConfig.stepBox.tint}>
-					<Select.Trigger>{styleConfig.stepBox.tint}</Select.Trigger>
+				<Select.Root type="single" bind:value={styleConfig.current.stepBox.tint}>
+					<Select.Trigger>{styleConfig.current.stepBox.tint}</Select.Trigger>
 					<Select.Content>
 						{#each tintOptions as t}
 							<Select.Item value={t}>{t}</Select.Item>
@@ -185,7 +194,7 @@
 
 			<Field.Field class="max-w-xs">
 				<Field.Label>Width (mm or "auto")</Field.Label>
-				<Input type="number" min={0} bind:value={styleConfig.stepBox.width} />
+				<Input type="number" min={0} bind:value={styleConfig.current.stepBox.width} />
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>
@@ -198,8 +207,8 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
 				<Field.Label>Tint</Field.Label>
-				<Select.Root type="single" bind:value={styleConfig.groupBox.tint}>
-					<Select.Trigger>{styleConfig.groupBox.tint}</Select.Trigger>
+				<Select.Root type="single" bind:value={styleConfig.current.groupBox.tint}>
+					<Select.Trigger>{styleConfig.current.groupBox.tint}</Select.Trigger>
 					<Select.Content>
 						{#each tintOptions as t}
 							<Select.Item value={t}>{t}</Select.Item>
@@ -209,4 +218,6 @@
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>
+
+	<Button variant="outline" class="self-end" onclick={restoreDefaults}>Restore defaults</Button>
 </div>

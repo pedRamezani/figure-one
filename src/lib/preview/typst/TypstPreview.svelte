@@ -18,7 +18,7 @@
 	const flowchartData = $derived(convertFlowchartToTypstJson(toObject()));
 	const encoder = new TextEncoder();
 	const encodedFlowchartJsonData = $derived(encoder.encode(JSON.stringify(flowchartData)));
-	const encodedStyleConfigData = $derived(encoder.encode(JSON.stringify(styleConfig)));
+	const encodedStyleConfigData = $derived(encoder.encode(JSON.stringify(styleConfig.current)));
 
 	let source: string | undefined = $state();
 	onMount(() => {

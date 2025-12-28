@@ -69,7 +69,7 @@ export interface FlowchartConfig {
 // -------------------------------------------------------------
 // Default Values
 // -------------------------------------------------------------
-export const styleConfig: FlowchartConfig = $state({
+export const defaultConfig: FlowchartConfig = {
   blob: {
     cornerRadius: 5,
     stroke: 1
@@ -96,4 +96,12 @@ export const styleConfig: FlowchartConfig = $state({
   groupBox: {
     tint: "green"
   }
-});
+};
+
+let config: FlowchartConfig = $state({...defaultConfig});
+
+export const styleConfig = {
+  get current() { return config },
+  set current(value) { config = value },
+  reset() {config = defaultConfig}
+}

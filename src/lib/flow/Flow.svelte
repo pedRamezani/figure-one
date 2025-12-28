@@ -121,8 +121,8 @@
 	{nodeTypes}
 	fitView
 	fitViewOptions={{
-		maxZoom: 2,
-		minZoom: 0.25
+		minZoom: 0.1,
+		maxZoom: 2.5
 	}}
 	onconnectend={handleConnectEnd}
 	snapGrid={[20, 20]}

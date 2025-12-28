@@ -117,7 +117,7 @@
 			<Select.Content class="min-w-24">
 				{#each DOWNLOAD_TYPES as downloadOption (downloadOption.value)}
 					<Select.Item value={downloadOption.value}>
-						<svelte:component this={downloadOption.icon} />
+						<downloadOption.icon />
 						<span class="text-muted-foreground">{downloadOption.label}</span>
 					</Select.Item>
 				{/each}

@@ -10,7 +10,11 @@
 	import Button from '@/components/ui/button/button.svelte';
 
 	import { downloadBlob } from '../../index.ts';
+	import { getLayoutedElements } from '../flow/index.ts';
 
+	const { toObject, fitView } = useSvelteFlow();
+
+	// Import / Export JSON
 	const nodes = useNodes();
 	const edges = useEdges();
 	function importJSON(): void {
@@ -26,11 +30,16 @@
 
 			new Response(file).json().then((json) => {
 				if (!isTypstFlowchartJSON(json)) return;
-				console.log(json);
 				const parsed = parseTypstFlowchartJSON(json);
-				console.log(parsed);
 				nodes.set(parsed.nodes);
 				edges.set(parsed.edges);
+
+				setTimeout(function () {
+					const layouted = getLayoutedElements(nodes.current, edges.current);
+					nodes.set(layouted.nodes);
+					edges.set(layouted.edges);
+					fitView();
+				}, 500);
 			});
 		};
 		fileInput.click();
@@ -41,8 +50,6 @@
 	}
 
 	// JSON encode
-	const { toObject } = useSvelteFlow();
-
 	const flowchartStringified = $derived.by<string>(() => {
 		const raw = toObject();
 		const output = convertFlowchartToTypstJson(raw);

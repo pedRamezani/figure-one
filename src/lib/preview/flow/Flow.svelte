@@ -9,7 +9,7 @@
 		useSvelteFlow,
 		Background,
 		Controls,
-		// ControlButton,
+		ControlButton,
 		Panel,
 		type Node,
 		type Edge,
@@ -23,7 +23,10 @@
 	import * as Card from '@/components/ui/card/index.js';
 	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
 
+	import NetworkIcon from '@lucide/svelte/icons/workflow';
+
 	import '@xyflow/svelte/dist/base.css';
+	import { getLayoutedElements } from '.';
 
 	const minZoom = 0.1;
 	const maxZoom = 2.5;
@@ -49,7 +52,7 @@
 	let nodes = $state.raw<Node[]>(initialNodes);
 	let edges = $state.raw<Edge[]>(initialEdges);
 
-	const { screenToFlowPosition } = useSvelteFlow();
+	const { screenToFlowPosition, fitView } = useSvelteFlow();
 
 	const handleConnectEnd: OnConnectEnd = (event, connectionState) => {
 		if (connectionState.isValid) return;
@@ -102,7 +105,19 @@
 				};
 			}
 
-			const sourceHandle = fromStepNodeOutput ? 'step-output' : undefined;
+			const sourceHandle = fromStartNode
+				? 'start'
+				: fromStepNodeOutput
+					? 'step-output'
+					: fromStepNodeSubsteps
+						? 'step-substeps'
+						: undefined;
+			const targetHandle =
+				fromStartNode || fromStepNodeOutput
+					? 'step-input'
+					: fromStepNodeSubsteps
+						? 'substep'
+						: undefined;
 
 			nodes = [...nodes, newNode];
 			edges = [
@@ -111,11 +126,21 @@
 					source: sourceNodeId,
 					sourceHandle: sourceHandle,
 					target: id,
+					targetHandle: targetHandle,
 					id: `${sourceNodeId}--${id}`
 				}
 			];
 		}
 	};
+
+	function onLayout() {
+		const layouted = getLayoutedElements(nodes, edges);
+
+		nodes = [...layouted.nodes];
+		edges = [...layouted.edges];
+
+		fitView();
+	}
 </script>
 
 <SvelteFlow
@@ -136,7 +161,7 @@
 	}}
 >
 	<Controls class={buttonGroupVariants({ orientation: 'vertical' })}>
-		<!-- <ControlButton onclick={() => console.log('⚡️')}>⚡️</ControlButton> -->
+		<ControlButton onclick={() => onLayout()}><NetworkIcon class="fill-primary" /></ControlButton>
 	</Controls>
 	<Background />
 	<Panel position="bottom-right" class="hidden md:block w-76">

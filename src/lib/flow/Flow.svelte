@@ -25,6 +25,9 @@
 
 	import '@xyflow/svelte/dist/base.css';
 
+	const minZoom = 0.1;
+	const maxZoom = 2.5;
+
 	const nodeTypes = {
 		start: StartNode,
 		step: StepNode,
@@ -121,9 +124,11 @@
 	{nodeTypes}
 	fitView
 	fitViewOptions={{
-		minZoom: 0.1,
-		maxZoom: 2.5
+		minZoom: minZoom,
+		maxZoom: maxZoom
 	}}
+	{minZoom}
+	{maxZoom}
 	onconnectend={handleConnectEnd}
 	snapGrid={[20, 20]}
 	proOptions={{

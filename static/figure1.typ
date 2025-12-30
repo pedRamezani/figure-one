@@ -32,23 +32,34 @@
   lime: rgb("#01ff70"),
 )
 
-#let blob(pos, label, width: 80mm, tint: white, ..args) = {
-  let b = style.blob
+#let styled-node(pos, label, width: 80mm, tint: white, ..args) = {
+  let n = style.node
 
   node(
     pos,
     align(left, label),
     width: width,
     fill: tint.lighten(60%),
-    stroke: b.stroke * 1pt + tint.darken(20%),
-    corner-radius: b.cornerRadius * 1pt,
+    stroke: n.stroke * 1pt + tint.darken(20%),
+    corner-radius: n.cornerRadius * 1pt,
+    ..args,
+  )
+}
+
+#let styled-edge(vertices, label, mark, width: 80mm, tint: black, ..args) = {
+  let e = style.edge
+
+  edge(
+    vertices, label, mark,
+    stroke: e.stroke * 1pt + tint,
+    corner-radius: e.cornerRadius * 1pt,
     ..args,
   )
 }
 
 #let figure-1(data, groups) = {
   let d = style.diagram
-  let e = style.edges
+  let a = style.mark
   let m = style.mainBox
   let s = style.stepBox
   let g = style.groupBox
@@ -56,13 +67,11 @@
   diagram(
     spacing: d.spacing * 1pt,
     cell-size: (d.cellWidth * 1mm, d.cellHeight * 1mm),
-    edge-stroke: e.stroke * 1pt,
-    edge-corner-radius: e.cornerRadius * 1pt,
-    mark-scale: d.markScale * 1%,
+    mark-scale: a.markScale * 1%,
 
     for (i, value) in data.enumerate() {
       // Main Box
-      blob(
+      styled-node(
         (0, 2 * i),
         data.at(i).stepLabel + "\n" + str(data.at(i).value),
         tint: tint-mapping.at(m.tint),
@@ -71,11 +80,11 @@
 
       if i != data.len() - 1 {
         // Main to main
-        edge((0, 2 * i), (0, 2 * (i + 1)), e.arrow)
+        styled-edge(((0, 2 * i), (0, 2 * (i + 1))), auto, a.arrow)
         // Main to step
-        edge("d,r", e.arrow)
+        styled-edge(auto, "d,r", a.arrow)
         // Step Box
-        blob(
+        styled-node(
           (1, 2 * i + 1),
           str(data.at(i + 1).delta)
             + " "
@@ -91,7 +100,7 @@
 
     for (start, end) in groups {
       // Group Box
-      blob(
+      styled-node(
         (-1, -1),
         rotate(data.at(start).group, -90deg, reflow: true),
         tint: tint-mapping.at(g.tint),

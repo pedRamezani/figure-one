@@ -50,7 +50,7 @@
 	let arrowHead = $state<ArrowHead>('|>');
 
 	function arrowUpdate() {
-		styleConfig.current.edges.arrow = `${arrowBody}${arrowHead}`;
+		styleConfig.current.mark.arrow = `${arrowBody}${arrowHead}`;
 	}
 
 	function restoreDefaults() {
@@ -59,22 +59,45 @@
 </script>
 
 <div class="flex flex-col h-full gap-2 py-4">
-	<!-- BLOB SETTINGS -->
+	<!-- DIAGRAM SETTINGS -->
+	<Field.Set>
+		<Field.Legend>Diagram</Field.Legend>
+		<Field.Description>Customise diagram appearance.</Field.Description>
+		<Field.Group class="flex flex-row flex-wrap">
+			<Field.Field class="max-w-xs">
+				<Field.Label>Spacing (pt)</Field.Label>
+				<Input type="number" bind:value={styleConfig.current.diagram.spacing} />
+			</Field.Field>
+
+			<Field.Field class="max-w-xs">
+				<Field.Label>Minimum Cell Width (mm)</Field.Label>
+				<Input type="number" bind:value={styleConfig.current.diagram.cellWidth} />
+			</Field.Field>
+
+			<Field.Field class="max-w-xs">
+				<Field.Label>Minimum Cell Height (mm)</Field.Label>
+				<Input type="number" bind:value={styleConfig.current.diagram.cellHeight} />
+			</Field.Field>
+		</Field.Group>
+	</Field.Set>
+	<Field.Separator class="my-2" />
+
+	<!-- NODE SETTINGS -->
 	<Field.Set>
 		<Field.Legend>Nodes</Field.Legend>
 		<Field.Description>Customise general node appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
-				<Field.Label for="blob-corner-radius">Corner Radius (pt)</Field.Label>
-				<Input
-					name="blob-corner-radius"
-					type="number"
-					bind:value={styleConfig.current.blob.cornerRadius}
-				/>
+				<Field.Label for="node-stroke">Stroke (pt)</Field.Label>
+				<Input name="node-stroke" type="number" bind:value={styleConfig.current.node.stroke} />
 			</Field.Field>
 			<Field.Field class="max-w-xs">
-				<Field.Label for="blob-stroke">Stroke (pt)</Field.Label>
-				<Input name="blob-stroke" type="number" bind:value={styleConfig.current.blob.stroke} />
+				<Field.Label for="node-corner-radius">Corner Radius (pt)</Field.Label>
+				<Input
+					name="node-corner-radius"
+					type="number"
+					bind:value={styleConfig.current.node.cornerRadius}
+				/>
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>
@@ -86,15 +109,27 @@
 		<Field.Description>Customise general edge appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
-				<Field.Label>Edge Stroke (pt)</Field.Label>
-				<Input type="number" bind:value={styleConfig.current.edges.stroke} />
+				<Field.Label for="edge-stroke">Stroke (pt)</Field.Label>
+				<Input name="edge-stroke" type="number" bind:value={styleConfig.current.edge.stroke} />
 			</Field.Field>
 
 			<Field.Field class="max-w-xs">
-				<Field.Label>Edge Corner Radius (pt)</Field.Label>
-				<Input type="number" bind:value={styleConfig.current.edges.cornerRadius} />
+				<Field.Label for="edge-corner-radius">Corner Radius (pt)</Field.Label>
+				<Input
+					name="edge-corner-radius"
+					type="number"
+					bind:value={styleConfig.current.edge.cornerRadius}
+				/>
 			</Field.Field>
+		</Field.Group>
+	</Field.Set>
+	<Field.Separator class="my-2" />
 
+	<!-- MARK SETTINGS -->
+	<Field.Set>
+		<Field.Legend>Arrow</Field.Legend>
+		<Field.Description>Customise general arrow appearance.</Field.Description>
+		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
 				<Field.Label>Arrow Body</Field.Label>
 				<Select.Root type="single" bind:value={arrowBody} onValueChange={arrowUpdate}>
@@ -118,33 +153,10 @@
 					</Select.Content>
 				</Select.Root>
 			</Field.Field>
-		</Field.Group>
-	</Field.Set>
-	<Field.Separator class="my-2" />
-
-	<!-- DIAGRAM SETTINGS -->
-	<Field.Set>
-		<Field.Legend>Diagram</Field.Legend>
-		<Field.Description>Customise diagram appearance.</Field.Description>
-		<Field.Group class="flex flex-row flex-wrap">
-			<Field.Field class="max-w-xs">
-				<Field.Label>Spacing (pt)</Field.Label>
-				<Input type="number" bind:value={styleConfig.current.diagram.spacing} />
-			</Field.Field>
-
-			<Field.Field class="max-w-xs">
-				<Field.Label>Minimum Cell Width (mm)</Field.Label>
-				<Input type="number" bind:value={styleConfig.current.diagram.cellWidth} />
-			</Field.Field>
-
-			<Field.Field class="max-w-xs">
-				<Field.Label>Minimum Cell Height (mm)</Field.Label>
-				<Input type="number" bind:value={styleConfig.current.diagram.cellHeight} />
-			</Field.Field>
 
 			<Field.Field class="max-w-xs">
 				<Field.Label>Arrow Mark Scale (%)</Field.Label>
-				<Input type="number" min="0" max="100" bind:value={styleConfig.current.diagram.markScale} />
+				<Input type="number" min="0" max="100" bind:value={styleConfig.current.mark.markScale} />
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>

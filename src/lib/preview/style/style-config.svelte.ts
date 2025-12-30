@@ -27,7 +27,7 @@ export type Arrow = `${ArrowBody}${ArrowHead}`;
 // -------------------------------------------------------------
 // Sub-objects of the configuration file
 // -------------------------------------------------------------
-export interface BlobConfig {
+export interface NodeConfig {
   cornerRadius: number; // pt
   stroke: number;       // pt
 }
@@ -35,14 +35,17 @@ export interface BlobConfig {
 export interface EdgesConfig {
   stroke: number;       // pt
   cornerRadius: number; // pt
+}
+
+export interface MarkConfig {
   arrow: Arrow;
+  markScale: number;    // 0–100
 }
 
 export interface DiagramConfig {
   spacing: number;      // pt
   cellWidth: number;    // mm
   cellHeight: number;   // mm
-  markScale: number;    // 0–100
 }
 
 export interface BoxConfig {
@@ -58,8 +61,9 @@ export interface GroupBoxConfig {
 // Full Flowchart Configuration Schema
 // -------------------------------------------------------------
 export interface FlowchartConfig {
-  blob: BlobConfig;
-  edges: EdgesConfig;
+  node: NodeConfig;
+  edge: EdgesConfig;
+  mark: MarkConfig;
   diagram: DiagramConfig;
   mainBox: BoxConfig;
   stepBox: BoxConfig;
@@ -70,20 +74,22 @@ export interface FlowchartConfig {
 // Default Values
 // -------------------------------------------------------------
 export const defaultConfig: FlowchartConfig = {
-  blob: {
+  node: {
     cornerRadius: 5,
     stroke: 1
   },
-  edges: {
+  edge: {
     stroke: 1,
     cornerRadius: 5,
-    arrow: '-|>'
+  },
+  mark: {
+    arrow: '-|>',
+    markScale: 70
   },
   diagram: {
     spacing: 8,
     cellWidth: 8,
     cellHeight: 8,
-    markScale: 70
   },
   mainBox: {
     tint: "white",

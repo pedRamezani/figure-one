@@ -46,11 +46,10 @@
   )
 }
 
-#let styled-edge(vertices, label, mark, width: 80mm, tint: black, ..args) = {
+#let styled-edge(width: 80mm, tint: black, ..args) = {
   let e = style.edge
 
   edge(
-    vertices, label, mark,
     stroke: e.stroke * 1pt + tint,
     corner-radius: e.cornerRadius * 1pt,
     ..args,
@@ -80,9 +79,9 @@
 
       if i != data.len() - 1 {
         // Main to main
-        styled-edge(((0, 2 * i), (0, 2 * (i + 1))), auto, a.arrow)
+        styled-edge((0, 2 * i), (0, 2 * (i + 1)), a.arrow)
         // Main to step
-        styled-edge(auto, "d,r", a.arrow)
+        styled-edge("d,r", a.arrow)
         // Step Box
         styled-node(
           (1, 2 * i + 1),

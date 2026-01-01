@@ -1,50 +1,18 @@
 <script lang="ts">
-	import { styleConfig, type Tint, type ArrowBody, type ArrowHead } from './style-config.svelte';
+	import {
+		styleConfig,
+		tintOptions,
+		arrowBodies,
+		arrowHeads,
+		aligmentOptions,
+		type ArrowBody,
+		type ArrowHead
+	} from './style-config.svelte';
 
 	import Button from '@/components/ui/button/button.svelte';
 	import * as Field from '$lib/components/ui/field/index.js';
 	import { Input } from '@/components/ui/input';
 	import * as Select from '@/components/ui/select';
-
-	// Allowed tint keys (Typst tint-mapping)
-	const tintOptions: Tint[] = [
-		'black',
-		'gray',
-		'silver',
-		'white',
-		'navy',
-		'blue',
-		'aqua',
-		'teal',
-		'eastern',
-		'purple',
-		'fuchsia',
-		'maroon',
-		'red',
-		'orange',
-		'yellow',
-		'olive',
-		'green',
-		'lime'
-	];
-
-	// Arrow body + head options
-	const arrowBodies: ArrowBody[] = ['-', '=', '==', '--', '..'];
-	const arrowHeads: ArrowHead[] = [
-		'>',
-		'>>',
-		'>>>',
-		'o',
-		'0',
-		'|>',
-		'}>',
-		'x',
-		'X',
-		'*',
-		'@',
-		'[]',
-		'<>'
-	];
 
 	let arrowBody = $state<ArrowBody>('-');
 	let arrowHead = $state<ArrowHead>('|>');
@@ -59,24 +27,82 @@
 </script>
 
 <div class="flex flex-col h-full gap-2 py-4">
+	<!-- PAGE SETTINGS -->
+	<Field.Set>
+		<Field.Legend>Page</Field.Legend>
+		<Field.Description>Customise page appearance.</Field.Description>
+		<Field.Group class="flex flex-row flex-wrap">
+			<Field.Field class="max-w-xs">
+				<Field.Label for="page-title">Title</Field.Label>
+				<Input name="page-title" type="text" bind:value={styleConfig.current.page.title} />
+			</Field.Field>
+
+			<Field.Field class="max-w-xs">
+				<Field.Label for="page-title-aligment">Tint Aligment</Field.Label>
+				<Select.Root
+					name="page-title-aligment"
+					type="single"
+					bind:value={styleConfig.current.page.titleAlign}
+				>
+					<Select.Trigger>{styleConfig.current.page.titleAlign}</Select.Trigger>
+					<Select.Content>
+						{#each aligmentOptions as body}
+							<Select.Item value={body}>{body}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-xs">
+				<Field.Label for="page-tint">Tint</Field.Label>
+				<Select.Root name="page-tint" type="single" bind:value={styleConfig.current.page.tint}>
+					<Select.Trigger>{styleConfig.current.page.tint}</Select.Trigger>
+					<Select.Content>
+						{#each tintOptions as t}
+							<Select.Item value={t}>{t}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-xs">
+				<Field.Label for="page-margin">Margin (mm)</Field.Label>
+				<Input name="page-margin" type="number" bind:value={styleConfig.current.page.margin} />
+			</Field.Field>
+		</Field.Group>
+	</Field.Set>
+	<Field.Separator class="my-2" />
+
 	<!-- DIAGRAM SETTINGS -->
 	<Field.Set>
 		<Field.Legend>Diagram</Field.Legend>
 		<Field.Description>Customise diagram appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-xs">
-				<Field.Label>Spacing (pt)</Field.Label>
-				<Input type="number" bind:value={styleConfig.current.diagram.spacing} />
+				<Field.Label for="diagram-spacing">Spacing (pt)</Field.Label>
+				<Input
+					name="diagram-spacing"
+					type="number"
+					bind:value={styleConfig.current.diagram.spacing}
+				/>
 			</Field.Field>
 
 			<Field.Field class="max-w-xs">
-				<Field.Label>Minimum Cell Width (mm)</Field.Label>
-				<Input type="number" bind:value={styleConfig.current.diagram.cellWidth} />
+				<Field.Label for="diagram-cell-width">Minimum Cell Width (mm)</Field.Label>
+				<Input
+					name="diagram-cell-width"
+					type="number"
+					bind:value={styleConfig.current.diagram.cellWidth}
+				/>
 			</Field.Field>
 
 			<Field.Field class="max-w-xs">
-				<Field.Label>Minimum Cell Height (mm)</Field.Label>
-				<Input type="number" bind:value={styleConfig.current.diagram.cellHeight} />
+				<Field.Label for="diagram-cell-height">Minimum Cell Height (mm)</Field.Label>
+				<Input
+					name="diagram-cell-height"
+					type="number"
+					bind:value={styleConfig.current.diagram.cellHeight}
+				/>
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>

@@ -2,10 +2,6 @@
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, edge, node
 #import fletcher.shapes: hexagon, house
 
-// Page settings
-#set page(width: auto, height: auto, margin: 5mm, fill: white)
-#set text(font: "New Computer Modern")
-
 // Data imports
 #let style = json("/assets/style.json")
 #let data = json("/assets/flowchart.json")
@@ -32,12 +28,24 @@
   lime: rgb("#01ff70"),
 )
 
+#let alignment-mapping = (
+  left: alignment.left,
+  center: alignment.center,
+  right: alignment.right,
+)
+
+// Page settings
+#set document(title: "Figure 1", author: "Pedram Ramezani", description: "A consort flowchart diagram.", keywords: ("flowchart", "figure1"))
+#show heading: set align(alignment-mapping.at(style.page.titleAlign))
+#set page(width: auto, height: auto, margin: style.page.margin * 1mm, fill: tint-mapping.at(style.page.tint).lighten(80%))
+#set text(font: "New Computer Modern")
+
 #let styled-node(pos, label, width: 80mm, tint: white, ..args) = {
   let n = style.node
 
   node(
     pos,
-    align(left, label),
+    align(left, text(label, fill: tint.darken(100%))),
     width: width,
     fill: tint.lighten(60%),
     stroke: n.stroke * 1pt + tint.darken(20%),
@@ -139,5 +147,5 @@
 
 #let groups = groups(data);
 
-= Figure 1
+#heading(text(style.page.title))
 #figure-1(data, groups)

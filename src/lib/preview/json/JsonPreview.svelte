@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { useSvelteFlow, useNodes, useEdges } from '@xyflow/svelte';
-	import {
-		convertFlowchartToTypstFlowchartData,
-		isFlowchartData,
-		parseTypstFlowchartJSON
-	} from './convert.ts';
+	import { convertFlowchartToTypstFlowchartData, parseTypstFlowchartJSON } from './convert.ts';
+
+	import { createProfile, isProfile } from '../../index.ts';
+	import { styleConfig } from '../style/style-config.svelte.ts';
 
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import Button from '@/components/ui/button/button.svelte';
@@ -29,8 +28,9 @@
 			if (file.type !== 'application/json') return;
 
 			new Response(file).json().then((json) => {
-				if (!isFlowchartData(json)) return;
-				const parsed = parseTypstFlowchartJSON(json);
+				if (!isProfile(json)) return;
+				styleConfig.current = json.config;
+				const parsed = parseTypstFlowchartJSON(json.data);
 				nodes.set(parsed.nodes);
 				edges.set(parsed.edges);
 
@@ -46,19 +46,20 @@
 	}
 
 	function exportJSON(): void {
-		downloadBlob(flowchartStringified, 'application/json', 'flowchart.json');
+		downloadBlob(profileStringified, 'application/json', 'flowchart.json');
 	}
 
 	// JSON encode
-	const flowchartStringified = $derived.by<string>(() => {
+	const profileStringified = $derived.by<string>(() => {
 		const raw = toObject();
-		const output = convertFlowchartToTypstFlowchartData(raw);
-		return JSON.stringify(output, null, 2);
+		const data = convertFlowchartToTypstFlowchartData(raw);
+		const profile = createProfile(data, styleConfig.current);
+		return JSON.stringify(profile, null, 2);
 	});
 </script>
 
 <div class="flex flex-col h-full gap-2 py-4">
-	<pre class="overflow-y-auto grow">{flowchartStringified}</pre>
+	<pre class="overflow-y-auto grow">{profileStringified}</pre>
 	<ButtonGroup.Root class="self-end" aria-label="Download options">
 		<Button class="self-end" variant="outline" onclick={importJSON}>Import JSON</Button>
 		<Button class="self-end" variant="outline" onclick={exportJSON}>Export JSON</Button>

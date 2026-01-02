@@ -1,3 +1,42 @@
+import type { TypstFlowchartData } from './preview/json/convert';
+import { isFlowchartData } from './preview/json/validate';
+
+import type { TypstFlowchartConfig } from './preview/style/style-config.svelte';
+import { isFlowchartConfig } from './preview/style/validate';
+
+export type Profile = {
+	$version: number;
+	data: TypstFlowchartData;
+	config: TypstFlowchartConfig;
+};
+
+export function createProfile(data: TypstFlowchartData, config: TypstFlowchartConfig): Profile {
+	return {
+		$version: 1,
+		data: data,
+		config: config
+	};
+}
+
+function isObject(v: unknown): v is Record<string, unknown> {
+	return typeof v === 'object' && v !== null;
+}
+
+function isNumber(n: unknown): n is number {
+	return typeof n === 'number' && Number.isFinite(n);
+}
+
+export function isProfile(value: unknown): value is Profile {
+	if (!isObject(value)) return false;
+
+	const v = value as any;
+	if (!isNumber(v.$version)) return false;
+	if (!isFlowchartData(v.data)) return false;
+	if (!isFlowchartConfig(v.config)) return false;
+
+	return true;
+}
+
 export function downloadBlob(data: BlobPart, mimeType: string, fileName: string): void {
 	const blob = new Blob([data], { type: mimeType });
 

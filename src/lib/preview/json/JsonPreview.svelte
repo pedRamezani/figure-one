@@ -4,7 +4,7 @@
 		convertFlowchartToTypstFlowchartData,
 		isFlowchartData,
 		parseTypstFlowchartJSON
-	} from './index.ts';
+	} from './convert.ts';
 
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import Button from '@/components/ui/button/button.svelte';

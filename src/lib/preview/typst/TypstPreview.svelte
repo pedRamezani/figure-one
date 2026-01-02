@@ -5,7 +5,7 @@
 	import TypstDocument from './TypstDocument.svelte';
 
 	import { downloadBlob } from '../../index.ts';
-	import { convertFlowchartToTypstFlowchartData } from '../json/index.ts';
+	import { convertFlowchartToTypstFlowchartData } from '../json/convert.ts';
 	import { styleConfig } from '../style/style-config.svelte.ts';
 
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';

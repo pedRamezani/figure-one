@@ -5,7 +5,7 @@
 	import TypstDocument from './TypstDocument.svelte';
 
 	import { downloadBlob } from '../../index.ts';
-	import { convertFlowchartToTypstJson } from '../json/index.ts';
+	import { convertFlowchartToTypstFlowchartData } from '../json/index.ts';
 	import { styleConfig } from '../style/style-config.svelte.ts';
 
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
@@ -15,7 +15,7 @@
 	import FileDownIcon from '@lucide/svelte/icons/file-down';
 
 	const { toObject } = useSvelteFlow();
-	const flowchartData = $derived(convertFlowchartToTypstJson(toObject()));
+	const flowchartData = $derived(convertFlowchartToTypstFlowchartData(toObject()));
 	const encoder = new TextEncoder();
 	const encodedFlowchartJsonData = $derived(encoder.encode(JSON.stringify(flowchartData)));
 	const encodedStyleConfigData = $derived(encoder.encode(JSON.stringify(styleConfig.current)));

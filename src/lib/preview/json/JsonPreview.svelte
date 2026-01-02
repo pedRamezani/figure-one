@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { useSvelteFlow, useNodes, useEdges } from '@xyflow/svelte';
 	import {
-		convertFlowchartToTypstJson,
-		isTypstFlowchartJSON,
+		convertFlowchartToTypstFlowchartData,
+		isFlowchartData,
 		parseTypstFlowchartJSON
 	} from './index.ts';
 
@@ -29,7 +29,7 @@
 			if (file.type !== 'application/json') return;
 
 			new Response(file).json().then((json) => {
-				if (!isTypstFlowchartJSON(json)) return;
+				if (!isFlowchartData(json)) return;
 				const parsed = parseTypstFlowchartJSON(json);
 				nodes.set(parsed.nodes);
 				edges.set(parsed.edges);
@@ -52,7 +52,7 @@
 	// JSON encode
 	const flowchartStringified = $derived.by<string>(() => {
 		const raw = toObject();
-		const output = convertFlowchartToTypstJson(raw);
+		const output = convertFlowchartToTypstFlowchartData(raw);
 		return JSON.stringify(output, null, 2);
 	});
 </script>

@@ -10,9 +10,10 @@
 	} from './style-config.svelte';
 
 	import Button from '@/components/ui/button/button.svelte';
-	import * as Field from '$lib/components/ui/field/index.js';
-	import { Input } from '@/components/ui/input';
+	import * as Field from '@/components/ui/field/index.js';
 	import * as Select from '@/components/ui/select';
+
+	import SimpleField from './SimpleField.svelte';
 
 	let arrowBody = $state<ArrowBody>('-');
 	let arrowHead = $state<ArrowHead>('|>');
@@ -32,10 +33,7 @@
 		<Field.Legend>Page</Field.Legend>
 		<Field.Description>Customise page appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
-			<Field.Field class="max-w-xs">
-				<Field.Label for="page-title">Title</Field.Label>
-				<Input name="page-title" type="text" bind:value={styleConfig.current.page.title} />
-			</Field.Field>
+			<SimpleField title="Title" name="page-title" bind:value={styleConfig.current.page.title} />
 
 			<Field.Field class="max-w-xs">
 				<Field.Label for="page-title-aligment">Title Aligment</Field.Label>
@@ -65,10 +63,12 @@
 				</Select.Root>
 			</Field.Field>
 
-			<Field.Field class="max-w-xs">
-				<Field.Label for="page-margin">Margin (mm)</Field.Label>
-				<Input name="page-margin" type="number" bind:value={styleConfig.current.page.margin} />
-			</Field.Field>
+			<SimpleField
+				title="Margin (mm)"
+				name="page-margin"
+				bind:value={styleConfig.current.page.margin}
+				min={0}
+			/>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -78,32 +78,25 @@
 		<Field.Legend>Diagram</Field.Legend>
 		<Field.Description>Customise diagram appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
-			<Field.Field class="max-w-xs">
-				<Field.Label for="diagram-spacing">Spacing (pt)</Field.Label>
-				<Input
-					name="diagram-spacing"
-					type="number"
-					bind:value={styleConfig.current.diagram.spacing}
-				/>
-			</Field.Field>
+			<SimpleField
+				title="Spacing (pt)"
+				name="diagram-spacing"
+				bind:value={styleConfig.current.diagram.spacing}
+			/>
 
-			<Field.Field class="max-w-xs">
-				<Field.Label for="diagram-cell-width">Minimum Cell Width (mm)</Field.Label>
-				<Input
-					name="diagram-cell-width"
-					type="number"
-					bind:value={styleConfig.current.diagram.cellWidth}
-				/>
-			</Field.Field>
+			<SimpleField
+				title="Minimum Cell Width (mm)"
+				name="diagram-cell-width"
+				bind:value={styleConfig.current.diagram.cellWidth}
+				min={0}
+			/>
 
-			<Field.Field class="max-w-xs">
-				<Field.Label for="diagram-cell-height">Minimum Cell Height (mm)</Field.Label>
-				<Input
-					name="diagram-cell-height"
-					type="number"
-					bind:value={styleConfig.current.diagram.cellHeight}
-				/>
-			</Field.Field>
+			<SimpleField
+				title="Minimum Cell Height (mm)"
+				name="diagram-cell-height"
+				bind:value={styleConfig.current.diagram.cellHeight}
+				min={0}
+			/>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -113,18 +106,19 @@
 		<Field.Legend>Nodes</Field.Legend>
 		<Field.Description>Customise general node appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
-			<Field.Field class="max-w-xs">
-				<Field.Label for="node-stroke">Stroke (pt)</Field.Label>
-				<Input name="node-stroke" type="number" bind:value={styleConfig.current.node.stroke} />
-			</Field.Field>
-			<Field.Field class="max-w-xs">
-				<Field.Label for="node-corner-radius">Corner Radius (pt)</Field.Label>
-				<Input
-					name="node-corner-radius"
-					type="number"
-					bind:value={styleConfig.current.node.cornerRadius}
-				/>
-			</Field.Field>
+			<SimpleField
+				title="Stroke (pt)"
+				name="node-stroke"
+				bind:value={styleConfig.current.node.stroke}
+				min={0}
+			/>
+
+			<SimpleField
+				title="Corner Radius (pt)"
+				name="node-corner-radius"
+				bind:value={styleConfig.current.node.cornerRadius}
+				min={0}
+			/>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -134,19 +128,19 @@
 		<Field.Legend>Edges</Field.Legend>
 		<Field.Description>Customise general edge appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
-			<Field.Field class="max-w-xs">
-				<Field.Label for="edge-stroke">Stroke (pt)</Field.Label>
-				<Input name="edge-stroke" type="number" bind:value={styleConfig.current.edge.stroke} />
-			</Field.Field>
+			<SimpleField
+				title="Stroke (pt)"
+				name="edge-stroke"
+				bind:value={styleConfig.current.edge.stroke}
+				min={0}
+			/>
 
-			<Field.Field class="max-w-xs">
-				<Field.Label for="edge-corner-radius">Corner Radius (pt)</Field.Label>
-				<Input
-					name="edge-corner-radius"
-					type="number"
-					bind:value={styleConfig.current.edge.cornerRadius}
-				/>
-			</Field.Field>
+			<SimpleField
+				title="Corner Radius (pt)"
+				name="edge-corner-radius"
+				bind:value={styleConfig.current.edge.cornerRadius}
+				min={0}
+			/>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -180,10 +174,13 @@
 				</Select.Root>
 			</Field.Field>
 
-			<Field.Field class="max-w-xs">
-				<Field.Label>Arrow Mark Scale (%)</Field.Label>
-				<Input type="number" min="0" max="100" bind:value={styleConfig.current.mark.markScale} />
-			</Field.Field>
+			<SimpleField
+				title="Arrow Mark Scale (%)"
+				name="edge-corner-radius"
+				bind:value={styleConfig.current.mark.markScale}
+				min={0}
+				max={100}
+			/>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -205,10 +202,12 @@
 				</Select.Root>
 			</Field.Field>
 
-			<Field.Field class="max-w-xs">
-				<Field.Label>Width (mm or "auto")</Field.Label>
-				<Input type="number" min={0} bind:value={styleConfig.current.mainBox.width} />
-			</Field.Field>
+			<SimpleField
+				title="Width (mm)"
+				name="mainbox-width"
+				bind:value={styleConfig.current.mainBox.width}
+				min={0}
+			/>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -230,10 +229,12 @@
 				</Select.Root>
 			</Field.Field>
 
-			<Field.Field class="max-w-xs">
-				<Field.Label>Width (mm or "auto")</Field.Label>
-				<Input type="number" min={0} bind:value={styleConfig.current.stepBox.width} />
-			</Field.Field>
+			<SimpleField
+				title="Width (mm)"
+				name="stepbox-width"
+				bind:value={styleConfig.current.stepBox.width}
+				min={0}
+			/>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />

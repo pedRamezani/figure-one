@@ -98,7 +98,7 @@ export interface GroupBoxConfig {
 // -------------------------------------------------------------
 // Full Flowchart Configuration Schema
 // -------------------------------------------------------------
-export interface FlowchartConfig {
+export interface TypstFlowchartConfig {
 	page: PageConfig;
 	node: NodeConfig;
 	edge: EdgesConfig;
@@ -112,7 +112,7 @@ export interface FlowchartConfig {
 // -------------------------------------------------------------
 // Default Values
 // -------------------------------------------------------------
-export const defaultConfig: FlowchartConfig = {
+export const defaultConfig: TypstFlowchartConfig = {
 	page: {
 		title: 'Figure 1',
 		titleAlign: 'left',
@@ -149,7 +149,7 @@ export const defaultConfig: FlowchartConfig = {
 	}
 };
 
-let config: FlowchartConfig = $state({ ...defaultConfig });
+let config: TypstFlowchartConfig = $state({ ...defaultConfig });
 
 export const styleConfig = {
 	get current() {

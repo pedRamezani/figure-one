@@ -34,7 +34,7 @@ export const arrowHeads = [
 	'>>',
 	'>>>',
 	'o',
-	'0',
+	'O',
 	'|>',
 	'}>',
 	'x',

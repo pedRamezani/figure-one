@@ -38,7 +38,7 @@
 			</Field.Field>
 
 			<Field.Field class="max-w-xs">
-				<Field.Label for="page-title-aligment">Tint Aligment</Field.Label>
+				<Field.Label for="page-title-aligment">Title Aligment</Field.Label>
 				<Select.Root
 					name="page-title-aligment"
 					type="single"

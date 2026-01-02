@@ -1,6 +1,6 @@
 import type { Node, Edge, Viewport } from '@xyflow/svelte';
 
-export type typstFlowchartJSON = {
+export type TypstFlowchartData = {
 	stepLabel: string;
 	droppedLabel: string;
 	group: string;
@@ -12,11 +12,11 @@ export type typstFlowchartJSON = {
 	}[];
 }[];
 
-export function convertFlowchartToTypstJson(raw: {
+export function convertFlowchartToTypstFlowchartData(raw: {
 	nodes: Node[];
 	edges: Edge[];
 	viewport: Viewport;
-}): typstFlowchartJSON {
+}): TypstFlowchartData {
 	const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
 	const edges = raw.edges;
 
@@ -50,7 +50,7 @@ export function convertFlowchartToTypstJson(raw: {
 		return children[stepId].filter((id) => nodeById[id].type === 'substep');
 	}
 
-	const output: typstFlowchartJSON = [];
+	const output: TypstFlowchartData = [];
 
 	// 1. Start node value
 	output.push({
@@ -93,7 +93,7 @@ export function convertFlowchartToTypstJson(raw: {
 	return output;
 }
 
-export function isTypstFlowchartJSON(value: unknown): value is typstFlowchartJSON {
+export function isFlowchartData(value: unknown): value is TypstFlowchartData {
 	if (!Array.isArray(value) || value.length === 0) return false;
 
 	function isNumber(n: unknown): n is number {
@@ -121,7 +121,7 @@ export function isTypstFlowchartJSON(value: unknown): value is typstFlowchartJSO
 	return true;
 }
 
-export function parseTypstFlowchartJSON(json: typstFlowchartJSON): {
+export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 	nodes: Node[];
 	edges: Edge[];
 } {

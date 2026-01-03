@@ -19,6 +19,7 @@
 	import StartNode from '@/nodes/StartNode.svelte';
 	import StepNode from '@/nodes/StepNode.svelte';
 	import SubstepNode from '@/nodes/SubstepNode.svelte';
+	import SplitNode from '@/nodes/SplitNode.svelte';
 
 	import * as Card from '@/components/ui/card/index.js';
 	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
@@ -37,7 +38,8 @@
 	const nodeTypes = {
 		start: StartNode,
 		step: StepNode,
-		substep: SubstepNode
+		substep: SubstepNode,
+		split: SplitNode
 	};
 
 	const getNodeDataDefaults = (type: string) => {
@@ -90,8 +92,11 @@
 		const fromStepNodeSubsteps =
 			connectionState.fromNode?.type === 'step' &&
 			connectionState.fromHandle?.id === 'step-substeps';
+		const fromSplitNodeOutput =
+			connectionState.fromNode?.type === 'split' &&
+			connectionState.fromHandle?.id === 'split-output';
 
-		if (fromStartNode || fromStepNodeOutput || fromStepNodeSubsteps) {
+		if (fromStartNode || fromStepNodeOutput || fromStepNodeSubsteps || fromSplitNodeOutput) {
 			let newNode: Node;
 
 			if (fromStepNodeSubsteps) {

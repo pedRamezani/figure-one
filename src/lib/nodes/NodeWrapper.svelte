@@ -7,7 +7,7 @@
 		description,
 		content,
 		footer
-	}: { title: String; description?: String; content: Snippet; footer?: Snippet } = $props();
+	}: { title: string; description?: string; content: Snippet; footer?: Snippet } = $props();
 </script>
 
 <Card.Root>

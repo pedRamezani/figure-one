@@ -26,7 +26,6 @@
 	import LayoutIcon from '@lucide/svelte/icons/circle-pile';
 	import ClearIcon from '@lucide/svelte/icons/trash';
 
-	import '@xyflow/svelte/dist/base.css';
 	import { getLayoutedElements } from '.';
 
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';

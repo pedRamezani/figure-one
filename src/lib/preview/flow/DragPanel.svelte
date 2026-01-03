@@ -4,6 +4,7 @@
 
 	import StepIcon from '@lucide/svelte/icons/square';
 	import SubstepIcon from '@lucide/svelte/icons/workflow';
+	import SplitIcon from '@lucide/svelte/icons/git-fork';
 
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
 
@@ -30,6 +31,11 @@
 		<div on:dragstart={(event) => onDragStart(event, 'substep')} draggable={true}>
 			<Badge variant="secondary" class="text-base"
 				><SubstepIcon class="size-4! stroke-2" />Substep</Badge
+			>
+		</div>
+		<div on:dragstart={(event) => onDragStart(event, 'split')} draggable={true}>
+			<Badge variant="secondary" class="text-base"
+				><SplitIcon class="size-4! stroke-2 rotate-180" />Split</Badge
 			>
 		</div>
 	</Card.Content>

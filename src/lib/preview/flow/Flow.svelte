@@ -161,7 +161,9 @@
 	}}
 >
 	<Controls class={buttonGroupVariants({ orientation: 'vertical' })}>
-		<ControlButton onclick={() => onLayout()}><NetworkIcon class="fill-primary" /></ControlButton>
+		<ControlButton aria-label="Layout flowchart" onclick={() => onLayout()}
+			><NetworkIcon class="fill-primary" /></ControlButton
+		>
 	</Controls>
 	<Background />
 	<Panel position="bottom-right" class="hidden md:block w-76">

@@ -30,7 +30,7 @@
 					<Tabs.Root value="flow" class="h-full">
 						<Tabs.List class="absolute top-4 left-4 md:top-8 md:left-8 z-10">
 							<Tabs.Trigger value="flow">Flow</Tabs.Trigger>
-							<Tabs.Trigger value="style"><SettingsIcon /></Tabs.Trigger>
+							<Tabs.Trigger value="style" aria-label="Config"><SettingsIcon /></Tabs.Trigger>
 						</Tabs.List>
 						<Tabs.Content value="flow">
 							<Flow />

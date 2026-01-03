@@ -23,10 +23,14 @@
 	import * as Card from '@/components/ui/card/index.js';
 	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
 
-	import NetworkIcon from '@lucide/svelte/icons/workflow';
+	import LayoutIcon from '@lucide/svelte/icons/circle-pile';
+	import ClearIcon from '@lucide/svelte/icons/trash';
 
 	import '@xyflow/svelte/dist/base.css';
 	import { getLayoutedElements } from '.';
+
+	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
+	import DragPanel from './DragPanel.svelte';
 
 	const minZoom = 0.1;
 	const maxZoom = 2.5;
@@ -37,11 +41,31 @@
 		substep: SubstepNode
 	};
 
+	const getNodeDataDefaults = (type: string) => {
+		switch (type) {
+			case 'step':
+				return {
+					value: null,
+					delta: 0,
+					stepLabel: 'Step',
+					droppedLabel: 'excluded',
+					group: ''
+				};
+			case 'substep':
+				return { delta: 0, label: 'Substep' };
+			case 'start':
+				return { label: 'Start population', value: 1000, group: '' };
+			case 'split':
+			default:
+				return {};
+		}
+	};
+
 	const initialNodes: Node[] = [
 		{
 			id: '0',
 			type: 'start',
-			data: { label: 'Start population', value: 1000, group: '' },
+			data: getNodeDataDefaults('start'),
 			position: { x: 0, y: 0 },
 			deletable: false
 		}
@@ -75,7 +99,7 @@
 				newNode = {
 					id,
 					type: 'substep',
-					data: { delta: 0, label: `Substep ${id}` },
+					data: getNodeDataDefaults('substep'),
 					// project the screen coordinates to pane coordinates
 					position: screenToFlowPosition({
 						x: clientX,
@@ -88,13 +112,7 @@
 				newNode = {
 					id,
 					type: 'step',
-					data: {
-						value: null,
-						delta: 0,
-						stepLabel: `Step ${id}`,
-						droppedLabel: 'excluded',
-						group: ''
-					},
+					data: getNodeDataDefaults('step'),
 					// project the screen coordinates to pane coordinates
 					position: screenToFlowPosition({
 						x: clientX,
@@ -133,11 +151,57 @@
 		}
 	};
 
-	function onLayout() {
+	const handleDragOver = (event: DragEvent) => {
+		event.preventDefault();
+
+		if (event.dataTransfer) {
+			event.dataTransfer.dropEffect = 'move';
+		}
+	};
+
+	const handleDrop = (event: DragEvent) => {
+		event.preventDefault();
+
+		if (!dragAndDropNodeType.current) {
+			return;
+		}
+
+		const position = screenToFlowPosition({
+			x: event.clientX,
+			y: event.clientY
+		});
+
+		const id = getId();
+
+		const newNode = {
+			id: id,
+			type: dragAndDropNodeType.current,
+			position,
+			data: getNodeDataDefaults(dragAndDropNodeType.current),
+			origin: [0.5, 0.5]
+		} satisfies Node;
+
+		nodes = [...nodes, newNode];
+	};
+
+	function layoutNodes() {
 		const layouted = getLayoutedElements(nodes, edges);
 
 		nodes = [...layouted.nodes];
 		edges = [...layouted.edges];
+
+		fitView();
+	}
+
+	function clearNodes() {
+		nodes = [...nodes.filter((node) => node.deletable === false)];
+		edges = [
+			...edges.filter(
+				(edge) =>
+					nodes.findIndex((node) => node.id == edge.source) !== -1 &&
+					nodes.findIndex((node) => node.id == edge.target) !== -1
+			)
+		];
 
 		fitView();
 	}
@@ -155,18 +219,23 @@
 	{minZoom}
 	{maxZoom}
 	onconnectend={handleConnectEnd}
+	ondragover={handleDragOver}
+	ondrop={handleDrop}
 	snapGrid={[20, 20]}
 	proOptions={{
 		hideAttribution: true
 	}}
 >
 	<Controls class={buttonGroupVariants({ orientation: 'vertical' })}>
-		<ControlButton aria-label="Layout flowchart" onclick={() => onLayout()}
-			><NetworkIcon class="fill-primary" /></ControlButton
+		<ControlButton aria-label="Layout flowchart" onclick={() => layoutNodes()}
+			><LayoutIcon class="fill-primary" /></ControlButton
+		>
+		<ControlButton aria-label="Clear flowchart" onclick={() => clearNodes()}
+			><ClearIcon class="fill-primary" /></ControlButton
 		>
 	</Controls>
 	<Background />
-	<Panel position="bottom-right" class="hidden md:block w-76">
+	<Panel position="top-right" class="hidden md:block w-76">
 		<Card.Root class="text-xs">
 			<Card.Header>
 				<Card.Title class="text-2xl">Flowchart Generator</Card.Title>
@@ -176,4 +245,5 @@
 			</Card.Header>
 		</Card.Root>
 	</Panel>
+	<Panel position="bottom-right"><DragPanel /></Panel>
 </SvelteFlow>

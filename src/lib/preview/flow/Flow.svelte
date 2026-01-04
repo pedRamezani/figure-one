@@ -1,46 +1,38 @@
 <script module>
 	let id = 1;
-	export const getId = () => `${id++}`;
-</script>
+	const getId = () => `${id++}`;
 
-<script lang="ts">
-	import {
-		SvelteFlow,
-		useSvelteFlow,
-		Background,
-		Controls,
-		ControlButton,
-		Panel,
-		type Node,
-		type Edge,
-		type OnConnectEnd
-	} from '@xyflow/svelte';
+	export function addNode(
+		type: RegisteredNodeType,
+		position: {
+			x: number;
+			y: number;
+		},
+		origin: [number, number] = [0.5, 0.5]
+	): Node {
+		const id = getId();
 
-	import StartNode from '@/nodes/StartNode.svelte';
-	import StepNode from '@/nodes/StepNode.svelte';
-	import SubstepNode from '@/nodes/SubstepNode.svelte';
+		const newNode = {
+			id: id,
+			type: type,
+			position,
+			data: getNodeDataDefaults(type),
+			origin: origin
+		} satisfies Node;
 
-	import * as Card from '@/components/ui/card/index.js';
-	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
+		nodes = [...nodes, newNode];
 
-	import LayoutIcon from '@lucide/svelte/icons/circle-pile';
-	import ClearIcon from '@lucide/svelte/icons/trash';
+		return newNode;
+	}
 
-	import { getLayoutedElements } from '.';
-
-	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
-	import DragPanel from './DragPanel.svelte';
-
-	const minZoom = 0.1;
-	const maxZoom = 2.5;
-
-	const nodeTypes = {
+	export type RegisteredNodeType = 'start' | 'step' | 'substep';
+	const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>> = {
 		start: StartNode,
 		step: StepNode,
 		substep: SubstepNode
 	};
 
-	const getNodeDataDefaults = (type: string) => {
+	const getNodeDataDefaults = (type: RegisteredNodeType) => {
 		switch (type) {
 			case 'step':
 				return {
@@ -54,7 +46,6 @@
 				return { delta: 0, label: 'Substep' };
 			case 'start':
 				return { label: 'Start population', value: 1000, group: '' };
-			case 'split':
 			default:
 				return {};
 		}
@@ -74,6 +65,40 @@
 
 	let nodes = $state.raw<Node[]>(initialNodes);
 	let edges = $state.raw<Edge[]>(initialEdges);
+</script>
+
+<script lang="ts">
+	import {
+		SvelteFlow,
+		useSvelteFlow,
+		Background,
+		Controls,
+		ControlButton,
+		Panel,
+		type Node,
+		type Edge,
+		type OnConnectEnd,
+		type NodeProps
+	} from '@xyflow/svelte';
+
+	import StartNode from '@/nodes/StartNode.svelte';
+	import StepNode from '@/nodes/StepNode.svelte';
+	import SubstepNode from '@/nodes/SubstepNode.svelte';
+
+	import * as Card from '@/components/ui/card/index.js';
+	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
+
+	import LayoutIcon from '@lucide/svelte/icons/circle-pile';
+	import ClearIcon from '@lucide/svelte/icons/trash';
+
+	import { getLayoutedElements } from '.';
+
+	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
+	import DragPanel from './DragPanel.svelte';
+	import type { Component } from 'svelte';
+
+	const minZoom = 0.1;
+	const maxZoom = 2.5;
 
 	const { screenToFlowPosition, fitView } = useSvelteFlow();
 
@@ -81,7 +106,6 @@
 		if (connectionState.isValid) return;
 
 		const sourceNodeId = connectionState.fromNode?.id ?? '0';
-		const id = getId();
 		const { clientX, clientY } = 'changedTouches' in event ? event.changedTouches[0] : event;
 
 		const fromStartNode = connectionState.fromNode?.type === 'start';
@@ -92,35 +116,16 @@
 			connectionState.fromHandle?.id === 'step-substeps';
 
 		if (fromStartNode || fromStepNodeOutput || fromStepNodeSubsteps) {
-			let newNode: Node;
-
-			if (fromStepNodeSubsteps) {
-				newNode = {
-					id,
-					type: 'substep',
-					data: getNodeDataDefaults('substep'),
-					// project the screen coordinates to pane coordinates
-					position: screenToFlowPosition({
-						x: clientX,
-						y: clientY
-					}),
-					// set the origin of the new node so it is centered
-					origin: [0.0, 0.5]
-				};
-			} else {
-				newNode = {
-					id,
-					type: 'step',
-					data: getNodeDataDefaults('step'),
-					// project the screen coordinates to pane coordinates
-					position: screenToFlowPosition({
-						x: clientX,
-						y: clientY
-					}),
-					// set the origin of the new node so it is centered
-					origin: [0.5, 0.0]
-				};
-			}
+			const newNodeType = fromStepNodeSubsteps ? 'substep' : 'step';
+			const newNodeOrigin: [number, number] = newNodeType == 'step' ? [0.5, 0.0] : [0.0, 0.5];
+			const newNode = addNode(
+				newNodeType,
+				screenToFlowPosition({
+					x: clientX,
+					y: clientY
+				}),
+				newNodeOrigin
+			);
 
 			const sourceHandle = fromStartNode
 				? 'start'
@@ -136,15 +141,14 @@
 						? 'substep'
 						: undefined;
 
-			nodes = [...nodes, newNode];
 			edges = [
 				...edges,
 				{
 					source: sourceNodeId,
 					sourceHandle: sourceHandle,
-					target: id,
+					target: newNode.id,
 					targetHandle: targetHandle,
-					id: `${sourceNodeId}--${id}`
+					id: `${sourceNodeId}--${newNode.id}`
 				}
 			];
 		}
@@ -170,17 +174,7 @@
 			y: event.clientY
 		});
 
-		const id = getId();
-
-		const newNode = {
-			id: id,
-			type: dragAndDropNodeType.current,
-			position,
-			data: getNodeDataDefaults(dragAndDropNodeType.current),
-			origin: [0.5, 0.5]
-		} satisfies Node;
-
-		nodes = [...nodes, newNode];
+		addNode(dragAndDropNodeType.current, position, [0.5, 0.5]);
 	};
 
 	function layoutNodes() {
@@ -226,10 +220,12 @@
 	}}
 >
 	<Controls class={buttonGroupVariants({ orientation: 'vertical' })}>
-		<ControlButton aria-label="Layout flowchart" onclick={() => layoutNodes()}
-			><LayoutIcon class="fill-primary" /></ControlButton
+		<ControlButton
+			title="Layout flowchart"
+			aria-label="Layout flowchart"
+			onclick={() => layoutNodes()}><LayoutIcon class="fill-primary" /></ControlButton
 		>
-		<ControlButton aria-label="Clear flowchart" onclick={() => clearNodes()}
+		<ControlButton title="Clear flowchart" aria-label="Clear flowchart" onclick={() => clearNodes()}
 			><ClearIcon class="fill-primary" /></ControlButton
 		>
 	</Controls>

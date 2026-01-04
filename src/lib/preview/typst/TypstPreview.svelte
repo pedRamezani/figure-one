@@ -113,7 +113,11 @@
 			>Download {DOWNLOAD_TYPES.find((option) => option.value == downloadType)?.label}</Button
 		>
 		<Select.Root type="single" bind:value={downloadType} required={true}>
-			<Select.Trigger class="font-mono" aria-label="Select Download Type" />
+			<Select.Trigger
+				class="font-mono"
+				title="Select Download Type"
+				aria-label="Select Download Type"
+			/>
 			<Select.Content class="min-w-24">
 				{#each DOWNLOAD_TYPES as downloadOption (downloadOption.value)}
 					<Select.Item value={downloadOption.value}>

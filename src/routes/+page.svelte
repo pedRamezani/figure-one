@@ -20,7 +20,7 @@
 	);
 </script>
 
-<div class="flex w-auto h-dvh" bind:clientHeight={height} bind:clientWidth={width}>
+<main class="flex w-auto h-dvh" bind:clientHeight={height} bind:clientWidth={width}>
 	<!-- fitView -->
 	<!-- You need the SvelteFlowProvider so you can useSvelteFlow  -->
 	<SvelteFlowProvider>
@@ -30,7 +30,9 @@
 					<Tabs.Root value="flow" class="h-full">
 						<Tabs.List class="absolute top-4 left-4 md:top-8 md:left-8 z-10">
 							<Tabs.Trigger value="flow">Flow</Tabs.Trigger>
-							<Tabs.Trigger value="style" aria-label="Config"><SettingsIcon /></Tabs.Trigger>
+							<Tabs.Trigger value="style" title="Config" aria-label="Config"
+								><SettingsIcon /></Tabs.Trigger
+							>
 						</Tabs.List>
 						<Tabs.Content value="flow">
 							<Flow />
@@ -60,4 +62,4 @@
 			</Resizable.Pane>
 		</Resizable.PaneGroup>
 	</SvelteFlowProvider>
-</div>
+</main>

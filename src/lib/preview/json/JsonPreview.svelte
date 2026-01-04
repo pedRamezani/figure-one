@@ -60,7 +60,7 @@
 
 <div class="flex flex-col h-full gap-2 py-4">
 	<pre class="overflow-y-auto grow">{profileStringified}</pre>
-	<ButtonGroup.Root class="self-end" aria-label="Download options">
+	<ButtonGroup.Root class="self-end" title="Download options" aria-label="Download options">
 		<Button class="self-end" variant="outline" onclick={importJSON}>Import JSON</Button>
 		<Button class="self-end" variant="outline" onclick={exportJSON}>Export JSON</Button>
 	</ButtonGroup.Root>

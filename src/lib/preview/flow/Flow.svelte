@@ -3,7 +3,7 @@
 	const getId = () => `${id++}`;
 
 	export function addNode(
-		type: RegisteredNodeType,
+		nodeType: RegisteredNodeType,
 		position: {
 			x: number;
 			y: number;
@@ -14,9 +14,9 @@
 
 		const newNode = {
 			id: id,
-			type: type,
+			type: nodeType,
 			position,
-			data: getNodeDataDefaults(type),
+			data: getNodeDataDefaults(nodeType),
 			origin: origin
 		} satisfies Node;
 

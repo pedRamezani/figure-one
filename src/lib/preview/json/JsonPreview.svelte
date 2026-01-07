@@ -5,8 +5,9 @@
 	import { createProfile, isProfile } from '../../index.ts';
 	import { styleConfig } from '../style/style-config.svelte.ts';
 
-	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
+	import * as ButtonGroup from '@/components/ui/button-group/index.js';
 	import Button from '@/components/ui/button/button.svelte';
+	import * as Code from '@/components/ui/code';
 
 	import { downloadBlob } from '../../index.ts';
 	import { getLayoutedElements } from '../flow/index.ts';
@@ -59,7 +60,13 @@
 </script>
 
 <div class="flex flex-col h-full gap-2 py-4">
-	<pre class="overflow-y-auto grow">{profileStringified}</pre>
+	<div class="grow">
+		<Code.Overflow>
+			<Code.Root hideLines code={profileStringified}>
+				<Code.CopyButton />
+			</Code.Root>
+		</Code.Overflow>
+	</div>
 	<ButtonGroup.Root class="self-end" title="Download options" aria-label="Download options">
 		<Button class="self-end" variant="outline" onclick={importJSON}>Import JSON</Button>
 		<Button class="self-end" variant="outline" onclick={exportJSON}>Export JSON</Button>

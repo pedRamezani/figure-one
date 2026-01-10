@@ -11,6 +11,8 @@
 	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Button } from '@/components/ui/button/index.js';
+
+	import DownloadIcon from '@lucide/svelte/icons/download';
 	import ImageDownloadIcon from '@lucide/svelte/icons/image-down';
 	import FileDownIcon from '@lucide/svelte/icons/file-down';
 
@@ -110,7 +112,8 @@
 
 	<ButtonGroup.Root class="self-end" aria-label="Download options">
 		<Button variant="outline" {disabled} {onclick}
-			>Download {DOWNLOAD_TYPES.find((option) => option.value == downloadType)?.label}</Button
+			><DownloadIcon />Download {DOWNLOAD_TYPES.find((option) => option.value == downloadType)
+				?.label}</Button
 		>
 		<Select.Root type="single" bind:value={downloadType} required={true}>
 			<Select.Trigger

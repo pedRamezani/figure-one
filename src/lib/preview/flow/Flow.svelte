@@ -25,12 +25,19 @@
 		return newNode;
 	}
 
-	export type RegisteredNodeType = 'start' | 'step' | 'substep';
-	const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>> = {
-		start: StartNode,
-		step: StepNode,
-		substep: SubstepNode
-	};
+	export function setNodes(value: Node[]): void {
+		nodes = value;
+	}
+
+	export function setEdges(value: Edge[]): void {
+		edges = value;
+	}
+
+	export function layoutView(): void {
+		const layouted = getLayoutedElements(nodes, edges);
+		nodes = layouted.nodes;
+		edges = layouted.edges;
+	}
 
 	const getNodeDataDefaults = (type: RegisteredNodeType) => {
 		switch (type) {
@@ -77,13 +84,10 @@
 		Panel,
 		type Node,
 		type Edge,
-		type OnConnectEnd,
-		type NodeProps
+		type OnConnectEnd
 	} from '@xyflow/svelte';
 
-	import StartNode from '@/nodes/StartNode.svelte';
-	import StepNode from '@/nodes/StepNode.svelte';
-	import SubstepNode from '@/nodes/SubstepNode.svelte';
+	import { type RegisteredNodeType, nodeTypes } from '@/nodes/types';
 
 	import * as Card from '@/components/ui/card/index.js';
 	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
@@ -95,7 +99,6 @@
 
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
 	import DragPanel from './DragPanel.svelte';
-	import type { Component } from 'svelte';
 
 	const minZoom = 0.1;
 	const maxZoom = 2.5;

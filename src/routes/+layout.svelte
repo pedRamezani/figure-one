@@ -18,9 +18,6 @@
 	<link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 
 	<link rel="preconnect" href="https://cdn.jsdelivr.net/" />
-
-	<!-- Add inside <head> -->
-	<script crossOrigin="anonymous" src="https://tweakcn.com/live-preview.min.js"></script>
 </svelte:head>
 
 <ModeWatcher />

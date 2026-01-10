@@ -79,6 +79,7 @@
 		SvelteFlow,
 		useSvelteFlow,
 		Background,
+		BackgroundVariant,
 		Controls,
 		ControlButton,
 		Panel,
@@ -89,8 +90,11 @@
 
 	import { type RegisteredNodeType, nodeTypes } from '@/nodes/types';
 
-	import * as Card from '@/components/ui/card/index.js';
+	import * as ButtonGroup from '@/components/ui/button-group/index.js';
 	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
+	import { ThemeSelector } from '@/components/ui/theme-selector';
+
+	import InfoButton from './InfoButton.svelte';
 
 	import LayoutIcon from '@lucide/svelte/icons/circle-pile';
 	import ClearIcon from '@lucide/svelte/icons/trash';
@@ -222,7 +226,7 @@
 		hideAttribution: true
 	}}
 >
-	<Controls class={buttonGroupVariants({ orientation: 'vertical' })}>
+	<Controls class={buttonGroupVariants({ orientation: 'vertical', class: 'bg-card' })}>
 		<ControlButton
 			title="Layout flowchart"
 			aria-label="Layout flowchart"
@@ -232,16 +236,12 @@
 			><ClearIcon class="fill-primary" /></ControlButton
 		>
 	</Controls>
-	<Background />
-	<Panel position="top-right" class="hidden md:block w-76">
-		<Card.Root class="text-xs">
-			<Card.Header>
-				<Card.Title class="text-2xl">Flowchart Generator</Card.Title>
-				<Card.Description
-					>Simply drag and drop from the node handles to generate your Flowchart!</Card.Description
-				>
-			</Card.Header>
-		</Card.Root>
+	<Background variant={BackgroundVariant.Dots} size={1.2} />
+	<Panel position="top-right" class="bg-card">
+		<ButtonGroup.Root>
+			<ThemeSelector />
+			<InfoButton />
+		</ButtonGroup.Root>
 	</Panel>
 	<Panel position="bottom-right"><DragPanel /></Panel>
 </SvelteFlow>

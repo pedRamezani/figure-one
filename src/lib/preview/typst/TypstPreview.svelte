@@ -117,7 +117,7 @@
 		>
 		<Select.Root type="single" bind:value={downloadType} required={true}>
 			<Select.Trigger
-				class="font-mono"
+				class="border-inherit"
 				title="Select Download Type"
 				aria-label="Select Download Type"
 			/>

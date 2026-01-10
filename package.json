@@ -54,6 +54,7 @@
 		"@shikijs/langs": "^3.21.0",
 		"@shikijs/themes": "^3.21.0",
 		"@xyflow/svelte": "^1.4.2",
+		"mode-watcher": "^1.1.0",
 		"paneforge": "^1.0.2",
 		"shiki": "^3.21.0"
 	}

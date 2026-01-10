@@ -44,7 +44,7 @@
 				</ScrollArea>
 			</Resizable.Pane>
 			<Resizable.Handle />
-			<Resizable.Pane defaultSize={35} class="border-l-2 border-zinc-200">
+			<Resizable.Pane defaultSize={35} class="border-l-2 border-card">
 				<ScrollArea class="h-full">
 					<Tabs.Root value="typst" class="h-full p-4 md:p-8">
 						<Tabs.List>

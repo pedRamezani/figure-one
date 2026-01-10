@@ -9,6 +9,9 @@
 	import Button from '@/components/ui/button/button.svelte';
 	import * as Code from '@/components/ui/code';
 
+	import { DownloadIcon } from '@lucide/svelte';
+	import { ImportIcon } from '@lucide/svelte';
+
 	import { downloadBlob } from '../../index.ts';
 	import { getLayoutedElements } from '../flow/index.ts';
 
@@ -68,7 +71,7 @@
 		</Code.Overflow>
 	</div>
 	<ButtonGroup.Root class="self-end" title="Download options" aria-label="Download options">
-		<Button class="self-end" variant="outline" onclick={importJSON}>Import JSON</Button>
-		<Button class="self-end" variant="outline" onclick={exportJSON}>Export JSON</Button>
+		<Button variant="outline" onclick={importJSON}><ImportIcon />Import</Button>
+		<Button variant="outline" onclick={exportJSON}><DownloadIcon />Export</Button>
 	</ButtonGroup.Root>
 </div>

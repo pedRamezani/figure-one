@@ -1,8 +1,10 @@
-import type { TypstFlowchartData } from './preview/json/convert';
+import { parseTypstFlowchartJSON, type TypstFlowchartData } from './preview/json/convert';
 import { isFlowchartData } from './preview/json/validate';
 
-import type { TypstFlowchartConfig } from './preview/style/style-config.svelte';
+import { styleConfig, type TypstFlowchartConfig } from './preview/style/style-config.svelte';
 import { isFlowchartConfig } from './preview/style/validate';
+
+import { setEdges, setNodes } from './preview/flow/Flow.svelte';
 
 export type Profile = {
 	$version: number;
@@ -35,6 +37,13 @@ export function isProfile(value: unknown): value is Profile {
 	if (!isFlowchartConfig(v.config)) return false;
 
 	return true;
+}
+
+export function setProfile(value: Profile): void {
+	styleConfig.current = value.config;
+	const parsed = parseTypstFlowchartJSON(value.data);
+	setNodes(parsed.nodes);
+	setEdges(parsed.edges);
 }
 
 export function downloadBlob(data: BlobPart, mimeType: string, fileName: string): void {

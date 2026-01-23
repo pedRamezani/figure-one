@@ -41,18 +41,19 @@
 
 	const getNodeDataDefaults = (type: RegisteredNodeType) => {
 		switch (type) {
+			case 'group':
+				return { group: '' };
 			case 'step':
 				return {
 					value: null,
 					delta: 0,
 					stepLabel: 'Step',
-					droppedLabel: 'excluded',
-					group: ''
+					droppedLabel: 'excluded'
 				};
 			case 'substep':
 				return { delta: 0, label: 'Substep' };
 			case 'start':
-				return { label: 'Start population', value: 1000, group: '' };
+				return { label: 'Start population', value: 1000 };
 			default:
 				return {};
 		}
@@ -85,7 +86,8 @@
 		Panel,
 		type Node,
 		type Edge,
-		type OnConnectEnd
+		type OnConnectEnd,
+		Position
 	} from '@xyflow/svelte';
 
 	import { type RegisteredNodeType, nodeTypes } from '@/nodes/types';
@@ -104,6 +106,8 @@
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
 	import DragPanel from './DragPanel.svelte';
 
+	import { handleDragCreate, nodeHandles } from '@/nodes/types';
+
 	const minZoom = 0.1;
 	const maxZoom = 2.5;
 
@@ -112,53 +116,58 @@
 	const handleConnectEnd: OnConnectEnd = (event, connectionState) => {
 		if (connectionState.isValid) return;
 
-		const sourceNodeId = connectionState.fromNode?.id ?? '0';
+		if (!connectionState.fromNode) return;
+
+		if (!connectionState.fromNode.type) return;
+
+		const fromHandle = nodeHandles[connectionState.fromNode.type as RegisteredNodeType].find(
+			(h) =>
+				h.handleId === connectionState.fromHandle?.id &&
+				h.handleType === connectionState.fromHandle?.type
+		);
+		if (!fromHandle) return;
+
+		const toHandle = handleDragCreate.get(fromHandle);
+		if (toHandle === undefined) return;
+		const toHandleId = toHandle.handleId;
+		const toNodeType = toHandle.nodeType;
+		const toNodeOrigin: [number, number] =
+			toHandle.position === Position.Top
+				? [0.5, 0]
+				: toHandle.position === Position.Bottom
+					? [0.5, 1]
+					: toHandle.position === Position.Left
+						? [0, 0.5]
+						: [1, 0.5];
+
+		const fromNodeId = connectionState.fromNode.id;
+		const fromHandleId = fromHandle.handleId;
+
 		const { clientX, clientY } = 'changedTouches' in event ? event.changedTouches[0] : event;
 
-		const fromStartNode = connectionState.fromNode?.type === 'start';
-		const fromStepNodeOutput =
-			connectionState.fromNode?.type === 'step' && connectionState.fromHandle?.id === 'step-output';
-		const fromStepNodeSubsteps =
-			connectionState.fromNode?.type === 'step' &&
-			connectionState.fromHandle?.id === 'step-substeps';
+		const toNode = addNode(
+			toNodeType,
+			screenToFlowPosition({
+				x: clientX,
+				y: clientY
+			}),
+			toNodeOrigin
+		);
+		const toNodeId = toNode.id;
 
-		if (fromStartNode || fromStepNodeOutput || fromStepNodeSubsteps) {
-			const newNodeType = fromStepNodeSubsteps ? 'substep' : 'step';
-			const newNodeOrigin: [number, number] = newNodeType == 'step' ? [0.5, 0.0] : [0.0, 0.5];
-			const newNode = addNode(
-				newNodeType,
-				screenToFlowPosition({
-					x: clientX,
-					y: clientY
-				}),
-				newNodeOrigin
-			);
-
-			const sourceHandle = fromStartNode
-				? 'start'
-				: fromStepNodeOutput
-					? 'step-output'
-					: fromStepNodeSubsteps
-						? 'step-substeps'
-						: undefined;
-			const targetHandle =
-				fromStartNode || fromStepNodeOutput
-					? 'step-input'
-					: fromStepNodeSubsteps
-						? 'substep'
-						: undefined;
-
-			edges = [
-				...edges,
-				{
-					source: sourceNodeId,
-					sourceHandle: sourceHandle,
-					target: newNode.id,
-					targetHandle: targetHandle,
-					id: `${sourceNodeId}--${newNode.id}`
-				}
-			];
-		}
+		edges = [
+			...edges,
+			{
+				source: fromHandle.handleType == 'source' ? fromNodeId : toNodeId,
+				sourceHandle: fromHandle.handleType == 'source' ? fromHandleId : toHandleId,
+				target: fromHandle.handleType == 'source' ? toNodeId : fromNodeId,
+				targetHandle: fromHandle.handleType == 'source' ? toHandleId : fromHandleId,
+				id:
+					fromHandle.handleType == 'source'
+						? `${fromNodeId}--${toNodeId}`
+						: `${toNodeId}--${fromNodeId}`
+			}
+		];
 	};
 
 	const handleDragOver = (event: DragEvent) => {

@@ -20,11 +20,14 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
 	const edges = raw.edges;
 
-	const children: { [id: string]: Array<string> } = {};
+	const sourceChildren: { [id: string]: Array<string> } = {};
+	const targetChildren: { [id: string]: Array<string> } = {};
 
 	for (const { source, target } of edges) {
-		if (!children[source]) children[source] = [];
-		children[source].push(target);
+		if (!sourceChildren[source]) sourceChildren[source] = [];
+		sourceChildren[source].push(target);
+		if (!targetChildren[target]) targetChildren[target] = [];
+		targetChildren[target].push(source);
 	}
 
 	const start = raw.nodes.find((n) => n.type === 'start');
@@ -33,9 +36,9 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		let order = [];
 		let current = startId;
 
-		while (children[current] && children[current].length > 0) {
+		while (sourceChildren[current] && sourceChildren[current].length > 0) {
 			// Find next step (ignore substeps here)
-			const nextStep = children[current].find((id) => nodeById[id].type === 'step');
+			const nextStep = sourceChildren[current].find((id) => nodeById[id].type === 'step');
 			if (!nextStep) break;
 			order.push(nextStep);
 			current = nextStep;
@@ -45,9 +48,14 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 	const stepOrder = start !== undefined ? traverseSteps(start.id) : [];
 
-	function getSubsteps(stepId: string) {
-		if (!children[stepId]) return [];
-		return children[stepId].filter((id) => nodeById[id].type === 'substep');
+	function getGroup(nodeId: string): string | undefined {
+		if (!targetChildren[nodeId]) return undefined;
+		return targetChildren[nodeId].find((id) => nodeById[id].type === 'group');
+	}
+
+	function getSubsteps(stepId: string): string[] {
+		if (!sourceChildren[stepId]) return [];
+		return sourceChildren[stepId].filter((id) => nodeById[id].type === 'substep');
 	}
 
 	const output: TypstFlowchartData = [];
@@ -56,7 +64,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	output.push({
 		stepLabel: (start?.data.label as string) ?? '',
 		droppedLabel: '',
-		group: (start?.data.group as string) ?? '',
+		group: getGroup(start?.id ?? '') ? (nodeById[getGroup(start?.id ?? '')!].data.group as string) ?? '' : '',
 		value: (start?.data.value as number) ?? 0,
 		delta: 0,
 		substepDeltas: []
@@ -68,7 +76,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 		const stepLabel = (step.data.stepLabel as string) ?? '';
 		const droppedLabel = (step.data.droppedLabel as string) ?? '';
-		const stepGroup = (step.data.group as string) ?? '';
+		const stepGroup = getGroup(stepId) ? (nodeById[getGroup(stepId)!].data.group as string) ?? '' : '';
 		const stepValue = (step.data.value as number) ?? 0;
 		const stepDelta = (step.data.delta as number) ?? 0;
 

@@ -1,6 +1,8 @@
 import Dagre from '@dagrejs/dagre';
 import type { Node, Edge } from '@xyflow/svelte';
 
+import { substepTarget } from '@/nodes/types';
+
 export function getLayoutedElements(
 	nodes: Node[],
 	edges: Edge[]
@@ -13,10 +15,10 @@ export function getLayoutedElements(
 	g.setGraph({ rankdir: 'TB', nodesep: gap, ranksep: gap });
 
 	edges
-		.filter((edge) => edge.sourceHandle !== 'step-substeps')
+		.filter((edge) => edge.targetHandle !== substepTarget.handleId)
 		.forEach((edge) => g.setEdge(edge.source, edge.target));
 	nodes
-		.filter((node) => node.type !== 'substep')
+		.filter((node) => node.type !== substepTarget.nodeType)
 		.forEach((node) =>
 			g.setNode(node.id, {
 				...node,
@@ -27,7 +29,7 @@ export function getLayoutedElements(
 
 	Dagre.layout(g);
 	const tbNodes = nodes
-		.filter((node) => node.type !== 'substep')
+		.filter((node) => node.type !== substepTarget.nodeType)
 		.map((node) => {
 			const position = g.node(node.id);
 			const [anchorX, anchorY] = node.origin ?? [0, 0];
@@ -49,7 +51,7 @@ export function getLayoutedElements(
 		};
 	} = {};
 	const lrNodes = nodes
-		.filter((node) => node.type === 'substep')
+		.filter((node) => node.type === substepTarget.nodeType)
 		.map((node) => {
 			const source = edges.find((edge) => edge.target == node.id)?.source ?? '-1';
 			if (!(source in counts)) {

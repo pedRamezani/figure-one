@@ -17,7 +17,8 @@
 	const panelDescription = 'Click or drag to add nodes.';
 
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
-	import { type RegisteredNodeType, addNode } from './Flow.svelte';
+	import type { RegisteredNodeType } from '@/nodes/types';
+	import { addNode } from './Flow.svelte';
 
 	import { useNodes, useSvelteFlow } from '@xyflow/svelte';
 

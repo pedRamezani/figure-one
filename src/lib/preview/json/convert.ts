@@ -1,6 +1,15 @@
 import type { Node, Edge, Viewport } from '@xyflow/svelte';
 
-import { stepTargetGroup } from '@/nodes/types';
+import {
+	groupSource,
+	startSourceOutput,
+	startTargetGroup,
+	stepSourceOutput,
+	stepSourceSubsteps,
+	stepTargetGroup,
+	stepTargetInput,
+	substepTarget
+} from '@/nodes/types';
 
 export type TypstFlowchartData = {
 	stepLabel: string;
@@ -164,8 +173,9 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			edges.push({
 				id: edgeId,
 				source: stepId,
-				sourceHandle: 'step-substeps',
-				target: subId
+				sourceHandle: stepSourceSubsteps.handleId,
+				target: subId,
+				targetHandle: substepTarget.handleId
 			} as Edge);
 		}
 	}
@@ -176,7 +186,9 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		edges.push({
 			id: edgeId,
 			source: startId,
-			target: stepIds[0]
+			sourceHandle: startSourceOutput.handleId,
+			target: stepIds[0],
+			targetHandle: stepTargetInput.handleId
 		} as Edge);
 	}
 
@@ -186,8 +198,9 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		edges.push({
 			id: edgeId,
 			source: stepIds[k],
-			sourceHandle: 'step-output',
-			target: stepIds[k + 1]
+			sourceHandle: stepSourceOutput.handleId,
+			target: stepIds[k + 1],
+			targetHandle: stepTargetInput.handleId
 		} as Edge);
 	}
 
@@ -195,7 +208,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 	const groupMap = new Map<string, string>();
 	let gi = 0;
 	function ensureGroup(name: string) {
-		if (name !== "" && !groupMap.has(name)) {
+		if (name !== '' && !groupMap.has(name)) {
 			const gid = `group-${gi++}`;
 			groupMap.set(name, gid);
 			nodes.push({
@@ -212,7 +225,13 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 	if (startEntry.group) {
 		const gid = ensureGroup(startEntry.group);
 		const edgeId = `${gid}-${startId}`;
-		edges.push({ id: edgeId, source: gid, target: startId } as Edge);
+		edges.push({
+			id: edgeId,
+			source: gid,
+			sourceHandle: groupSource.handleId,
+			target: startId,
+			targetHandle: startTargetGroup.handleId
+		} as Edge);
 	}
 
 	// steps
@@ -225,6 +244,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			edges.push({
 				id: edgeId,
 				source: gid,
+				sourceHandle: groupSource.handleId,
 				target: stepId,
 				targetHandle: stepTargetGroup.handleId
 			} as Edge);

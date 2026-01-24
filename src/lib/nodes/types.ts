@@ -5,8 +5,12 @@ import SubstepNode from './SubstepNode.svelte';
 
 import type { Component } from 'svelte';
 import { type NodeProps, type HandleProps, Position } from '@xyflow/svelte';
-export type HandleType = HandleProps['type'];
 
+import StepIcon from '@lucide/svelte/icons/square';
+import SubstepIcon from '@lucide/svelte/icons/workflow';
+import GroupIcon from '@lucide/svelte/icons/workflow';
+
+// Node Types and Defaults
 export type RegisteredNodeType = 'group' | 'start' | 'step' | 'substep';
 export const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>> = {
 	group: GroupNode,
@@ -14,6 +18,29 @@ export const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>>
 	step: StepNode,
 	substep: SubstepNode
 };
+
+export const getNodeDataDefaults = (type: RegisteredNodeType): Record<string, unknown> => {
+	switch (type) {
+		case 'group':
+			return { group: '' };
+		case 'step':
+			return {
+				value: null,
+				delta: 0,
+				stepLabel: 'Step',
+				droppedLabel: 'excluded'
+			};
+		case 'substep':
+			return { delta: 0, label: 'Substep' };
+		case 'start':
+			return { label: 'Start population', value: 1000 };
+		default:
+			return {};
+	}
+};
+
+// Handle Types and Definitions
+export type HandleType = HandleProps['type'];
 
 export type Handle = {
 	nodeType: RegisteredNodeType;
@@ -77,18 +104,6 @@ export const substepTarget: Handle = {
 	handleType: 'target',
 	position: Position.Left
 };
-
-export type NodeHandleMap = {
-	[key in RegisteredNodeType]: Handle[];
-};
-
-export const nodeHandles: NodeHandleMap = {
-	group: [groupSource],
-	start: [startSourceOutput, startTargetGroup],
-	step: [stepSourceOutput, stepSourceSubsteps, stepTargetInput, stepTargetGroup],
-	substep: [substepTarget]
-};
-
 class Graph<T> {
 	adjacencyList: Map<T, Set<T>>;
 
@@ -121,7 +136,7 @@ class Graph<T> {
 	}
 }
 
-export const handleGraph = () => {
+export const handleGraph = (): Graph<Handle> => {
 	const graph = new Graph<Handle>();
 	graph.addEdge(startSourceOutput, stepTargetInput);
 	graph.addEdge(stepSourceOutput, stepTargetInput);
@@ -149,3 +164,25 @@ export const handleDragCreate: Map<Handle, Handle> = new Map([
 	[stepTargetGroup, groupSource],
 	[stepSourceSubsteps, substepTarget]
 ]);
+
+export const dragPanelNodes: Map<RegisteredNodeType, {
+	icon: Component;
+	label: string;
+} | null> = new Map([
+	["start", null],
+	["step", { icon: StepIcon, label: 'Step' }],
+	["substep", { icon: SubstepIcon, label: 'Substep' }],
+	["group", { icon: GroupIcon, label: 'Group' }],
+]);
+
+// Mixed Types
+export type NodeHandleMap = {
+	[key in RegisteredNodeType]: Handle[];
+};
+
+export const nodeHandles: NodeHandleMap = {
+	group: [groupSource],
+	start: [startSourceOutput, startTargetGroup],
+	step: [stepSourceOutput, stepSourceSubsteps, stepTargetInput, stepTargetGroup],
+	substep: [substepTarget]
+};

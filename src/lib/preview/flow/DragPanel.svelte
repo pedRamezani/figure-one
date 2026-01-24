@@ -8,16 +8,13 @@
 	import * as Card from '@/components/ui/card/index.js';
 	import * as Popover from '@/components/ui/popover/index.js';
 
-	import StepIcon from '@lucide/svelte/icons/square';
-	import SubstepIcon from '@lucide/svelte/icons/workflow';
-
 	const medium = new MediaQuery('max-width: 48rem');
 
 	const panelTitel = 'Available nodes';
 	const panelDescription = 'Click or drag to add nodes.';
 
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
-	import type { RegisteredNodeType } from '@/nodes/types';
+	import { type RegisteredNodeType, dragPanelNodes } from '@/nodes/types';
 	import { addNode } from './Flow.svelte';
 
 	import { useNodes, useSvelteFlow } from '@xyflow/svelte';
@@ -53,16 +50,15 @@
 </script>
 
 {#snippet panelContent()}
-	<nav on:dragstart={(event) => onDragStart(event, 'step')} draggable={true}>
-		<Button variant="secondary" size="sm" onclick={() => onClick('step')}
-			><StepIcon class="size-4! stroke-2" />Step</Button
-		>
-	</nav>
-	<nav on:dragstart={(event) => onDragStart(event, 'substep')} draggable={true}>
-		<Button variant="secondary" size="sm" onclick={() => onClick('substep')}
-			><SubstepIcon class="size-4! stroke-2" />Substep</Button
-		>
-	</nav>
+	{#each dragPanelNodes as [nodeType, config]}
+		{#if config !== null}
+			<nav on:dragstart={(event) => onDragStart(event, nodeType)} draggable={true}>
+				<Button variant="secondary" size="sm" onclick={() => onClick(nodeType)}
+					><svelte:component this={config.icon} class="size-4! stroke-2" />{config.label}</Button
+				>
+			</nav>
+		{/if}
+	{/each}
 {/snippet}
 
 {#if medium.current}

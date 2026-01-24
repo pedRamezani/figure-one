@@ -1,5 +1,7 @@
 import type { Node, Edge, Viewport } from '@xyflow/svelte';
 
+import { stepTargetGroup } from '@/nodes/types';
+
 export type TypstFlowchartData = {
 	stepLabel: string;
 	droppedLabel: string;
@@ -64,7 +66,9 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	output.push({
 		stepLabel: (start?.data.label as string) ?? '',
 		droppedLabel: '',
-		group: getGroup(start?.id ?? '') ? (nodeById[getGroup(start?.id ?? '')!].data.group as string) ?? '' : '',
+		group: getGroup(start?.id ?? '')
+			? ((nodeById[getGroup(start?.id ?? '')!].data.group as string) ?? '')
+			: '',
 		value: (start?.data.value as number) ?? 0,
 		delta: 0,
 		substepDeltas: []
@@ -76,7 +80,9 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 		const stepLabel = (step.data.stepLabel as string) ?? '';
 		const droppedLabel = (step.data.droppedLabel as string) ?? '';
-		const stepGroup = getGroup(stepId) ? (nodeById[getGroup(stepId)!].data.group as string) ?? '' : '';
+		const stepGroup = getGroup(stepId)
+			? ((nodeById[getGroup(stepId)!].data.group as string) ?? '')
+			: '';
 		const stepValue = (step.data.value as number) ?? 0;
 		const stepDelta = (step.data.delta as number) ?? 0;
 
@@ -118,12 +124,11 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		type: 'start',
 		data: {
 			label: startEntry.stepLabel,
-			group: startEntry.group,
 			value: startEntry.value
 		},
 		position: { x: 0, y: 0 },
 		deletable: false
-	} as unknown as Node);
+	} as Node);
 
 	// Steps begin at index 1
 	const stepIds: string[] = [];
@@ -139,12 +144,11 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			data: {
 				stepLabel: entry.stepLabel,
 				droppedLabel: entry.droppedLabel,
-				group: entry.group,
 				value: entry.value,
 				delta: entry.delta
 			},
 			position: { x: 0, y: 0 }
-		} as unknown as Node);
+		} as Node);
 
 		// substeps
 		for (let j = 0; j < entry.substepDeltas.length; j++) {
@@ -155,14 +159,14 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				type: 'substep',
 				data: { label: s.label, delta: s.delta },
 				position: { x: 0, y: 0 }
-			} as unknown as Node);
+			} as Node);
 			const edgeId = `${stepId}-${subId}`;
 			edges.push({
 				id: edgeId,
 				source: stepId,
 				sourceHandle: 'step-substeps',
 				target: subId
-			} as unknown as Edge);
+			} as Edge);
 		}
 	}
 
@@ -173,7 +177,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			id: edgeId,
 			source: startId,
 			target: stepIds[0]
-		} as unknown as Edge);
+		} as Edge);
 	}
 
 	// connect steps sequentially
@@ -184,7 +188,47 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			source: stepIds[k],
 			sourceHandle: 'step-output',
 			target: stepIds[k + 1]
-		} as unknown as Edge);
+		} as Edge);
+	}
+
+	// Create unique group nodes and connect them to their start/step nodes
+	const groupMap = new Map<string, string>();
+	let gi = 0;
+	function ensureGroup(name: string) {
+		if (name !== "" && !groupMap.has(name)) {
+			const gid = `group-${gi++}`;
+			groupMap.set(name, gid);
+			nodes.push({
+				id: gid,
+				type: 'group',
+				data: { group: name },
+				position: { x: 0, y: 0 }
+			} as Node);
+		}
+		return groupMap.get(name)!;
+	}
+
+	// start
+	if (startEntry.group) {
+		const gid = ensureGroup(startEntry.group);
+		const edgeId = `${gid}-${startId}`;
+		edges.push({ id: edgeId, source: gid, target: startId } as Edge);
+	}
+
+	// steps
+	for (let i = 1; i < json.length; i++) {
+		const entry = json[i];
+		const stepId = stepIds[i - 1];
+		if (entry.group) {
+			const gid = ensureGroup(entry.group);
+			const edgeId = `${gid}-${stepId}`;
+			edges.push({
+				id: edgeId,
+				source: gid,
+				target: stepId,
+				targetHandle: stepTargetGroup.handleId
+			} as Edge);
+		}
 	}
 
 	return { nodes, edges };

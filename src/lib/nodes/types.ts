@@ -168,11 +168,12 @@ export const handleDragCreate: Map<Handle, Handle> = new Map([
 export const dragPanelNodes: Map<RegisteredNodeType, {
 	icon: Component;
 	label: string;
+	class?: string;
 } | null> = new Map([
 	["start", null],
 	["step", { icon: StepIcon, label: 'Step' }],
 	["substep", { icon: SubstepIcon, label: 'Substep' }],
-	["group", { icon: GroupIcon, label: 'Group' }],
+	["group", { icon: GroupIcon, label: 'Group', class: '-rotate-90' }],
 ]);
 
 // Mixed Types

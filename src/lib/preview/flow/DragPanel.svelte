@@ -4,6 +4,8 @@
 
 	import OpenIcon from '@lucide/svelte/icons/blocks';
 
+	import { cn } from '@/utils';
+
 	import { Button } from '@/components/ui/button/index.js';
 	import * as Card from '@/components/ui/card/index.js';
 	import * as Popover from '@/components/ui/popover/index.js';
@@ -54,7 +56,10 @@
 		{#if config !== null}
 			<nav on:dragstart={(event) => onDragStart(event, nodeType)} draggable={true}>
 				<Button variant="secondary" size="sm" onclick={() => onClick(nodeType)}
-					><svelte:component this={config.icon} class="size-4! stroke-2" />{config.label}</Button
+					><svelte:component
+						this={config.icon}
+						class={cn('size-4! stroke-2', config.class)}
+					/>{config.label}</Button
 				>
 			</nav>
 		{/if}

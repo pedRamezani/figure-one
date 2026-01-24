@@ -39,26 +39,6 @@
 		edges = layouted.edges;
 	}
 
-	const getNodeDataDefaults = (type: RegisteredNodeType) => {
-		switch (type) {
-			case 'group':
-				return { group: '' };
-			case 'step':
-				return {
-					value: null,
-					delta: 0,
-					stepLabel: 'Step',
-					droppedLabel: 'excluded'
-				};
-			case 'substep':
-				return { delta: 0, label: 'Substep' };
-			case 'start':
-				return { label: 'Start population', value: 1000 };
-			default:
-				return {};
-		}
-	};
-
 	const initialNodes: Node[] = [
 		{
 			id: '0',
@@ -90,7 +70,7 @@
 		Position
 	} from '@xyflow/svelte';
 
-	import { type RegisteredNodeType, nodeTypes } from '@/nodes/types';
+	import { type RegisteredNodeType, nodeTypes, getNodeDataDefaults } from '@/nodes/types';
 
 	import * as ButtonGroup from '@/components/ui/button-group/index.js';
 	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';

@@ -14,7 +14,7 @@
 <NodeWrapper title="Group" description="The group name of a node." nodeId={id} nodeType="group">
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
-			<Label for="group">Group</Label>
+			<Label for="group">Label</Label>
 			<Input
 				name="group"
 				value={data.group}

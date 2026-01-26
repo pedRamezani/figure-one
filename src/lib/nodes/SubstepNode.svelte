@@ -1,6 +1,5 @@
 <script lang="ts">
 	import {
-		Position,
 		useSvelteFlow,
 		useNodeConnections,
 		useNodesData,
@@ -11,24 +10,19 @@
 	import Label from '@/components/ui/label/label.svelte';
 	import Input from '@/components/ui/input/input.svelte';
 
-	import WideHandle from '@/handles/WideHandle.svelte';
 	import NodeWrapper from './NodeWrapper.svelte';
 
 	const { id, data }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
 
-	const connectionsTarget = useNodeConnections({
-		handleType: 'target'
-	});
+	// const connectionsTarget = useNodeConnections({
+	// 	handleType: 'target'
+	// });
 
-	const isConnectable = $derived<boolean>(connectionsTarget.current.length === 0);
-
-	const isValidConnection: IsValidConnection = (edge) => edge.sourceHandle === 'step-substeps';
-
-	const targetData = $derived(
-		useNodesData(connectionsTarget.current.map((connection) => connection.source))
-	);
+	// const targetData = $derived(
+	// 	useNodesData(connectionsTarget.current.map((connection) => connection.source))
+	// );
 
 	// const noConnection = $derived<boolean>(targetData.current.length === 0);
 
@@ -52,19 +46,9 @@
 	// });
 </script>
 
-<NodeWrapper title="Substep" description="Inclusion or Exclusion">
+<NodeWrapper title="Substep" description="Inclusion or Exclusion" nodeId={id} nodeType="substep">
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
-			<!-- Left Section -->
-			<WideHandle
-				id="substep"
-				type="target"
-				position={Position.Left}
-				{isConnectable}
-				{isValidConnection}
-			/>
-
-			<!-- Main Section -->
 			<Label for="label">Label</Label>
 			<Input
 				name="label"

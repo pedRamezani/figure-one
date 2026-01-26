@@ -16,18 +16,18 @@ export function getLayoutedElements(
 
 	// Exclude substep and group nodes/edges from Dagre so we can layout them manually
 	const excludedNodeTypes = new Set([substepTarget.nodeType, groupSource.nodeType]);
-	// .filter((edge) => {
-	// 	const src = nodes.find((n) => n.id === edge.source);
-	// 	const tgt = nodes.find((n) => n.id === edge.target);
-	// 	if (!src || !tgt) return false;
-	// 	return !excludedNodeTypes.has(src.type) && !excludedNodeTypes.has(tgt.type);
-	// })
 
 	edges
 		.filter(
 			(edge) =>
 				edge.targetHandle !== substepTarget.handleId && edge.sourceHandle !== groupSource.handleId
 		)
+		// .filter((edge) => {
+		// 	const src = nodes.find((n) => n.id === edge.source);
+		// 	const tgt = nodes.find((n) => n.id === edge.target);
+		// 	if (!src || !tgt) return false;
+		// 	return !excludedNodeTypes.has(src.type) && !excludedNodeTypes.has(tgt.type);
+		// })
 		.forEach((edge) => g.setEdge(edge.source, edge.target));
 
 	nodes
@@ -63,11 +63,10 @@ export function getLayoutedElements(
 			y: number;
 		};
 	} = {};
-	const lrNodes = nodes
+	const substepNodes = nodes
 		.filter((node) => node.type === substepTarget.nodeType)
 		.map((ssNode) => {
 			const source = edges.find((edge) => edge.target == ssNode.id)?.source;
-
 			if (source === undefined) {
 				return { ...ssNode, position: { x: 0, y: 0 } } as Node;
 			}
@@ -125,19 +124,19 @@ export function getLayoutedElements(
 			const maxBottom = Math.max(...bottomYs);
 			const centerY = (minTop + maxBottom) / 2;
 
+			// This only works because the origin is at Position.Right
+			// Not robust, but works for now.
 			const minLeft = Math.min(...targetNodes.map((t) => t.position.x));
 
-			const gw = gNode.measured?.width ?? 0;
-			const gh = gNode.measured?.height ?? 0;
+			// Use 3x gap
+			const x = minLeft - gap * ((targetNodes.length <= 1) ? 1 : 3);
+			const y = centerY;
 
-			const x = minLeft - gap - gw;
-			const y = centerY - gh / 2;
-
-			return { ...gNode, position: { x, y } } as Node;
+			return { ...gNode, position: { x, y }, origin: gNode.origin } as Node;
 		});
 
 	return {
-		nodes: [...tbNodes, ...groupNodes, ...lrNodes],
+		nodes: [...tbNodes, ...groupNodes, ...substepNodes],
 		edges
 	};
 }

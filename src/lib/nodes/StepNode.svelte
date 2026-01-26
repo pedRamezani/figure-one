@@ -1,54 +1,28 @@
 <script lang="ts">
-	import {
-		Position,
-		useSvelteFlow,
-		useNodeConnections,
-		useNodesData,
-		type NodeProps,
-		type IsValidConnection
-	} from '@xyflow/svelte';
+	import { useSvelteFlow, useNodeConnections, useNodesData, type NodeProps } from '@xyflow/svelte';
 
 	import Label from '@/components/ui/label/label.svelte';
 	import Input from '@/components/ui/input/input.svelte';
 	import * as Collapsible from '@/components/ui/collapsible/index.js';
 
-	import WideHandle from '@/handles/WideHandle.svelte';
 	import NodeWrapper from './NodeWrapper.svelte';
+
+	import { stepTargetInput } from './types.ts';
 
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import { buttonVariants } from '@/components/ui/button/index.js';
-	// import { clsx } from 'clsx';
 
 	const { id, data }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
 
-	const connectionsTarget = useNodeConnections({
-		handleType: 'target'
+	const connectionsTargetInput = useNodeConnections({
+		handleId: stepTargetInput.handleId,
+		handleType: stepTargetInput.handleType
 	});
-	const connectionsSourceOutput = useNodeConnections({
-		handleId: 'step-output',
-		handleType: 'source'
-	});
-	// const connectionsSourceSubsteps = useNodeConnections({
-	// 	id: 'step-substeps',
-	// 	handleType: 'source'
-	// });
-
-	const isConnectableTarget = $derived<boolean>(connectionsTarget.current.length === 0);
-	const isConnectableSourceOutput = $derived<boolean>(connectionsSourceOutput.current.length === 0);
-
-	const isValidConnectionTarget: IsValidConnection = (edge) =>
-		['start', 'step-output'].includes(edge.sourceHandle ?? '');
-
-	const isValidConnectionSourceSubsteps: IsValidConnection = (edge) =>
-		edge.targetHandle == 'substep';
-
-	const isValidConnectionSourceOutput: IsValidConnection = (edge) =>
-		edge.targetHandle == 'step-input' && edge.source !== edge.target;
 
 	const targetData = $derived(
-		useNodesData(connectionsTarget.current.map((connection) => connection.source))
+		useNodesData(connectionsTargetInput.current.map((connection) => connection.source))
 	);
 
 	const noConnection = $derived<boolean>(targetData.current.length === 0);
@@ -73,36 +47,24 @@
 	});
 </script>
 
-<NodeWrapper title="Step" description="Inclusion or Exclusion">
+<NodeWrapper title="Step" description="Inclusion or Exclusion" nodeId={id} nodeType="step">
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
-			<!-- Top Section -->
-			<!-- <div
-				class={clsx(
-					'absolute top-6 right-6 size-4 rounded-full',
-					noConnection ? 'bg-rose-300' : data.value === null ? 'bg-amber-300' : 'bg-emerald-300'
-				)}
-			></div> -->
-			<WideHandle
-				id="step-input"
-				type="target"
-				position={Position.Top}
-				isConnectable={isConnectableTarget}
-				isValidConnection={isValidConnectionTarget}
+			<Label for="step-label">Label</Label>
+			<Input
+				name="step-label"
+				value={data.stepLabel}
+				type="text"
+				oninput={(evt) => {
+					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
+					updateNodeData(id, { stepLabel: raw });
+				}}
+				class="nodrag"
 			/>
 
-			<!-- Right Section -->
-			<WideHandle
-				id="step-substeps"
-				type="source"
-				position={Position.Right}
-				isValidConnection={isValidConnectionSourceSubsteps}
-			/>
-
-			<!-- Main Section -->
 			<Collapsible.Root>
 				<div class="flex items-center justify-between space-x-4">
-					<Label for="step-label">Label</Label>
+					<Label for="delta">Dropped</Label>
 					<Collapsible.Trigger
 						class={buttonVariants({ variant: 'ghost', size: 'sm', class: 'w-9 p-0' })}
 					>
@@ -111,12 +73,19 @@
 					</Collapsible.Trigger>
 				</div>
 				<Input
-					name="step-label"
-					value={data.stepLabel}
-					type="text"
+					name="delta"
+					value={data.delta}
+					type="number"
 					oninput={(evt) => {
 						const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-						updateNodeData(id, { stepLabel: raw });
+						const parsedDelta = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : 0;
+						const prev =
+							targetData.current.length !== 0
+								? ((targetData.current[0].data.value as number) ?? NaN)
+								: NaN;
+
+						const newAfter = isNaN(prev) ? null : prev - parsedDelta;
+						updateNodeData(id, { delta: parsedDelta, value: newAfter });
 					}}
 					class="nodrag"
 				/>
@@ -132,38 +101,8 @@
 						}}
 						class="nodrag"
 					/>
-					<Label for="group">Group</Label>
-					<Input
-						name="group"
-						value={data.group}
-						type="text"
-						oninput={(evt) => {
-							const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-							updateNodeData(id, { group: raw });
-						}}
-						class="nodrag"
-					/>
 				</Collapsible.Content>
 			</Collapsible.Root>
-
-			<Label for="delta">Dropped</Label>
-			<Input
-				name="delta"
-				value={data.delta}
-				type="number"
-				oninput={(evt) => {
-					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-					const parsedDelta = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : 0;
-					const prev =
-						targetData.current.length !== 0
-							? ((targetData.current[0].data.value as number) ?? NaN)
-							: NaN;
-
-					const newAfter = isNaN(prev) ? null : prev - parsedDelta;
-					updateNodeData(id, { delta: parsedDelta, value: newAfter });
-				}}
-				class="nodrag"
-			/>
 
 			{#if data.value}
 				<Label for="after">After</Label>
@@ -185,15 +124,6 @@
 					class="nodrag"
 				/>
 			{/if}
-
-			<!-- Bottom Section -->
-			<WideHandle
-				id="step-output"
-				type="source"
-				position={Position.Bottom}
-				isConnectable={isConnectableSourceOutput}
-				isValidConnection={isValidConnectionSourceOutput}
-			/>
 		</div>
 	{/snippet}
 </NodeWrapper>

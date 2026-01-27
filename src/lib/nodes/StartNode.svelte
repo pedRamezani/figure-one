@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { useSvelteFlow, type NodeProps } from '@xyflow/svelte';
 
-	import Label from '@/components/ui/label/label.svelte';
 	import Input from '@/components/ui/input/input.svelte';
+	import Label from '@/components/ui/label/label.svelte';
+	import * as NumberField from '$lib/components/ui/number-field';
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
@@ -33,17 +34,21 @@
 
 			<!-- Main Section -->
 			<Label for="start">Population size</Label>
-			<Input
-				name="start"
-				value={data.value}
-				type="number"
-				oninput={(evt) => {
-					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-					const parsedValue = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : 0;
-					updateNodeData(id, { value: parsedValue });
-				}}
-				class="nodrag"
-			/>
+			<NumberField.Root min={0} value={data.value as number | undefined}>
+				<NumberField.Group class="nodrag">
+					<NumberField.Decrement />
+					<NumberField.Input
+						class="w-[10ch]"
+						name="start"
+						oninput={(evt) => {
+							const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
+							const parsedValue = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : 0;
+							updateNodeData(id, { value: parsedValue });
+						}}
+					/>
+					<NumberField.Increment />
+				</NumberField.Group>
+			</NumberField.Root>
 		</div>
 	{/snippet}
 </NodeWrapper>

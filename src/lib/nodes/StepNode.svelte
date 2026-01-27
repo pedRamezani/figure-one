@@ -45,7 +45,7 @@
 		edge.targetHandle == 'substep';
 
 	const isValidConnectionSourceOutput: IsValidConnection = (edge) =>
-		['step-input', 'split-input'].includes(edge.targetHandle ?? '') && edge.source !== edge.target;
+		edge.targetHandle == 'step-input' && edge.source !== edge.target;
 
 	const targetData = $derived(
 		useNodesData(connectionsTarget.current.map((connection) => connection.source))

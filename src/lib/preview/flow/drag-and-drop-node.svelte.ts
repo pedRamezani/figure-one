@@ -1,4 +1,6 @@
-let dndType = $state<string | null>(null);
+import type { RegisteredNodeType } from "@/nodes/types";
+
+let dndType = $state<RegisteredNodeType | null>(null);
 
 export const dragAndDropNodeType = {
 	get current() {

@@ -1,5 +1,16 @@
 import type { Node, Edge, Viewport } from '@xyflow/svelte';
 
+import {
+	groupSource,
+	startSourceOutput,
+	startTargetGroup,
+	stepSourceOutput,
+	stepSourceSubsteps,
+	stepTargetGroup,
+	stepTargetInput,
+	substepTarget
+} from '@/nodes/types';
+
 export type TypstFlowchartData = {
 	stepLabel: string;
 	droppedLabel: string;
@@ -20,11 +31,14 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
 	const edges = raw.edges;
 
-	const children: { [id: string]: Array<string> } = {};
+	const sourceChildren: { [id: string]: Array<string> } = {};
+	const targetChildren: { [id: string]: Array<string> } = {};
 
 	for (const { source, target } of edges) {
-		if (!children[source]) children[source] = [];
-		children[source].push(target);
+		if (!sourceChildren[source]) sourceChildren[source] = [];
+		sourceChildren[source].push(target);
+		if (!targetChildren[target]) targetChildren[target] = [];
+		targetChildren[target].push(source);
 	}
 
 	const start = raw.nodes.find((n) => n.type === 'start');
@@ -33,9 +47,9 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		let order = [];
 		let current = startId;
 
-		while (children[current] && children[current].length > 0) {
+		while (sourceChildren[current] && sourceChildren[current].length > 0) {
 			// Find next step (ignore substeps here)
-			const nextStep = children[current].find((id) => nodeById[id].type === 'step');
+			const nextStep = sourceChildren[current].find((id) => nodeById[id].type === 'step');
 			if (!nextStep) break;
 			order.push(nextStep);
 			current = nextStep;
@@ -45,9 +59,14 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 	const stepOrder = start !== undefined ? traverseSteps(start.id) : [];
 
-	function getSubsteps(stepId: string) {
-		if (!children[stepId]) return [];
-		return children[stepId].filter((id) => nodeById[id].type === 'substep');
+	function getGroup(nodeId: string): string | undefined {
+		if (!targetChildren[nodeId]) return undefined;
+		return targetChildren[nodeId].find((id) => nodeById[id].type === 'group');
+	}
+
+	function getSubsteps(stepId: string): string[] {
+		if (!sourceChildren[stepId]) return [];
+		return sourceChildren[stepId].filter((id) => nodeById[id].type === 'substep');
 	}
 
 	const output: TypstFlowchartData = [];
@@ -56,7 +75,9 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	output.push({
 		stepLabel: (start?.data.label as string) ?? '',
 		droppedLabel: '',
-		group: (start?.data.group as string) ?? '',
+		group: getGroup(start?.id ?? '')
+			? ((nodeById[getGroup(start?.id ?? '')!].data.group as string) ?? '')
+			: '',
 		value: (start?.data.value as number) ?? 0,
 		delta: 0,
 		substepDeltas: []
@@ -68,7 +89,9 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 		const stepLabel = (step.data.stepLabel as string) ?? '';
 		const droppedLabel = (step.data.droppedLabel as string) ?? '';
-		const stepGroup = (step.data.group as string) ?? '';
+		const stepGroup = getGroup(stepId)
+			? ((nodeById[getGroup(stepId)!].data.group as string) ?? '')
+			: '';
 		const stepValue = (step.data.value as number) ?? 0;
 		const stepDelta = (step.data.delta as number) ?? 0;
 
@@ -110,12 +133,11 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		type: 'start',
 		data: {
 			label: startEntry.stepLabel,
-			group: startEntry.group,
 			value: startEntry.value
 		},
 		position: { x: 0, y: 0 },
 		deletable: false
-	} as unknown as Node);
+	} as Node);
 
 	// Steps begin at index 1
 	const stepIds: string[] = [];
@@ -131,12 +153,11 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			data: {
 				stepLabel: entry.stepLabel,
 				droppedLabel: entry.droppedLabel,
-				group: entry.group,
 				value: entry.value,
 				delta: entry.delta
 			},
 			position: { x: 0, y: 0 }
-		} as unknown as Node);
+		} as Node);
 
 		// substeps
 		for (let j = 0; j < entry.substepDeltas.length; j++) {
@@ -147,14 +168,15 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				type: 'substep',
 				data: { label: s.label, delta: s.delta },
 				position: { x: 0, y: 0 }
-			} as unknown as Node);
+			} as Node);
 			const edgeId = `${stepId}-${subId}`;
 			edges.push({
 				id: edgeId,
 				source: stepId,
-				sourceHandle: 'step-substeps',
-				target: subId
-			} as unknown as Edge);
+				sourceHandle: stepSourceSubsteps.handleId,
+				target: subId,
+				targetHandle: substepTarget.handleId
+			} as Edge);
 		}
 	}
 
@@ -164,8 +186,10 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		edges.push({
 			id: edgeId,
 			source: startId,
-			target: stepIds[0]
-		} as unknown as Edge);
+			sourceHandle: startSourceOutput.handleId,
+			target: stepIds[0],
+			targetHandle: stepTargetInput.handleId
+		} as Edge);
 	}
 
 	// connect steps sequentially
@@ -174,9 +198,57 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		edges.push({
 			id: edgeId,
 			source: stepIds[k],
-			sourceHandle: 'step-output',
-			target: stepIds[k + 1]
-		} as unknown as Edge);
+			sourceHandle: stepSourceOutput.handleId,
+			target: stepIds[k + 1],
+			targetHandle: stepTargetInput.handleId
+		} as Edge);
+	}
+
+	// Create unique group nodes and connect them to their start/step nodes
+	const groupMap = new Map<string, string>();
+	let gi = 0;
+	function ensureGroup(name: string) {
+		if (name !== '' && !groupMap.has(name)) {
+			const gid = `group-${gi++}`;
+			groupMap.set(name, gid);
+			nodes.push({
+				id: gid,
+				type: 'group',
+				data: { group: name },
+				position: { x: 0, y: 0 }
+			} as Node);
+		}
+		return groupMap.get(name)!;
+	}
+
+	// start
+	if (startEntry.group) {
+		const gid = ensureGroup(startEntry.group);
+		const edgeId = `${gid}-${startId}`;
+		edges.push({
+			id: edgeId,
+			source: gid,
+			sourceHandle: groupSource.handleId,
+			target: startId,
+			targetHandle: startTargetGroup.handleId
+		} as Edge);
+	}
+
+	// steps
+	for (let i = 1; i < json.length; i++) {
+		const entry = json[i];
+		const stepId = stepIds[i - 1];
+		if (entry.group) {
+			const gid = ensureGroup(entry.group);
+			const edgeId = `${gid}-${stepId}`;
+			edges.push({
+				id: edgeId,
+				source: gid,
+				sourceHandle: groupSource.handleId,
+				target: stepId,
+				targetHandle: stepTargetGroup.handleId
+			} as Edge);
+		}
 	}
 
 	return { nodes, edges };

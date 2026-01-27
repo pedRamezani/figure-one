@@ -1,64 +1,43 @@
 <script module>
 	let id = 1;
-	export const getId = () => `${id++}`;
-</script>
+	const getId = () => `${id++}`;
 
-<script lang="ts">
-	import {
-		SvelteFlow,
-		useSvelteFlow,
-		Background,
-		Controls,
-		ControlButton,
-		Panel,
-		type Node,
-		type Edge,
-		type OnConnectEnd
-	} from '@xyflow/svelte';
+	export function addNode(
+		nodeType: RegisteredNodeType,
+		position: {
+			x: number;
+			y: number;
+		},
+		origin: [number, number] = [0.5, 0.5]
+	): Node {
+		const id = getId();
 
-	import StartNode from '@/nodes/StartNode.svelte';
-	import StepNode from '@/nodes/StepNode.svelte';
-	import SubstepNode from '@/nodes/SubstepNode.svelte';
+		const newNode = {
+			id: id,
+			type: nodeType,
+			position,
+			data: getNodeDataDefaults(nodeType),
+			origin: origin
+		} satisfies Node;
 
-	import * as Card from '@/components/ui/card/index.js';
-	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
+		nodes = [...nodes, newNode];
 
-	import LayoutIcon from '@lucide/svelte/icons/circle-pile';
-	import ClearIcon from '@lucide/svelte/icons/trash';
+		return newNode;
+	}
 
-	import { getLayoutedElements } from '.';
+	export function setNodes(value: Node[]): void {
+		nodes = value;
+	}
 
-	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
-	import DragPanel from './DragPanel.svelte';
+	export function setEdges(value: Edge[]): void {
+		edges = value;
+	}
 
-	const minZoom = 0.1;
-	const maxZoom = 2.5;
-
-	const nodeTypes = {
-		start: StartNode,
-		step: StepNode,
-		substep: SubstepNode
-	};
-
-	const getNodeDataDefaults = (type: string) => {
-		switch (type) {
-			case 'step':
-				return {
-					value: null,
-					delta: 0,
-					stepLabel: 'Step',
-					droppedLabel: 'excluded',
-					group: ''
-				};
-			case 'substep':
-				return { delta: 0, label: 'Substep' };
-			case 'start':
-				return { label: 'Start population', value: 1000, group: '' };
-			case 'split':
-			default:
-				return {};
-		}
-	};
+	export function layoutView(): void {
+		const layouted = getLayoutedElements(nodes, edges);
+		nodes = layouted.nodes;
+		edges = layouted.edges;
+	}
 
 	const initialNodes: Node[] = [
 		{
@@ -74,80 +53,101 @@
 
 	let nodes = $state.raw<Node[]>(initialNodes);
 	let edges = $state.raw<Edge[]>(initialEdges);
+</script>
+
+<script lang="ts">
+	import {
+		SvelteFlow,
+		useSvelteFlow,
+		Background,
+		BackgroundVariant,
+		Controls,
+		ControlButton,
+		Panel,
+		type Node,
+		type Edge,
+		type OnConnectEnd,
+		Position
+	} from '@xyflow/svelte';
+
+	import { type RegisteredNodeType, nodeTypes, getNodeDataDefaults } from '@/nodes/types';
+
+	import * as ButtonGroup from '@/components/ui/button-group/index.js';
+	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
+	import { ThemeSelector } from '@/components/ui/theme-selector';
+
+	import InfoButton from './InfoButton.svelte';
+
+	import LayoutIcon from '@lucide/svelte/icons/circle-pile';
+	import ClearIcon from '@lucide/svelte/icons/trash';
+
+	import { getLayoutedElements } from '.';
+
+	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
+	import DragPanel from './DragPanel.svelte';
+
+	import { handleDragCreate, nodeHandles } from '@/nodes/types';
+
+	const minZoom = 0.1;
+	const maxZoom = 2.5;
 
 	const { screenToFlowPosition, fitView } = useSvelteFlow();
 
 	const handleConnectEnd: OnConnectEnd = (event, connectionState) => {
 		if (connectionState.isValid) return;
 
-		const sourceNodeId = connectionState.fromNode?.id ?? '0';
-		const id = getId();
+		if (!connectionState.fromNode) return;
+
+		if (!connectionState.fromNode.type) return;
+
+		const fromHandle = nodeHandles[connectionState.fromNode.type as RegisteredNodeType].find(
+			(h) =>
+				h.handleId === connectionState.fromHandle?.id &&
+				h.handleType === connectionState.fromHandle?.type
+		);
+		if (!fromHandle) return;
+
+		const toHandle = handleDragCreate.get(fromHandle);
+		if (toHandle === undefined) return;
+		const toHandleId = toHandle.handleId;
+		const toNodeType = toHandle.nodeType;
+		const toNodeOrigin: [number, number] =
+			toHandle.position === Position.Top
+				? [0.5, 0]
+				: toHandle.position === Position.Bottom
+					? [0.5, 1]
+					: toHandle.position === Position.Left
+						? [0, 0.5]
+						: [1, 0.5];
+
+		const fromNodeId = connectionState.fromNode.id;
+		const fromHandleId = fromHandle.handleId;
+
 		const { clientX, clientY } = 'changedTouches' in event ? event.changedTouches[0] : event;
 
-		const fromStartNode = connectionState.fromNode?.type === 'start';
-		const fromStepNodeOutput =
-			connectionState.fromNode?.type === 'step' && connectionState.fromHandle?.id === 'step-output';
-		const fromStepNodeSubsteps =
-			connectionState.fromNode?.type === 'step' &&
-			connectionState.fromHandle?.id === 'step-substeps';
+		const toNode = addNode(
+			toNodeType,
+			screenToFlowPosition({
+				x: clientX,
+				y: clientY
+			}),
+			toNodeOrigin
+		);
+		const toNodeId = toNode.id;
 
-		if (fromStartNode || fromStepNodeOutput || fromStepNodeSubsteps) {
-			let newNode: Node;
-
-			if (fromStepNodeSubsteps) {
-				newNode = {
-					id,
-					type: 'substep',
-					data: getNodeDataDefaults('substep'),
-					// project the screen coordinates to pane coordinates
-					position: screenToFlowPosition({
-						x: clientX,
-						y: clientY
-					}),
-					// set the origin of the new node so it is centered
-					origin: [0.0, 0.5]
-				};
-			} else {
-				newNode = {
-					id,
-					type: 'step',
-					data: getNodeDataDefaults('step'),
-					// project the screen coordinates to pane coordinates
-					position: screenToFlowPosition({
-						x: clientX,
-						y: clientY
-					}),
-					// set the origin of the new node so it is centered
-					origin: [0.5, 0.0]
-				};
+		edges = [
+			...edges,
+			{
+				source: fromHandle.handleType == 'source' ? fromNodeId : toNodeId,
+				sourceHandle: fromHandle.handleType == 'source' ? fromHandleId : toHandleId,
+				target: fromHandle.handleType == 'source' ? toNodeId : fromNodeId,
+				targetHandle: fromHandle.handleType == 'source' ? toHandleId : fromHandleId,
+				id:
+					fromHandle.handleType == 'source'
+						? `${fromNodeId}--${toNodeId}`
+						: `${toNodeId}--${fromNodeId}`
 			}
-
-			const sourceHandle = fromStartNode
-				? 'start'
-				: fromStepNodeOutput
-					? 'step-output'
-					: fromStepNodeSubsteps
-						? 'step-substeps'
-						: undefined;
-			const targetHandle =
-				fromStartNode || fromStepNodeOutput
-					? 'step-input'
-					: fromStepNodeSubsteps
-						? 'substep'
-						: undefined;
-
-			nodes = [...nodes, newNode];
-			edges = [
-				...edges,
-				{
-					source: sourceNodeId,
-					sourceHandle: sourceHandle,
-					target: id,
-					targetHandle: targetHandle,
-					id: `${sourceNodeId}--${id}`
-				}
-			];
-		}
+		];
 	};
 
 	const handleDragOver = (event: DragEvent) => {
@@ -170,17 +170,7 @@
 			y: event.clientY
 		});
 
-		const id = getId();
-
-		const newNode = {
-			id: id,
-			type: dragAndDropNodeType.current,
-			position,
-			data: getNodeDataDefaults(dragAndDropNodeType.current),
-			origin: [0.5, 0.5]
-		} satisfies Node;
-
-		nodes = [...nodes, newNode];
+		addNode(dragAndDropNodeType.current, position, [0.5, 0.5]);
 	};
 
 	function layoutNodes() {
@@ -225,24 +215,22 @@
 		hideAttribution: true
 	}}
 >
-	<Controls class={buttonGroupVariants({ orientation: 'vertical' })}>
-		<ControlButton aria-label="Layout flowchart" onclick={() => layoutNodes()}
-			><LayoutIcon class="fill-primary" /></ControlButton
+	<Controls class={buttonGroupVariants({ orientation: 'vertical', class: 'bg-card' })}>
+		<ControlButton
+			title="Layout flowchart"
+			aria-label="Layout flowchart"
+			onclick={() => layoutNodes()}><LayoutIcon class="fill-primary" /></ControlButton
 		>
-		<ControlButton aria-label="Clear flowchart" onclick={() => clearNodes()}
+		<ControlButton title="Clear flowchart" aria-label="Clear flowchart" onclick={() => clearNodes()}
 			><ClearIcon class="fill-primary" /></ControlButton
 		>
 	</Controls>
-	<Background />
-	<Panel position="top-right" class="hidden md:block w-76">
-		<Card.Root class="text-xs">
-			<Card.Header>
-				<Card.Title class="text-2xl">Flowchart Generator</Card.Title>
-				<Card.Description
-					>Simply drag and drop from the node handles to generate your Flowchart!</Card.Description
-				>
-			</Card.Header>
-		</Card.Root>
+	<Background variant={BackgroundVariant.Dots} size={1.2} />
+	<Panel position="top-right" class="bg-card">
+		<ButtonGroup.Root>
+			<ThemeSelector />
+			<InfoButton />
+		</ButtonGroup.Root>
 	</Panel>
 	<Panel position="bottom-right"><DragPanel /></Panel>
 </SvelteFlow>

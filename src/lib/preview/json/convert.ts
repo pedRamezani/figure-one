@@ -1,17 +1,15 @@
 import type { Node, Edge, Viewport } from '@xyflow/svelte';
+export type TypstFlowNode =
+	| {
+			type: 'linear';
+			nodes: TypstStep[];
+	  }
+	| {
+			type: 'split';
+			branches: TypstFlowNode[];
+	  };
 
-import {
-	groupSource,
-	startSourceOutput,
-	startTargetGroup,
-	stepSourceOutput,
-	stepSourceSubsteps,
-	stepTargetGroup,
-	stepTargetInput,
-	substepTarget
-} from '@/nodes/types';
-
-export type TypstFlowchartData = {
+export type TypstStep = {
 	stepLabel: string;
 	droppedLabel: string;
 	group: string;
@@ -21,99 +19,106 @@ export type TypstFlowchartData = {
 		label: string;
 		delta: number;
 	}[];
-}[];
+};
+
+export type TypstFlowchartData = {
+	root: TypstFlowNode;
+};
 
 export function convertFlowchartToTypstFlowchartData(raw: {
 	nodes: Node[];
 	edges: Edge[];
 	viewport: Viewport;
 }): TypstFlowchartData {
-	const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
-	const edges = raw.edges;
+		const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
 
-	const sourceChildren: { [id: string]: Array<string> } = {};
-	const targetChildren: { [id: string]: Array<string> } = {};
+	const children: Record<string, string[]> = {};
+	const parents: Record<string, string[]> = {};
 
-	for (const { source, target } of edges) {
-		if (!sourceChildren[source]) sourceChildren[source] = [];
-		sourceChildren[source].push(target);
-		if (!targetChildren[target]) targetChildren[target] = [];
-		targetChildren[target].push(source);
+	for (const e of raw.edges) {
+		children[e.source] ??= [];
+		children[e.source].push(e.target);
+
+		parents[e.target] ??= [];
+		parents[e.target].push(e.source);
+	}
+
+	const getGroup = (id: string): string => {
+		const g = parents[id]?.find((p) => nodeById[p].type === 'group');
+		return g ? (nodeById[g].data.group as string) : '';
+	};
+
+	const getSubsteps = (stepId: string) =>
+		(children[stepId] ?? [])
+			.map((id) => nodeById[id])
+			.filter((n) => n.type === 'substep')
+			.map((n) => ({
+				label: n.data.label as string,
+				delta: n.data.delta as number
+			}));
+
+	function buildLinear(popNodeId: string) {
+		const popNode = nodeById[popNodeId];
+
+		const linear = {
+			type: 'linear' as const,
+			population: {
+				label: popNode.data.label as string,
+				value: popNode.data.value as number,
+				group: getGroup(popNodeId)
+			},
+			steps: [] as any[],
+			next: undefined as any
+		};
+
+		let current = popNodeId;
+
+		while (true) {
+			const stepId = (children[current] ?? []).find(
+				(id) => nodeById[id].type === 'step'
+			);
+			if (!stepId) break;
+
+			const step = nodeById[stepId];
+			linear.steps.push({
+				stepLabel: step.data.stepLabel as string,
+				droppedLabel: step.data.droppedLabel as string,
+				delta: step.data.delta as number,
+				substepDeltas: getSubsteps(stepId)
+			});
+
+			const splitId = (children[stepId] ?? []).find(
+				(id) => nodeById[id].type === 'split'
+			);
+
+			if (splitId) {
+				linear.next = buildSplit(splitId);
+				break;
+			}
+
+			current = stepId;
+		}
+
+		return linear;
+	}
+
+	function buildSplit(splitId: string) {
+		const splitStarts = (children[splitId] ?? []).filter(
+			(id) => nodeById[id].type === 'splitstart'
+		);
+
+		return {
+			type: 'split' as const,
+			populations: splitStarts.map((sid) => buildLinear(sid))
+		};
 	}
 
 	const start = raw.nodes.find((n) => n.type === 'start');
+	if (!start) throw new Error('No start node found');
 
-	function traverseSteps(startId: string) {
-		let order = [];
-		let current = startId;
-
-		while (sourceChildren[current] && sourceChildren[current].length > 0) {
-			// Find next step (ignore substeps here)
-			const nextStep = sourceChildren[current].find((id) => nodeById[id].type === 'step');
-			if (!nextStep) break;
-			order.push(nextStep);
-			current = nextStep;
-		}
-		return order;
-	}
-
-	const stepOrder = start !== undefined ? traverseSteps(start.id) : [];
-
-	function getGroup(nodeId: string): string | undefined {
-		if (!targetChildren[nodeId]) return undefined;
-		return targetChildren[nodeId].find((id) => nodeById[id].type === 'group');
-	}
-
-	function getSubsteps(stepId: string): string[] {
-		if (!sourceChildren[stepId]) return [];
-		return sourceChildren[stepId].filter((id) => nodeById[id].type === 'substep');
-	}
-
-	const output: TypstFlowchartData = [];
-
-	// 1. Start node value
-	output.push({
-		stepLabel: (start?.data.label as string) ?? '',
-		droppedLabel: '',
-		group: getGroup(start?.id ?? '')
-			? ((nodeById[getGroup(start?.id ?? '')!].data.group as string) ?? '')
-			: '',
-		value: (start?.data.value as number) ?? 0,
-		delta: 0,
-		substepDeltas: []
-	});
-
-	// 2. Each step
-	for (const stepId of stepOrder) {
-		const step = nodeById[stepId];
-
-		const stepLabel = (step.data.stepLabel as string) ?? '';
-		const droppedLabel = (step.data.droppedLabel as string) ?? '';
-		const stepGroup = getGroup(stepId)
-			? ((nodeById[getGroup(stepId)!].data.group as string) ?? '')
-			: '';
-		const stepValue = (step.data.value as number) ?? 0;
-		const stepDelta = (step.data.delta as number) ?? 0;
-
-		const substepsDeltas = getSubsteps(stepId).map((id) => {
-			const n = nodeById[id];
-			return {
-				label: (n.data.label as string) ?? '',
-				delta: (n.data.delta as number) ?? 0
-			};
-		});
-
-		output.push({
-			stepLabel: stepLabel,
-			droppedLabel: droppedLabel,
-			group: stepGroup,
-			value: stepValue,
-			delta: stepDelta,
-			substepDeltas: substepsDeltas
-		});
-	}
-
-	return output;
+	return {
+		root: buildLinear(start.id)
+	};
 }
 
 export function parseTypstFlowchartJSON(json: TypstFlowchartData): {

@@ -70,7 +70,7 @@ export function getLayoutedElements(
 			if (source === undefined) {
 				return { ...ssNode, position: { x: 0, y: 0 } } as Node;
 			}
-			
+
 			if (!(source in counts)) {
 				const sourceNode = tbNodes.find((node) => node.id == source);
 				const [sourceAnchorX, sourceAnchorY] = sourceNode?.origin ?? [0, 0];
@@ -119,17 +119,21 @@ export function getLayoutedElements(
 			if (targetNodes.length === 0) return { ...gNode, position: { x: 0, y: 0 } } as Node;
 
 			const topYs = targetNodes.map((t) => t.position.y);
-			const bottomYs = targetNodes.map((t) => t.position.y + (t.measured?.height ?? 0));
+			const bottomYs = targetNodes.map(
+				(t) => t.position.y + (1 - (t.origin?.[1] ?? 0)) * (t.measured?.height ?? 0)
+			);
 			const minTop = Math.min(...topYs);
 			const maxBottom = Math.max(...bottomYs);
 			const centerY = (minTop + maxBottom) / 2;
 
 			// This only works because the origin is at Position.Right
 			// Not robust, but works for now.
-			const minLeft = Math.min(...targetNodes.map((t) => t.position.x));
+			const minLeft = Math.min(
+				...targetNodes.map((t) => t.position.x - (t.origin?.[0] ?? 0) * (t.measured?.width ?? 0))
+			);
 
 			// Use 3x gap
-			const x = minLeft - gap * ((targetNodes.length <= 1) ? 1 : 3);
+			const x = minLeft - gap * (targetNodes.length <= 1 ? 1 : 3);
 			const y = centerY;
 
 			return { ...gNode, position: { x, y }, origin: gNode.origin } as Node;

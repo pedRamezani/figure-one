@@ -1,37 +1,64 @@
 import type { Node, Edge, Viewport } from '@xyflow/svelte';
-export type TypstFlowNode =
-	| {
-			type: 'linear';
-			nodes: TypstStep[];
-	  }
-	| {
-			type: 'split';
-			branches: TypstFlowNode[];
-	  };
 
-export type TypstStep = {
-	stepLabel: string;
-	droppedLabel: string;
+import {
+	groupSource,
+	startSourceOutput,
+	startTargetGroup,
+	stepSourceSubsteps,
+	stepSourceOutput,
+	stepTargetGroup,
+	stepTargetInput,
+	substepTarget
+} from '@/nodes/types';
+
+export type TypstRow = {
+	// Removing row, col and switching to id, next will 
+	// allow to correctly draw edges from node to split nodes below
+	// it is needed if multiple splits are allowed to know where the
+	// split is coming from. => Is this really needed for a CONSORT flowchart?
+	// Using id, next has 2 disatvantages:
+	// 1. Groups are row based. I want to pass the group info seperatly later like:
+	// {"label": "groupname", rows: [1, 2, 3]}
+	// 2. After a split we may want to align similiar steps accros the splits on the same row
+	// A
+	// |
+	// B
+	// |  \
+	// C1 C2
+	// |  |
+	// D1 skipped
+	// |  |
+	// E1 E2
+	// id: string;
+	// next: string[];
+	row: number;
+	col: number;
+
 	group: string;
+
+	label: string;
 	value: number;
-	delta: number;
-	substepDeltas: {
+
+	delta: {
 		label: string;
-		delta: number;
-	}[];
+		value: number;
+		substeps: {
+			label: string;
+			value: number;
+		}[];
+	} | null;
 };
 
-export type TypstFlowchartData = {
-	root: TypstFlowNode;
-};
+export type TypstFlowchartData = TypstRow[];
 
 export function convertFlowchartToTypstFlowchartData(raw: {
 	nodes: Node[];
 	edges: Edge[];
 	viewport: Viewport;
 }): TypstFlowchartData {
-		const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
+	const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
 
+	// adjacency
 	const children: Record<string, string[]> = {};
 	const parents: Record<string, string[]> = {};
 
@@ -43,8 +70,9 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		parents[e.target].push(e.source);
 	}
 
+	// helpers
 	const getGroup = (id: string): string => {
-		const g = parents[id]?.find((p) => nodeById[p].type === 'group');
+		const g = parents[id]?.find((pid) => nodeById[pid].type === 'group');
 		return g ? (nodeById[g].data.group as string) : '';
 	};
 
@@ -54,71 +82,88 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 			.filter((n) => n.type === 'substep')
 			.map((n) => ({
 				label: n.data.label as string,
-				delta: n.data.delta as number
+				value: n.data.delta as number
 			}));
 
-	function buildLinear(popNodeId: string) {
-		const popNode = nodeById[popNodeId];
+	const rows: TypstFlowchartData = [];
 
-		const linear = {
-			type: 'linear' as const,
-			population: {
-				label: popNode.data.label as string,
-				value: popNode.data.value as number,
-				group: getGroup(popNodeId)
-			},
-			steps: [] as any[],
-			next: undefined as any
-		};
+	let currentRow = 0;
 
-		let current = popNodeId;
-
-		while (true) {
-			const stepId = (children[current] ?? []).find(
-				(id) => nodeById[id].type === 'step'
-			);
-			if (!stepId) break;
-
-			const step = nodeById[stepId];
-			linear.steps.push({
-				stepLabel: step.data.stepLabel as string,
-				droppedLabel: step.data.droppedLabel as string,
-				delta: step.data.delta as number,
-				substepDeltas: getSubsteps(stepId)
-			});
-
-			const splitId = (children[stepId] ?? []).find(
-				(id) => nodeById[id].type === 'split'
-			);
-
-			if (splitId) {
-				linear.next = buildSplit(splitId);
-				break;
-			}
-
-			current = stepId;
-		}
-
-		return linear;
-	}
-
-	function buildSplit(splitId: string) {
-		const splitStarts = (children[splitId] ?? []).filter(
-			(id) => nodeById[id].type === 'splitstart'
-		);
-
-		return {
-			type: 'split' as const,
-			populations: splitStarts.map((sid) => buildLinear(sid))
-		};
-	}
+	// column allocation per split
+	let nextFreeCol = 1;
+	const colByNode = new Map<string, number>();
 
 	const start = raw.nodes.find((n) => n.type === 'start');
-	if (!start) throw new Error('No start node found');
+	if (!start) {
+		return [];
+	}
 
-	return {
-		root: buildLinear(start.id)
-	};
+	colByNode.set(start.id, 0);
+
+	function emitNode(nodeId: string, row: number) {
+		const node = nodeById[nodeId];
+		const col = colByNode.get(nodeId) ?? 0;
+
+		const newRow: TypstRow = {
+			// id: nodeId,
+			row,
+			col,
+
+			group: getGroup(nodeId),
+
+			label: (node.data.stepLabel as string) ?? (node.data.label as string) ?? '',
+			value: (node.data.value as number) ?? 0,
+
+			delta:
+				node.type === 'step'
+					? {
+							label: (node.data.droppedLabel as string) ?? '',
+							value: (node.data.delta as number) ?? 0,
+							substeps: getSubsteps(nodeId)
+						}
+					: null
+		};
+
+		rows.push(newRow);
+	}
+
+	// main traversal queue
+	const queue: Array<{ id: string; row: number }> = [{ id: start.id, row: currentRow }];
+
+	while (queue.length > 0) {
+		const { id, row } = queue.shift()!;
+		currentRow = Math.max(currentRow, row);
+
+		emitNode(id, row);
+
+		const node = nodeById[id];
+
+		// STEP → next step or split
+		if (node.type === 'step' || node.type === 'start' || node.type === 'splitstart') {
+			const nextStep = (children[id] ?? []).find((cid) => nodeById[cid].type === 'step');
+
+			const split = (children[id] ?? []).find((cid) => nodeById[cid].type === 'split');
+
+			if (nextStep) {
+				colByNode.set(nextStep, colByNode.get(id)!);
+				queue.push({ id: nextStep, row: row + 1 });
+				continue;
+			}
+
+			if (split) {
+				const splitStarts = (children[split] ?? []).filter(
+					(cid) => nodeById[cid].type === 'splitstart'
+				);
+
+				for (const ss of splitStarts) {
+					colByNode.set(ss, nextFreeCol++);
+					queue.push({ id: ss, row: row + 1 });
+				}
+			}
+		}
+	}
+
+	return rows;
 }
 
 export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
@@ -137,7 +182,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		id: startId,
 		type: 'start',
 		data: {
-			label: startEntry.stepLabel,
+			label: startEntry.label,
 			value: startEntry.value
 		},
 		position: { x: 0, y: 0 },
@@ -156,22 +201,22 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			id: stepId,
 			type: 'step',
 			data: {
-				stepLabel: entry.stepLabel,
-				droppedLabel: entry.droppedLabel,
+				stepLabel: entry.label,
+				droppedLabel: entry.delta?.label ?? "",
 				value: entry.value,
-				delta: entry.delta
+				delta: entry.delta?.value ?? 0
 			},
 			position: { x: 0, y: 0 }
 		} as Node);
 
 		// substeps
-		for (let j = 0; j < entry.substepDeltas.length; j++) {
-			const s = entry.substepDeltas[j];
+		for (let j = 0; j < (entry.delta?.substeps.length ?? 0); j++) {
+			const s = entry.delta?.substeps[j];
 			const subId = `substep-${i}-${j}`;
 			nodes.push({
 				id: subId,
 				type: 'substep',
-				data: { label: s.label, delta: s.delta },
+				data: { label: s?.label ?? "", delta: s?.value ?? 0 },
 				position: { x: 0, y: 0 }
 			} as Node);
 			const edgeId = `${stepId}-${subId}`;

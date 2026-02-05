@@ -1,12 +1,16 @@
-// Module imports
+// ============================
+// Imports
+// ============================
+// Module
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, edge, node
-#import fletcher.shapes: hexagon, house
 
-// Data imports
+// Data
 #let style = json("/assets/style.json")
 #let data = json("/assets/flowchart.json")
 
+// ============================
 // Helpers
+// ============================
 #let tint-mapping = (
   black: luma(0),
   gray: luma(170),
@@ -34,12 +38,39 @@
   right: alignment.right,
 )
 
-// Page settings
-#set document(title: "Figure 1", author: "Pedram Ramezani", description: "A consort flowchart diagram.", keywords: ("flowchart", "figure1"))
+#let mapped-col(col) = {
+  if col == 0 {
+    return 0
+  }
+  
+  // calc.pow(-1, col) * (col - calc.rem-euclid(col, 2)) - 1
+  // col * 2
+  col * 2 - 2
+}
+
+// ============================
+// Page
+// ============================
+#set document(
+  title: style.page.title,
+  description: "A CONSORT flowchart diagram",
+  keywords: ("flowchart", "figure1")
+)
+
 #show heading: set align(alignment-mapping.at(style.page.titleAlign))
-#set page(width: auto, height: auto, margin: style.page.margin * 1mm, fill: tint-mapping.at(style.page.tint).lighten(80%))
+
+#set page(
+  width: auto, 
+  height: auto,
+  margin: style.page.margin * 1mm,
+  fill: tint-mapping.at(style.page.tint).lighten(80%)
+)
+
 #set text(font: "New Computer Modern")
 
+// ============================
+// Styled primitives
+// ============================
 #let styled-node(pos, label, width: 80mm, tint: white, ..args) = {
   let n = style.node
 
@@ -54,98 +85,138 @@
   )
 }
 
-#let styled-edge(width: 80mm, tint: black, ..args) = {
+#let styled-edge(tint: black, ..args) = {
   let e = style.edge
 
   edge(
     stroke: e.stroke * 1pt + tint,
     corner-radius: e.cornerRadius * 1pt,
-    ..args,
+    ..args
   )
 }
 
-#let figure-1(data, groups) = {
+// ----------------------------
+// Group calculation (by rows)
+// ----------------------------
+#let groups(data) = {
+  data.map(it => it.group).filter(g => g != "").dedup().map(
+    g => {
+      let rows = data.filter(it => it.group == g).map(it => it.row)
+      let r-min = calc.min(..rows)
+      let r-max = calc.max(..rows)
+
+      (
+        label: g,
+        start: r-min,
+        end: r-max
+      )
+    }
+  )
+}
+
+// ----------------------------
+// Diagram
+// ----------------------------
+#let figure-1(data) = {
   let d = style.diagram
   let a = style.mark
   let m = style.mainBox
   let s = style.stepBox
   let g = style.groupBox
 
+  let group-col = calc.min(..data.map(it => mapped-col(it.col))) - 1
+
+  let split-row = calc.min(..data.map(it => it.row).sorted().windows(2).filter(w => w.at(0) == w.at(1)).map(w => w.at(0)))
+
   diagram(
     spacing: d.spacing * 1pt,
     cell-size: (d.cellWidth * 1mm, d.cellHeight * 1mm),
     mark-scale: a.markScale * 1%,
 
-    for (i, value) in data.enumerate() {
-      // Main Box
-      styled-node(
-        (0, 2 * i),
-        data.at(i).stepLabel + "\n" + str(data.at(i).value),
-        tint: tint-mapping.at(m.tint),
-        width: m.width * 1mm,
-      )
+    // ----------------------------
+    // Population + exclusion boxes
+    // ----------------------------
+    // Sorting is needed for correct "d,r" arrows later
+    for it in data.sorted(key: it => (it.col, it.row)) {
+      // Exclusion box (optional) + Edge
+      if it.delta != none {
+        // Population → exclusion
+        styled-edge(
+          "d,r", 
+          a.arrow
+        )
 
-      if i != data.len() - 1 {
-        // Main to main
-        styled-edge((0, 2 * i), (0, 2 * (i + 1)), a.arrow)
-        // Main to step
-        styled-edge("d,r", a.arrow)
-        // Step Box
+        // Exclusion box
         styled-node(
-          (1, 2 * i + 1),
-          str(data.at(i + 1).delta)
+          (mapped-col(it.col) + 1, it.row * 2 - 1),
+          str(it.delta.value)
             + " "
-            + data.at(i + 1).droppedLabel
-            + for value in data.at(i + 1).substepDeltas {
-              "\n    " + str(value.delta) + " " + value.label
+            + it.delta.label
+            + for s in it.delta.substeps {
+              "\n    " + str(s.value) + " " + s.label
             },
           tint: tint-mapping.at(s.tint),
           width: s.width * 1mm,
         )
       }
-    },
 
-    for (start, end) in groups {
-      // Group Box
+      // Population box
       styled-node(
-        (-1, -1),
-        rotate(data.at(start).group, -90deg, reflow: true),
-        tint: tint-mapping.at(g.tint),
-        width: auto,
-        enclose: ((-1, 2 * start - 0.25), (-1, 2 * end + 1 + 0.25)),
+        (mapped-col(it.col), it.row * 2),
+        it.label + "\n" + str(it.value),
+        tint: tint-mapping.at(m.tint),
+        width: m.width * 1mm,
       )
     },
+
+    // ----------------------------
+    // Vertical population flow
+    // ----------------------------
+    for it in data {
+      let next = data.find(
+        n => n.col == it.col and n.row == it.row + 1
+      )
+
+      if next != none {
+        styled-edge(
+          (mapped-col(it.col), it.row * 2),
+          (mapped-col(next.col), next.row * 2),
+          a.arrow,
+        )
+      }
+    },
+
+    // ----------------------------
+    // Split population flow
+    // ----------------------------
+    for it in data.filter(it => it.row == split-row) {
+      styled-edge(
+        (mapped-col(0), split-row * 2 - 2),
+        (mapped-col(it.col), it.row * 2),
+        a.arrow,
+      )
+    },
+
+    // ----------------------------
+    // Group boxes
+    // ----------------------------
+    for gr in groups(data) {
+      styled-node(
+        (group-col, -1),
+        rotate(gr.label, -90deg, reflow: true),
+        tint: tint-mapping.at(g.tint),
+        width: auto,
+        enclose: (
+          (group-col, 2 * gr.start - 0.25),
+          (group-col, 2 * gr.end + 1 + 0.25)
+        ),
+      )
+    }
   )
 }
 
-#let groups(data) = {
-  let result = ()
-  let current = none
-
-  for (i, key) in data.enumerate() {
-    if key.group == "" {
-      if current != none {
-        result.push((current, i - 1))
-        current = none
-      }
-    } else {
-      if current == none {
-        current = i
-      } else if key.group != data.at(i - 1).group {
-        result.push((current, i - 1))
-        current = i
-      }
-    }
-  }
-
-  if current != none {
-    result.push((current, data.len() - 1))
-  }
-
-  result
-}
-
-#let groups = groups(data);
-
+// ----------------------------
+// Render
+// ----------------------------
 #heading(text(style.page.title))
-#figure-1(data, groups)
+#figure-1(data)

@@ -14,7 +14,7 @@
 
 	import { addNode, addEdge } from '@/preview/flow/Flow.svelte';
 
-	import { scale } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 
 	const { id }: NodeProps = $props();
 
@@ -81,7 +81,7 @@
 	{#snippet content()}
 		<div class="w-3xs"></div>
 		{#if targetSummedValue && noSourceConnection}
-			<div class="flex flex-col gap-2" transition:scale>
+			<div class="flex flex-col gap-2" transition:slide>
 				<Label for="split">Splits</Label>
 				<ButtonGroup.Root>
 					<Input

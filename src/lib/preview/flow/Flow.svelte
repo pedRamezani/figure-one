@@ -8,7 +8,8 @@
 			x: number;
 			y: number;
 		},
-		origin: [number, number] = [0.5, 0.5]
+		origin: [number, number] = [0.5, 0.5],
+		data: Record<string, unknown> = {}
 	): Node {
 		const id = getId();
 
@@ -16,13 +17,35 @@
 			id: id,
 			type: nodeType,
 			position,
-			data: getNodeDataDefaults(nodeType),
+			data: {
+				...getNodeDataDefaults(nodeType),
+				...data
+			},
 			origin: origin
 		} satisfies Node;
 
 		nodes = [...nodes, newNode];
 
 		return newNode;
+	}
+
+	export function addEdge(
+		source: string,
+		target: string,
+		sourceHandle?: string,
+		targetHandle?: string
+	): Edge {
+		const newEdge = {
+			source,
+			sourceHandle,
+			target,
+			targetHandle,
+			id: `${source}--${target}`
+		} satisfies Edge;
+
+		edges = [...edges, newEdge];
+
+		return newEdge;
 	}
 
 	export function setNodes(value: Node[]): void {
@@ -135,19 +158,12 @@
 		);
 		const toNodeId = toNode.id;
 
-		edges = [
-			...edges,
-			{
-				source: fromHandle.handleType == 'source' ? fromNodeId : toNodeId,
-				sourceHandle: fromHandle.handleType == 'source' ? fromHandleId : toHandleId,
-				target: fromHandle.handleType == 'source' ? toNodeId : fromNodeId,
-				targetHandle: fromHandle.handleType == 'source' ? toHandleId : fromHandleId,
-				id:
-					fromHandle.handleType == 'source'
-						? `${fromNodeId}--${toNodeId}`
-						: `${toNodeId}--${fromNodeId}`
-			}
-		];
+		addEdge(
+			fromHandle.handleType == 'source' ? fromNodeId : toNodeId,
+			fromHandle.handleType == 'source' ? toNodeId : fromNodeId,
+			fromHandle.handleType == 'source' ? fromHandleId : toHandleId,
+			fromHandle.handleType == 'source' ? toHandleId : fromHandleId
+		);
 	};
 
 	const handleDragOver = (event: DragEvent) => {
@@ -216,12 +232,10 @@
 	}}
 >
 	<Controls class={buttonGroupVariants({ orientation: 'vertical', class: 'bg-card' })}>
-		<ControlButton
-			title="Layout flowchart"
-			aria-label="Layout flowchart"
-			onclick={() => layoutNodes()}><LayoutIcon class="fill-primary" /></ControlButton
+		<ControlButton title="Layout flowchart" aria-label="Layout flowchart" onclick={layoutNodes}
+			><LayoutIcon class="fill-primary" /></ControlButton
 		>
-		<ControlButton title="Clear flowchart" aria-label="Clear flowchart" onclick={() => clearNodes()}
+		<ControlButton title="Clear flowchart" aria-label="Clear flowchart" onclick={clearNodes}
 			><ClearIcon class="fill-primary" /></ControlButton
 		>
 	</Controls>

@@ -11,6 +11,18 @@ import {
 	substepTarget
 } from '@/nodes/types';
 
+export type TypstFlowchartDataLegacyV1 = {
+	stepLabel: string;
+	droppedLabel: string;
+	group: string;
+	value: number;
+	delta: number;
+	substepDeltas: {
+		label: string;
+		delta: number;
+	}[];
+}[];
+
 export type TypstRow = {
 	// Removing row, col and switching to id, next will 
 	// allow to correctly draw edges from node to split nodes below
@@ -90,7 +102,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	let currentRow = 0;
 
 	// column allocation per split
-	let nextFreeCol = 1;
+	let nextFreeCol = 0;
 	const colByNode = new Map<string, number>();
 
 	const start = raw.nodes.find((n) => n.type === 'start');
@@ -217,7 +229,8 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				id: subId,
 				type: 'substep',
 				data: { label: s?.label ?? "", delta: s?.value ?? 0 },
-				position: { x: 0, y: 0 }
+				position: { x: 0, y: 0 },
+				origin: [0, 0.5]
 			} as Node);
 			const edgeId = `${stepId}-${subId}`;
 			edges.push({
@@ -265,7 +278,8 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				id: gid,
 				type: 'group',
 				data: { group: name },
-				position: { x: 0, y: 0 }
+				position: { x: 0, y: 0 },
+				origin: [1, 0.5]
 			} as Node);
 		}
 		return groupMap.get(name)!;

@@ -12,6 +12,8 @@
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import { buttonVariants } from '@/components/ui/button/index.js';
 
+	import { slide } from 'svelte/transition';
+
 	const { id, data }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
@@ -78,7 +80,7 @@
 					type="number"
 					oninput={(evt) => {
 						const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-						const parsedDelta = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : 0;
+						const parsedDelta = Number.isFinite(Number(raw)) && raw !== '' ? parseInt(raw, 10) : 0;
 						const prev =
 							targetData.current.length !== 0
 								? ((targetData.current[0].data.value as number) ?? NaN)
@@ -89,40 +91,49 @@
 					}}
 					class="nodrag"
 				/>
-				<Collapsible.Content class="mt-2 space-y-2">
-					<Label for="dropped-label">Dropped label</Label>
-					<Input
-						name="dropped-Label"
-						value={data.droppedLabel}
-						type="text"
-						oninput={(evt) => {
-							const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-							updateNodeData(id, { droppedLabel: raw });
-						}}
-						class="nodrag"
-					/>
+				<Collapsible.Content class="mt-2 space-y-2" forceMount>
+					{#snippet child({ props, open })}
+						{#if open}
+							<div {...props} transition:slide>
+								<Label for="dropped-label">Dropped label</Label>
+								<Input
+									name="dropped-Label"
+									value={data.droppedLabel}
+									type="text"
+									oninput={(evt) => {
+										const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
+										updateNodeData(id, { droppedLabel: raw });
+									}}
+									class="nodrag"
+								/>
+							</div>
+						{/if}
+					{/snippet}
 				</Collapsible.Content>
 			</Collapsible.Root>
 
 			{#if data.value}
-				<Label for="after">After</Label>
-				<Input
-					name="after"
-					value={data.value ?? 0}
-					type="number"
-					oninput={(evt) => {
-						const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-						const parsedAfter = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : NaN;
-						const prev =
-							targetData.current.length !== 0
-								? ((targetData.current[0]?.data?.value as number) ?? NaN)
-								: NaN;
+				<div transition:slide class="flex flex-col gap-2">
+					<Label for="after">After</Label>
+					<Input
+						name="after"
+						value={data.value ?? 0}
+						type="number"
+						oninput={(evt) => {
+							const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
+							const parsedAfter =
+								Number.isFinite(Number(raw)) && raw !== '' ? parseInt(raw, 10) : NaN;
+							const prev =
+								targetData.current.length !== 0
+									? ((targetData.current[0]?.data?.value as number) ?? NaN)
+									: NaN;
 
-						const newDelta = isNaN(prev) ? null : prev - parsedAfter;
-						updateNodeData(id, { value: parsedAfter, delta: newDelta });
-					}}
-					class="nodrag"
-				/>
+							const newDelta = isNaN(prev) ? null : prev - parsedAfter;
+							updateNodeData(id, { value: parsedAfter, delta: newDelta });
+						}}
+						class="nodrag"
+					/>
+				</div>
 			{/if}
 		</div>
 	{/snippet}

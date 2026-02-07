@@ -68,7 +68,7 @@
 				type="number"
 				oninput={(evt) => {
 					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-					const parsedDelta = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : 0;
+					const parsedDelta = Number.isFinite(Number(raw)) && raw !== '' ? parseInt(raw, 10) : 0;
 					updateNodeData(id, { delta: parsedDelta });
 				}}
 				class="nodrag"

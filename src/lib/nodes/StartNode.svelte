@@ -39,7 +39,7 @@
 				type="number"
 				oninput={(evt) => {
 					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-					const parsedValue = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : 0;
+					const parsedValue = Number.isFinite(Number(raw)) && raw !== '' ? parseInt(raw, 10) : 0;
 					updateNodeData(id, { value: parsedValue });
 				}}
 				class="nodrag"

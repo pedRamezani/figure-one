@@ -38,16 +38,6 @@
   right: alignment.right,
 )
 
-#let mapped-col(col) = {
-  if col == 0 {
-    return 0
-  }
-  
-  // calc.pow(-1, col) * (col - calc.rem-euclid(col, 2)) - 1
-  // col * 2
-  col * 2 - 2
-}
-
 // ============================
 // Page
 // ============================
@@ -124,9 +114,29 @@
   let s = style.stepBox
   let g = style.groupBox
 
-  let group-col = calc.min(..data.map(it => mapped-col(it.col))) - 1
+  // Find split row
+  let split-row = data.map(it => it.row).sorted().windows(2).filter(w => w.at(0) == w.at(1)).map(w => w.at(0)).reduce((acc, it) => calc.min(acc, it))
 
-  let split-row = calc.min(..data.map(it => it.row).sorted().windows(2).filter(w => w.at(0) == w.at(1)).map(w => w.at(0)))
+  // Find split parent if possible
+  let split-parent = none
+  if split-row != none {
+    split-parent = data.find(it => it.row == split-row - 1)
+  }
+
+  // Calculate column shift for rows >= split-row
+  let max-col = data.map(it => it.col).reduce((acc, it) => calc.max(acc, it))
+
+  // Col mapping function
+  let mapped-col(col, row: none) = {
+    if row == none or split-row == none or row < split-row {
+      col * 2
+    } else {
+      col * 2 - max-col
+    }
+  }
+
+  // Calculate min col - 1 for group box placement
+  let group-col = calc.min(..data.map(it => mapped-col(it.col, row: it.row))) - 1
 
   diagram(
     spacing: d.spacing * 1pt,
@@ -148,7 +158,7 @@
 
         // Exclusion box
         styled-node(
-          (mapped-col(it.col) + 1, it.row * 2 - 1),
+          (mapped-col(it.col, row: it.row) + 1, it.row * 2 - 1),
           str(it.delta.value)
             + " "
             + it.delta.label
@@ -162,7 +172,7 @@
 
       // Population box
       styled-node(
-        (mapped-col(it.col), it.row * 2),
+        (mapped-col(it.col, row: it.row), it.row * 2),
         it.label + "\n" + str(it.value),
         tint: tint-mapping.at(m.tint),
         width: m.width * 1mm,
@@ -177,10 +187,13 @@
         n => n.col == it.col and n.row == it.row + 1
       )
 
-      if next != none {
+      if next != none and (
+        split-row == none
+        or next.row != split-row
+      ) {
         styled-edge(
-          (mapped-col(it.col), it.row * 2),
-          (mapped-col(next.col), next.row * 2),
+          (mapped-col(it.col, row: it.row), it.row * 2),
+          (mapped-col(next.col, row: next.row), next.row * 2),
           a.arrow,
         )
       }
@@ -190,9 +203,15 @@
     // Split population flow
     // ----------------------------
     for it in data.filter(it => it.row == split-row) {
+      let steps = (
+        (mapped-col(split-parent.col), split-parent.row * 2),
+        (mapped-col(split-parent.col), split-parent.row * 2 + 1),
+        (mapped-col(it.col, row: it.row), split-parent.row * 2 + 1),
+        (mapped-col(it.col, row: it.row), split-row * 2)
+      ).dedup()
+
       styled-edge(
-        (mapped-col(0), split-row * 2 - 2),
-        (mapped-col(it.col), it.row * 2),
+        ..steps,
         a.arrow,
       )
     },

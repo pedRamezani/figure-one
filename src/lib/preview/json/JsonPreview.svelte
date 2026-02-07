@@ -13,7 +13,7 @@
 	import { ImportIcon } from '@lucide/svelte';
 
 	import { downloadBlob } from '../../index.ts';
-	import { getLayoutedElements } from '../flow/index.ts';
+	import { getLayoutedElements } from '../flow/layout.ts';
 
 	const { toObject, fitView } = useSvelteFlow();
 

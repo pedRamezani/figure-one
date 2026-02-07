@@ -70,12 +70,9 @@
 {#snippet panelContent()}
 	{#each dragPanelNodes as [nodeType, config]}
 		{#if config !== null && (config.maxCount === undefined || (nodeTypeCounts[nodeType] ?? 0) < config.maxCount)}
-			<nav on:dragstart={(event) => onDragStart(event, nodeType)} draggable={true}>
+			<nav ondragstart={(event) => onDragStart(event, nodeType)} draggable={true}>
 				<Button variant="secondary" size="sm" onclick={() => onClick(nodeType)}
-					><svelte:component
-						this={config.icon}
-						class={cn('size-4! stroke-2', config.class)}
-					/>{config.label}</Button
+					><config.icon class={cn('size-4! stroke-2', config.class)} />{config.label}</Button
 				>
 			</nav>
 		{/if}

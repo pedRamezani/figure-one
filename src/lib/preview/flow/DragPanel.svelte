@@ -49,11 +49,27 @@
 
 		event.dataTransfer.effectAllowed = 'move';
 	};
+
+	const nodeTypeCounts = $derived(
+		nodes.current
+			.map((node) => node.type ?? '')
+			.reduce(
+				(d, nodeType) => {
+					if (nodeType in d) {
+						d[nodeType] += 1;
+					} else {
+						d[nodeType] = 1;
+					}
+					return d;
+				},
+				{} as { [key: string]: number }
+			)
+	);
 </script>
 
 {#snippet panelContent()}
 	{#each dragPanelNodes as [nodeType, config]}
-		{#if config !== null}
+		{#if config !== null && (config.maxCount === undefined || (nodeTypeCounts[nodeType] ?? 0) < config.maxCount)}
 			<nav on:dragstart={(event) => onDragStart(event, nodeType)} draggable={true}>
 				<Button variant="secondary" size="sm" onclick={() => onClick(nodeType)}
 					><svelte:component

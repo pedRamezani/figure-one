@@ -81,7 +81,7 @@
 	import LayoutIcon from '@lucide/svelte/icons/circle-pile';
 	import ClearIcon from '@lucide/svelte/icons/trash';
 
-	import { getLayoutedElements } from '.';
+	import { getLayoutedElements } from './layout.ts';
 
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
 	import DragPanel from './DragPanel.svelte';

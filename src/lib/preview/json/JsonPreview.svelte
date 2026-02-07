@@ -2,7 +2,7 @@
 	import { useSvelteFlow, useNodes, useEdges } from '@xyflow/svelte';
 	import { convertFlowchartToTypstFlowchartData, parseTypstFlowchartJSON } from './convert.ts';
 
-	import { createProfile, isProfile } from '../../index.ts';
+	import { createProfile, parseProfileJSON } from '../../index.ts';
 	import { styleConfig } from '../style/style-config.svelte.ts';
 
 	import * as ButtonGroup from '@/components/ui/button-group/index.js';
@@ -32,9 +32,10 @@
 			if (file.type !== 'application/json') return;
 
 			new Response(file).json().then((json) => {
-				if (!isProfile(json)) return;
-				styleConfig.current = json.config;
-				const parsed = parseTypstFlowchartJSON(json.data);
+				const profile = parseProfileJSON(json);
+				if (profile === null) return;
+				styleConfig.current = profile.config;
+				const parsed = parseTypstFlowchartJSON(profile.data);
 				nodes.set(parsed.nodes);
 				edges.set(parsed.edges);
 

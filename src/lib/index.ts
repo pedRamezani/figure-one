@@ -1,10 +1,12 @@
 import { parseTypstFlowchartJSON, type TypstFlowchartData } from './preview/json/convert';
-import { isFlowchartData } from './preview/json/validate';
+import { isFlowchartData, isFlowchartDataV1 } from './preview/json/validate';
 
 import { styleConfig, type TypstFlowchartConfig } from './preview/style/style-config.svelte';
 import { isFlowchartConfig } from './preview/style/validate';
 
 import { setEdges, setNodes } from './preview/flow/Flow.svelte';
+
+import { isNumber, isObject } from './utils.ts';
 
 export type Profile = {
 	$version: number;
@@ -14,29 +16,72 @@ export type Profile = {
 
 export function createProfile(data: TypstFlowchartData, config: TypstFlowchartConfig): Profile {
 	return {
-		$version: 1,
+		$version: 2,
 		data: data,
 		config: config
 	};
 }
 
-function isObject(v: unknown): v is Record<string, unknown> {
-	return typeof v === 'object' && v !== null;
-}
+// export function isProfile(value: unknown): value is Profile {
+// 	if (!isObject(value)) return false;
 
-function isNumber(n: unknown): n is number {
-	return typeof n === 'number' && Number.isFinite(n);
-}
+// 	const v = value as any;
+// 	if (!isNumber(v.$version)) return false;
+// 	if (!isFlowchartData(v.data)) return false;
+// 	if (!isFlowchartConfig(v.config)) return false;
 
-export function isProfile(value: unknown): value is Profile {
-	if (!isObject(value)) return false;
+// 	return true;
+// }
 
-	const v = value as any;
-	if (!isNumber(v.$version)) return false;
-	if (!isFlowchartData(v.data)) return false;
-	if (!isFlowchartConfig(v.config)) return false;
+export function parseProfileJSON(value: unknown): Profile | null {
+	if (!isObject(value)) return null;
 
-	return true;
+	// Version
+	if (!isNumber(value.$version)) return null;
+
+	// Data
+	let flowchartData: TypstFlowchartData;
+	if (isFlowchartData(value.data)) {
+		flowchartData = value.data;
+		console.log('newFD');
+	} else if (isFlowchartDataV1(value.data)) {
+		const parsedData: TypstFlowchartData = [];
+		for (let i = 0; i <= value.data.length - 1; i++) {
+			const entry = value.data[i];
+			console.log(entry);
+			parsedData.push({
+				row: i,
+				col: 0,
+				group: entry.group,
+				label: entry.stepLabel,
+				value: entry.value,
+				delta:
+					i == 0
+						? null
+						: {
+								label: entry.droppedLabel,
+								value: entry.delta,
+								substeps: entry.substepDeltas.map((it) => ({
+									label: it.label,
+									value: it.delta
+								}))
+							}
+			});
+		}
+		flowchartData = parsedData;
+	} else {
+		console.log('notSupported');
+		return null;
+	}
+
+	// Config
+	if (!isFlowchartConfig(value.config)) return null;
+
+	return {
+		$version: value.$version,
+		data: flowchartData,
+		config: value.config
+	};
 }
 
 export function setProfile(value: Profile): void {

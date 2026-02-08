@@ -84,7 +84,8 @@
 		<Popover.Trigger
 			title="Open Drag & Drop Panel"
 			aria-label="Open Drag & Drop Panel"
-			class={buttonVariants({ variant: 'outline', size: 'icon' })}><OpenIcon /></Popover.Trigger
+			class={buttonVariants({ variant: 'outline', size: 'icon', class: 'bg-card/90' })}
+			><OpenIcon /></Popover.Trigger
 		>
 		<Popover.Content align="end" side="top" class="max-w-xs">
 			<div class="grid gap-4">

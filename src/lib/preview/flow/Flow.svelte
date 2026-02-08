@@ -231,7 +231,7 @@
 		hideAttribution: true
 	}}
 >
-	<Controls class={buttonGroupVariants({ orientation: 'vertical', class: 'bg-card' })}>
+	<Controls class={buttonGroupVariants({ orientation: 'vertical', class: 'bg-card/90' })}>
 		<ControlButton title="Layout flowchart" aria-label="Layout flowchart" onclick={layoutNodes}
 			><LayoutIcon class="fill-primary" /></ControlButton
 		>
@@ -240,7 +240,7 @@
 		>
 	</Controls>
 	<Background variant={BackgroundVariant.Dots} size={1.2} />
-	<Panel position="top-right" class="bg-card">
+	<Panel position="top-right" class="bg-card/90">
 		<ButtonGroup.Root>
 			<ThemeSelector />
 			<InfoButton />

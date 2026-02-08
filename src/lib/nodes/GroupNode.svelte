@@ -11,7 +11,7 @@
 	const { updateNodeData } = useSvelteFlow();
 </script>
 
-<NodeWrapper title="Group" description="The group name of a node." nodeId={id} nodeType="group">
+<NodeWrapper title="Group" description="The group name of a node." nodeId={id} nodeType="groups">
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="group">Label</Label>

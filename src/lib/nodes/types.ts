@@ -14,9 +14,10 @@ import SubstepIcon from '@lucide/svelte/icons/workflow';
 import GroupIcon from '@lucide/svelte/icons/workflow';
 
 // Node Types and Defaults
-export type RegisteredNodeType = 'group' | 'split' | 'splitstart' | 'start' | 'step' | 'substep';
+// Use 'groups' instead of 'group' to avoid css name conflicts
+export type RegisteredNodeType = 'groups' | 'split' | 'splitstart' | 'start' | 'step' | 'substep';
 export const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>> = {
-	group: GroupNode,
+	groups: GroupNode,
 	split: SplitNode,
 	splitstart: SplitStartNode,
 	start: StartNode,
@@ -26,7 +27,7 @@ export const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>>
 
 export const getNodeDataDefaults = (type: RegisteredNodeType): Record<string, unknown> => {
 	switch (type) {
-		case 'group':
+		case 'groups':
 			return { group: '' };
 		case 'splitstart':
 			return { label: 'Split start population', value: 0 };
@@ -58,7 +59,7 @@ export type Handle = {
 };
 
 export const groupSource: Handle = {
-	nodeType: 'group',
+	nodeType: 'groups',
 	handleId: 'group',
 	handleType: 'source',
 	position: Position.Right
@@ -233,7 +234,7 @@ export const dragPanelNodes: Map<
 	['splitstart', null],
 	['step', { icon: StepIcon, label: 'Step' }],
 	['substep', { icon: SubstepIcon, label: 'Substep' }],
-	['group', { icon: GroupIcon, label: 'Group', class: '-rotate-90' }],
+	['groups', { icon: GroupIcon, label: 'Group', class: '-rotate-90' }],
 	['split', { icon: SplitIcon, label: 'Split', maxCount: 1 }],
 ]);
 
@@ -243,7 +244,7 @@ export type NodeHandleMap = {
 };
 
 export const nodeHandles: NodeHandleMap = {
-	group: [groupSource],
+	groups: [groupSource],
 	split: [splitSourceOutput, splitTargetInput],
 	splitstart: [splitstartSourceOutput, splitstartTargetInput], // splitstartTargetGroup
 	start: [startSourceOutput, startTargetGroup],

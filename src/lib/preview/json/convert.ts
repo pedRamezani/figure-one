@@ -24,7 +24,7 @@ export type TypstFlowchartDataLegacyV1 = {
 }[];
 
 export type TypstRow = {
-	// Removing row, col and switching to id, next will 
+	// Removing row, col and switching to id, next will
 	// allow to correctly draw edges from node to split nodes below
 	// it is needed if multiple splits are allowed to know where the
 	// split is coming from. => Is this really needed for a CONSORT flowchart?
@@ -84,7 +84,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 	// helpers
 	const getGroup = (id: string): string => {
-		const g = parents[id]?.find((pid) => nodeById[pid].type === 'group');
+		const g = parents[id]?.find((pid) => nodeById[pid].type === 'groups');
 		return g ? (nodeById[g].data.group as string) : '';
 	};
 
@@ -214,7 +214,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			type: 'step',
 			data: {
 				stepLabel: entry.label,
-				droppedLabel: entry.delta?.label ?? "",
+				droppedLabel: entry.delta?.label ?? '',
 				value: entry.value,
 				delta: entry.delta?.value ?? 0
 			},
@@ -228,7 +228,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			nodes.push({
 				id: subId,
 				type: 'substep',
-				data: { label: s?.label ?? "", delta: s?.value ?? 0 },
+				data: { label: s?.label ?? '', delta: s?.value ?? 0 },
 				position: { x: 0, y: 0 },
 				origin: [0, 0.5]
 			} as Node);
@@ -276,7 +276,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			groupMap.set(name, gid);
 			nodes.push({
 				id: gid,
-				type: 'group',
+				type: 'groups',
 				data: { group: name },
 				position: { x: 0, y: 0 },
 				origin: [1, 0.5]

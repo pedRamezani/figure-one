@@ -3,7 +3,7 @@
 	import type { Snippet } from 'svelte';
 	import { type RegisteredNodeType, nodeHandles } from '@/nodes/types';
 
-	import SimpleHandle from '@/handles/SimpleHandle.svelte';
+	import HandleWrapper from '@/handles/HandleWrapper.svelte';
 
 	let {
 		nodeId,
@@ -36,7 +36,7 @@
 
 		<!-- Handles -->
 		{#each handles as handle}
-			<SimpleHandle {nodeId} {handle} />
+			<HandleWrapper {nodeId} {handle} />
 		{/each}
 	</Card.Content>
 	{#if footer}

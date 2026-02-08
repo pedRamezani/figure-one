@@ -21,6 +21,8 @@
 
 	import { useNodes, useSvelteFlow } from '@xyflow/svelte';
 
+	import { scale } from 'svelte/transition';
+
 	const nodes = useNodes();
 	const { fitView } = useSvelteFlow();
 	const offset: [number, number] = [0.3, 0.3];
@@ -70,7 +72,7 @@
 {#snippet panelContent()}
 	{#each dragPanelNodes as [nodeType, config]}
 		{#if config !== null && (config.maxCount === undefined || (nodeTypeCounts[nodeType] ?? 0) < config.maxCount)}
-			<nav ondragstart={(event) => onDragStart(event, nodeType)} draggable={true}>
+			<nav ondragstart={(event) => onDragStart(event, nodeType)} draggable={true} transition:scale>
 				<Button variant="secondary" size="sm" onclick={() => onClick(nodeType)}
 					><config.icon class={cn('size-4! stroke-2', config.class)} />{config.label}</Button
 				>

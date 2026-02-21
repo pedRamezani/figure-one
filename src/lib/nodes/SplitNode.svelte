@@ -16,7 +16,7 @@
 
 	import { slide } from 'svelte/transition';
 
-	const { id }: NodeProps = $props();
+	const { id, type }: NodeProps = $props();
 
 	const connectionsSourcesOutput = useNodeConnections({
 		handleType: splitSourceOutput.handleType,
@@ -76,7 +76,7 @@
 	title="Split"
 	description="The flowchart will split from here."
 	nodeId={id}
-	nodeType="split"
+	nodeType={type}
 >
 	{#snippet content()}
 		<div class="w-3xs"></div>

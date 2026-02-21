@@ -14,7 +14,7 @@
 
 	import { slide } from 'svelte/transition';
 
-	const { id, data }: NodeProps = $props();
+	const { id, data, type }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
 
@@ -49,7 +49,7 @@
 	});
 </script>
 
-<NodeWrapper title="Step" description="Inclusion or Exclusion" nodeId={id} nodeType="step">
+<NodeWrapper title="Step" description="Inclusion or Exclusion" nodeId={id} nodeType={type}>
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="step-label">Label</Label>

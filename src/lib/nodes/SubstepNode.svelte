@@ -12,7 +12,7 @@
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
-	const { id, data }: NodeProps = $props();
+	const { id, data, type }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
 
@@ -46,7 +46,7 @@
 	// });
 </script>
 
-<NodeWrapper title="Substep" description="Inclusion or Exclusion" nodeId={id} nodeType="substep">
+<NodeWrapper title="Substep" description="Inclusion or Exclusion" nodeId={id} nodeType={type}>
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="label">Label</Label>

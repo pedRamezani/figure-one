@@ -6,7 +6,7 @@
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
-	const { id, data }: NodeProps = $props();
+	const { id, data, type }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
 </script>
@@ -15,7 +15,7 @@
 	title="CONSORT Start"
 	description="The flowchart will start from here."
 	nodeId={id}
-	nodeType="start"
+	nodeType={type}
 >
 	{#snippet content()}
 		<div class="flex flex-col gap-2">

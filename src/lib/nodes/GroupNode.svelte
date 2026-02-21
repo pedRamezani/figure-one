@@ -6,12 +6,12 @@
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
-	const { id, data }: NodeProps = $props();
+	const { id, data, type }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
 </script>
 
-<NodeWrapper title="Group" description="The group name of a node." nodeId={id} nodeType="groups">
+<NodeWrapper title="Group" description="The group name of a node." nodeId={id} nodeType={type}>
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="group">Label</Label>

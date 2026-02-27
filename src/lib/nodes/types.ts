@@ -12,12 +12,14 @@ import SplitIcon from '@lucide/svelte/icons/git-fork';
 import StepIcon from '@lucide/svelte/icons/square';
 import SubstepIcon from '@lucide/svelte/icons/workflow';
 import GroupIcon from '@lucide/svelte/icons/workflow';
+import RowNode from './RowNode.svelte';
 
 // Node Types and Defaults
 // Use 'groups' instead of 'group' to avoid css name conflicts
-export type RegisteredNodeType = 'groups' | 'split' | 'splitstart' | 'start' | 'step' | 'substep';
+export type RegisteredNodeType = 'groups' | 'row' |'split' | 'splitstart' | 'start' | 'step' | 'substep';
 export const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>> = {
 	groups: GroupNode,
+	row: RowNode,
 	split: SplitNode,
 	splitstart: SplitStartNode,
 	start: StartNode,
@@ -43,7 +45,7 @@ export const getNodeDataDefaults = (type: RegisteredNodeType): Record<string, un
 		case 'start':
 			return { label: 'Start population', value: 1000 };
 		default:
-			// split
+			// split, row
 			return {};
 	}
 };
@@ -63,6 +65,13 @@ export const groupSource: Handle = {
 	handleId: 'group',
 	handleType: 'source',
 	position: Position.Right
+};
+
+export const rowTargetGroup: Handle = {
+	nodeType: 'row',
+	handleId: 'row-group',
+	handleType: 'target',
+	position: Position.Left
 };
 
 export const splitSourceOutput: Handle = {
@@ -189,6 +198,7 @@ export const handleGraph = (): Graph<Handle> => {
 	graph.addEdge(stepSourceOutput, splitTargetInput);
 	graph.addEdge(stepSourceSubsteps, substepTarget);
 	// graph.addEdge(groupSource, splitstartTargetGroup);
+	graph.addEdge(groupSource, rowTargetGroup);
 	graph.addEdge(groupSource, startTargetGroup);
 	graph.addEdge(groupSource, stepTargetGroup);
 	return graph;
@@ -196,6 +206,7 @@ export const handleGraph = (): Graph<Handle> => {
 
 export const handleConnectionLimits: Map<Handle, number> = new Map([
 	[groupSource, Infinity],
+	[rowTargetGroup, 1],
 	[splitSourceOutput, Infinity],
 	[splitTargetInput, 1],
 	[splitstartSourceOutput, 1],
@@ -211,6 +222,7 @@ export const handleConnectionLimits: Map<Handle, number> = new Map([
 ]);
 
 export const handleDragCreate: Map<Handle, Handle> = new Map([
+	[rowTargetGroup, groupSource],
 	[splitSourceOutput, splitstartTargetInput],
 	[splitstartSourceOutput, stepTargetInput],
 	// [splitstartTargetGroup, groupSource],
@@ -245,6 +257,7 @@ export type NodeHandleMap = {
 
 export const nodeHandles: NodeHandleMap = {
 	groups: [groupSource],
+	row: [rowTargetGroup],
 	split: [splitSourceOutput, splitTargetInput],
 	splitstart: [splitstartSourceOutput, splitstartTargetInput], // splitstartTargetGroup
 	start: [startSourceOutput, startTargetGroup],

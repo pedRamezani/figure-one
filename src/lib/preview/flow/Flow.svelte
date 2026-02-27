@@ -9,7 +9,8 @@
 			y: number;
 		},
 		origin: [number, number] = [0.5, 0.5],
-		data: Record<string, unknown> = {}
+		data: Record<string, unknown> = {},
+		parentId?: string
 	): Node {
 		const id = getId();
 
@@ -21,7 +22,8 @@
 				...getNodeDataDefaults(nodeType),
 				...data
 			},
-			origin: origin
+			origin: origin,
+			parentId: parentId
 		} satisfies Node;
 
 		nodes = [...nodes, newNode];

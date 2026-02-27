@@ -54,17 +54,28 @@
 		}
 
 		const bound = getNodesBounds([id]);
+		const rowNode = addNode(
+			'row',
+			{
+				x: bound.x - 200,
+				y: bound.y + bound.height + 50
+			},
+			[0, 0]
+		);
+
+		const parentId = rowNode.id;
 		for (const [index, splitVal] of splitValues.entries()) {
 			const newNode = addNode(
 				'splitstart',
 				{
 					x: bound.x + index * 200,
-					y: bound.y + bound.height + 50
+					y: 50
 				},
 				[0, 0],
 				{
 					value: splitVal
-				}
+				},
+				parentId
 			);
 
 			addEdge(id, newNode.id, splitSourceOutput.handleId, splitstartTargetInput.handleId);

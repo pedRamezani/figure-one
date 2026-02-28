@@ -32,16 +32,17 @@ export const getNodeDataDefaults = (type: RegisteredNodeType): Record<string, un
 		case 'groups':
 			return { group: '' };
 		case 'splitstart':
-			return { label: 'Split start population', value: 0 };
+			return { label: 'Split start population', value: 0, row: null };
 		case 'step':
 			return {
 				value: null,
 				delta: 0,
 				stepLabel: 'Step',
-				droppedLabel: 'excluded'
+				droppedLabel: 'excluded',
+				row: null
 			};
 		case 'substep':
-			return { delta: 0, label: 'Substep' };
+			return { delta: 0, label: 'Substep', row: null };
 		case 'start':
 			return { label: 'Start population', value: 1000 };
 		default:

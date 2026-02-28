@@ -57,10 +57,13 @@
 		const rowNode = addNode(
 			'row',
 			{
-				x: bound.x - 200,
+				x: bound.x - (300 * (splits - 1)) / 2,
 				y: bound.y + bound.height + 50
 			},
-			[0, 0]
+			[0, 0], // VERY IMPORTANT!
+			{},
+			undefined,
+			true // VERY IMPORTANT!
 		);
 
 		const parentId = rowNode.id;
@@ -68,12 +71,13 @@
 			const newNode = addNode(
 				'splitstart',
 				{
-					x: bound.x + index * 200,
+					x: index * 300,
 					y: 50
 				},
 				[0, 0],
 				{
-					value: splitVal
+					value: splitVal,
+					row: 0
 				},
 				parentId
 			);

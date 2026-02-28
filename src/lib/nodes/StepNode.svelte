@@ -39,12 +39,24 @@
 
 		// There should only be one connection anyway
 		const connection = targetData.current[0];
+
 		const value = connection.data?.value as number;
 		const newValue = value - (data.delta as number);
 
 		// IMPORTANT: Removing this will cause an infinite loop.
-		if (newValue && data.value != newValue) {
+		if (newValue && data.value !== newValue) {
 			updateNodeData(id, { value: newValue });
+		}
+
+		const row = ('row' in connection.data ? connection.data?.row : null) as number | null;
+
+		// IMPORTANT: Removing this will cause an infinite loop.
+		if (row === null) {
+			if (data.row !== null) {
+				updateNodeData(id, { row: null });
+			}
+		} else if (data.row !== row + 1) {
+			updateNodeData(id, { row: row + 1 });
 		}
 	});
 </script>

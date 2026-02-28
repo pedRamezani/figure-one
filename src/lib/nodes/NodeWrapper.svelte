@@ -10,6 +10,7 @@
 		nodeType,
 		title,
 		description,
+		excludedHandles,
 		content,
 		footer
 	}: {
@@ -17,11 +18,14 @@
 		nodeType: RegisteredNodeType;
 		title: string;
 		description?: string;
+		excludedHandles?: string[];
 		content: Snippet;
 		footer?: Snippet;
 	} = $props();
 
-	const handles = $derived(nodeHandles[nodeType]);
+	const handles = $derived(
+		nodeHandles[nodeType].filter((handle) => !(excludedHandles ?? []).includes(handle.handleId))
+	);
 </script>
 
 <Card.Root>

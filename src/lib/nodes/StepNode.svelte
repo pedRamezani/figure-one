@@ -7,7 +7,7 @@
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
-	import { stepTargetInput } from './types.ts';
+	import { stepTargetInput, stepTargetGroup } from './types.ts';
 
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import { buttonVariants } from '@/components/ui/button/index.js';
@@ -64,7 +64,13 @@
 	});
 </script>
 
-<NodeWrapper title="Step" description="Inclusion or Exclusion" nodeId={id} nodeType={type}>
+<NodeWrapper
+	title="Step"
+	description="Inclusion or Exclusion"
+	nodeId={id}
+	nodeType={type}
+	excludedHandles={data.row === null ? [] : [stepTargetGroup.handleId]}
+>
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="step-label">Label</Label>

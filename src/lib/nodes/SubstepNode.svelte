@@ -25,6 +25,9 @@
 
 	$effect(function () {
 		if (noConnection) {
+			if (data.row !== null) {
+				updateNodeData(id, { row: null });
+			}
 			return;
 		}
 

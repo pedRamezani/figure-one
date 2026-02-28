@@ -34,6 +34,9 @@
 			if (data.value !== null) {
 				updateNodeData(id, { value: null });
 			}
+			if (data.row !== null) {
+				updateNodeData(id, { row: null });
+			}
 			return;
 		}
 

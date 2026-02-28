@@ -13,6 +13,7 @@
 <script lang="ts">
 	import {
 		useNodes,
+		useSvelteFlow,
 		type XYPosition,
 		type Dimensions,
 		type NodeProps,
@@ -25,6 +26,8 @@
 	import HandleWrapper from '@/handles/HandleWrapper.svelte';
 
 	const { id, type, positionAbsoluteX, positionAbsoluteY, width, height }: NodeProps = $props();
+
+	const { deleteElements } = useSvelteFlow();
 
 	const handles = $derived(nodeHandles[type as RegisteredNodeType]);
 
@@ -79,6 +82,7 @@
 	const nodes = useNodes();
 	const childNodes = $derived(nodes.current.filter((node) => node.parentId == id));
 	const childBounds = $derived(getNodesBoundsCustom(childNodes));
+	const noChildren = $derived(childNodes.length === 0);
 
 	function resolveExpansion(childBounds: Rect, padding: number = 20): Expansion {
 		const paddedChildBounds = pad(childBounds, padding);
@@ -145,6 +149,12 @@
 	$effect(() => {
 		if (expansion.changed && expansion.valid) {
 			updateExtension(expansion);
+		}
+	});
+
+	$effect(() => {
+		if (noChildren) {
+			deleteElements({ nodes: [{ id: id }] });
 		}
 	});
 </script>

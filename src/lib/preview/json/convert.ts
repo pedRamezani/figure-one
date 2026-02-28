@@ -2,6 +2,7 @@ import type { Node, Edge, Viewport } from '@xyflow/svelte';
 
 import {
 	groupSource,
+	rowTargetGroup,
 	startSourceOutput,
 	startTargetGroup,
 	stepSourceSubsteps,
@@ -75,11 +76,24 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	const parents: Record<string, string[]> = {};
 
 	for (const e of raw.edges) {
-		children[e.source] ??= [];
-		children[e.source].push(e.target);
-
-		parents[e.target] ??= [];
-		parents[e.target].push(e.source);
+		if (e.targetHandle === rowTargetGroup.handleId) {
+			// special case for row node (not connected, but parentId of other nodes)
+			const targets = raw.nodes.filter(n => n.parentId === e.target).map(n => n.id)
+			for (const t of targets) {
+				children[e.source] ??= [];
+				children[e.source].push(t);
+		
+				parents[t] ??= [];
+				parents[t].push(e.source);
+			}
+		} else {
+			// regular case
+			children[e.source] ??= [];
+			children[e.source].push(e.target);
+	
+			parents[e.target] ??= [];
+			parents[e.target].push(e.source);
+		}
 	}
 
 	// helpers
@@ -216,7 +230,8 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				stepLabel: entry.label,
 				droppedLabel: entry.delta?.label ?? '',
 				value: entry.value,
-				delta: entry.delta?.value ?? 0
+				delta: entry.delta?.value ?? 0,
+				row: null
 			},
 			position: { x: 0, y: 0 }
 		} as Node);
@@ -230,7 +245,8 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				type: 'substep',
 				data: { label: s?.label ?? '', delta: s?.value ?? 0 },
 				position: { x: 0, y: 0 },
-				origin: [0, 0.5]
+				origin: [0, 0.5],
+				row: null
 			} as Node);
 			const edgeId = `${stepId}-${subId}`;
 			edges.push({

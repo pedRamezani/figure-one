@@ -219,7 +219,7 @@
 		fitView();
 	}
 
-	const rowsWithoutParent = $derived(
+	const rowNodes = $derived(
 		nodes
 			.filter((n) => 'row' in n.data)
 			.reduce(
@@ -236,8 +236,9 @@
 	);
 
 	$effect(() => {
-		Object.entries(rowsWithoutParent).forEach(([row, nodes]) => {
+		Object.entries(rowNodes).forEach(([row, nodes]) => {
 			if (Number(row) === -1) {
+				// Number(row) === -1 => row === null => no row node parent => remove parents
 				const nodesWithParent = nodes.filter((n) => n.parentId !== undefined);
 				nodesWithParent.forEach((node) => {
 					const parentNode = getNode(node.parentId as string);
@@ -250,11 +251,12 @@
 					});
 				});
 			} else {
+				// Number(row)  !== -1 => row !== null => node has row parent => add parent
 				const nodesWithoutParent = nodes.filter((n) => n.parentId === undefined);
 				if (nodesWithoutParent) {
-					const nodeWithParent = nodes.find((n) => n.parentId !== undefined);
-					const existingParent =
-						nodeWithParent === undefined ? undefined : getNode(nodeWithParent?.parentId as string);
+					const nodeWithParentId = nodes.find((n) => n.parentId !== undefined)?.parentId;
+					let existingParent =
+						nodeWithParentId === undefined ? undefined : getNode(nodeWithParentId as string);
 					nodesWithoutParent.forEach((node) => {
 						const parentNode =
 							existingParent ??
@@ -266,6 +268,11 @@
 								undefined,
 								true
 							);
+
+						// Needed for updating multiple nodes at once
+						if (existingParent === undefined) {
+							existingParent = parentNode;
+						}
 
 						updateNode(node.id, {
 							parentId: parentNode.id,

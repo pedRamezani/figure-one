@@ -42,14 +42,15 @@
 			(acc: Bounds, childNode: Node) => {
 				const { width = 0, height = 0 } = childNode.measured ?? {};
 				const { x, y } = childNode.position;
+				const [originX, originY] = childNode.origin ?? [0, 0];
 
-				const x1 = x;
-				const y1 = y;
+				const x1 = x - originX * width;
+				const y1 = y - originY * height;
 				acc.x1 = x1 < acc.x1 ? x1 : acc.x1;
 				acc.y1 = y1 < acc.y1 ? y1 : acc.y1;
 
-				const x2 = x + width;
-				const y2 = y + height;
+				const x2 = x + (1 - originX) * width;
+				const y2 = y + (1 - originY) * height;
 				acc.x2 = x2 > acc.x2 ? x2 : acc.x2;
 				acc.y2 = y2 > acc.y2 ? y2 : acc.y2;
 
@@ -109,39 +110,25 @@
 	}
 
 	function updateExtension(expansion: Expansion): void {
-		// steps += 1;
-		// console.log(steps);
 		nodes.update((nodes) =>
 			nodes.map((node) => {
 				if (childNodes.map((n) => n.id).includes(node.id)) {
-					// console.log(
-					// 	'Child',
-					// 	'X',
-					// 	node.position.x,
-					// 	node.position.x - expansion.offset.x,
-					// 	'Y',
-					// 	node.position.y,
-					// 	node.position.y - expansion.offset.y
-					// );
+					// Child nodes have relative coordinates
+					// The absolute coordinates should however be the same after the expansion
+					const origin = node.origin ?? [0, 0];
+					const xShift = node.position.x - origin[0] * (node.width ?? 0);
+					const yShift = node.position.y - origin[1] * (node.height ?? 0);
 					return {
 						...node,
 						position: {
-							x: node.position.x - expansion.offset.x,
-							y: node.position.y - expansion.offset.y
+							x: xShift - expansion.offset.x,
+							y: yShift - expansion.offset.y
 						}
 					};
 				}
 
 				if (node.id === id) {
-					// console.log(
-					// 	'Parent',
-					// 	'X',
-					// 	node.position.x,
-					// 	expansion.position.x,
-					// 	'Y',
-					// 	node.position.y,
-					// 	expansion.position.y
-					// );
+					// These are absolute coordinates
 					return {
 						...node,
 						...expansion.dimension,
@@ -155,14 +142,11 @@
 	}
 
 	const expansion = $derived(resolveExpansion(childBounds));
-	// let steps = 0;
 	$effect(() => {
 		if (expansion.changed && expansion.valid) {
 			updateExtension(expansion);
 		}
 	});
-
-	// $inspect(childBounds);
 </script>
 
 <div

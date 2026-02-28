@@ -7,10 +7,11 @@
 		position: {
 			x: number;
 			y: number;
-		},
+		} = { x: 0, y: 0 },
 		origin: [number, number] = [0.5, 0.5],
 		data: Record<string, unknown> = {},
-		parentId?: string
+		parentId?: string,
+		isParent: boolean = false
 	): Node {
 		const id = getId();
 
@@ -26,7 +27,12 @@
 			parentId: parentId
 		} satisfies Node;
 
-		nodes = [...nodes, newNode];
+		// Child nodes have to always come after parent nodes
+		if (isParent) {
+			nodes = [newNode, ...nodes];
+		} else {
+			nodes = [...nodes, newNode];
+		}
 
 		return newNode;
 	}
@@ -116,7 +122,7 @@
 	const minZoom = 0.1;
 	const maxZoom = 2.5;
 
-	const { screenToFlowPosition, fitView } = useSvelteFlow();
+	const { screenToFlowPosition, fitView, updateNode, getNode } = useSvelteFlow();
 
 	const handleConnectEnd: OnConnectEnd = (event, connectionState) => {
 		if (connectionState.isValid) return;
@@ -212,6 +218,67 @@
 
 		fitView();
 	}
+
+	const rowsWithoutParent = $derived(
+		nodes
+			.filter((n) => 'row' in n.data)
+			.reduce(
+				(acc, node) => {
+					const row = node.data?.row as number | null;
+					if (!acc[row ?? -1]) {
+						acc[row ?? -1] = [];
+					}
+					acc[row ?? -1].push(node);
+					return acc;
+				},
+				{} as { [key: number]: Node[] }
+			)
+	);
+
+	$effect(() => {
+		Object.entries(rowsWithoutParent).forEach(([row, nodes]) => {
+			if (Number(row) === -1) {
+				const nodesWithParent = nodes.filter((n) => n.parentId !== undefined);
+				nodesWithParent.forEach((node) => {
+					const parentNode = getNode(node.parentId as string);
+					updateNode(node.id, {
+						parentId: undefined,
+						position: {
+							x: (parentNode?.position.x ?? 0) + node.position.x,
+							y: (parentNode?.position.y ?? 0) + node.position.y
+						}
+					});
+				});
+			} else {
+				const nodesWithoutParent = nodes.filter((n) => n.parentId === undefined);
+				if (nodesWithoutParent) {
+					const nodeWithParent = nodes.find((n) => n.parentId !== undefined);
+					const existingParent =
+						nodeWithParent === undefined ? undefined : getNode(nodeWithParent?.parentId as string);
+					nodesWithoutParent.forEach((node) => {
+						const parentNode =
+							existingParent ??
+							addNode(
+								'row',
+								{ x: node.position.x - 20, y: node.position.y - 20 },
+								[0, 0],
+								{},
+								undefined,
+								true
+							);
+
+						updateNode(node.id, {
+							parentId: parentNode.id,
+							position: {
+								x: node.position.x - parentNode.position.x,
+								y: node.position.y - parentNode.position.y
+							}
+						});
+					});
+				}
+			}
+		});
+	});
 </script>
 
 <SvelteFlow

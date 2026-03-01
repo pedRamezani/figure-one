@@ -24,31 +24,7 @@ export type TypstFlowchartDataLegacyV1 = {
 	}[];
 }[];
 
-export type TypstRow = {
-	// Removing row, col and switching to id, next will
-	// allow to correctly draw edges from node to split nodes below
-	// it is needed if multiple splits are allowed to know where the
-	// split is coming from. => Is this really needed for a CONSORT flowchart?
-	// Using id, next has 2 disatvantages:
-	// 1. Groups are row based. I want to pass the group info seperatly later like:
-	// {"label": "groupname", rows: [1, 2, 3]}
-	// 2. After a split we may want to align similiar steps accros the splits on the same row
-	// A
-	// |
-	// B
-	// |  \
-	// C1 C2
-	// |  |
-	// D1 skipped
-	// |  |
-	// E1 E2
-	// id: string;
-	// next: string[];
-	row: number;
-	col: number;
-
-	group: string;
-
+export type TypstStep = {
 	label: string;
 	value: number;
 
@@ -62,7 +38,34 @@ export type TypstRow = {
 	} | null;
 };
 
-export type TypstFlowchartData = TypstRow[];
+export type TypstSteps = (TypstStep | (TypstStep | null)[])[];
+
+export type TypstGroups = Record<string, number[]>;
+
+export type TypstFlowchartData = {
+	steps: TypstSteps;
+	groups: TypstGroups;
+};
+
+function mapToRectangular2DArray<T>(map: Map<[number, number], T>): (T | null)[][] {
+	let maxRow = -1;
+	let maxCol = -1;
+
+	for (const [[row, col]] of map) {
+		maxRow = Math.max(maxRow, row);
+		maxCol = Math.max(maxCol, col);
+	}
+
+	const result: (T | null)[][] = Array.from({ length: maxRow + 1 }, () =>
+		Array(maxCol + 1).fill(null)
+	);
+
+	for (const [[row, col], value] of map) {
+		result[row][col] = value;
+	}
+
+	return result;
+}
 
 export function convertFlowchartToTypstFlowchartData(raw: {
 	nodes: Node[];
@@ -78,11 +81,11 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	for (const e of raw.edges) {
 		if (e.targetHandle === rowTargetGroup.handleId) {
 			// special case for row node (not connected, but parentId of other nodes)
-			const targets = raw.nodes.filter(n => n.parentId === e.target).map(n => n.id)
+			const targets = raw.nodes.filter((n) => n.parentId === e.target).map((n) => n.id);
 			for (const t of targets) {
 				children[e.source] ??= [];
 				children[e.source].push(t);
-		
+
 				parents[t] ??= [];
 				parents[t].push(e.source);
 			}
@@ -90,7 +93,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 			// regular case
 			children[e.source] ??= [];
 			children[e.source].push(e.target);
-	
+
 			parents[e.target] ??= [];
 			parents[e.target].push(e.source);
 		}
@@ -111,32 +114,16 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 				value: n.data.delta as number
 			}));
 
-	const rows: TypstFlowchartData = [];
-
-	let currentRow = 0;
-
-	// column allocation per split
-	let nextFreeCol = 0;
-	const colByNode = new Map<string, number>();
-
 	const start = raw.nodes.find((n) => n.type === 'start');
 	if (!start) {
-		return [];
+		return { steps: [], groups: {} };
 	}
 
+	const colByNode = new Map<string, number>();
 	colByNode.set(start.id, 0);
 
-	function emitNode(nodeId: string, row: number) {
-		const node = nodeById[nodeId];
-		const col = colByNode.get(nodeId) ?? 0;
-
-		const newRow: TypstRow = {
-			// id: nodeId,
-			row,
-			col,
-
-			group: getGroup(nodeId),
-
+	function createStep(node: Node): TypstStep {
+		const newStep: TypstStep = {
 			label: (node.data.stepLabel as string) ?? (node.data.label as string) ?? '',
 			value: (node.data.value as number) ?? 0,
 
@@ -145,51 +132,102 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 					? {
 							label: (node.data.droppedLabel as string) ?? '',
 							value: (node.data.delta as number) ?? 0,
-							substeps: getSubsteps(nodeId)
+							substeps: getSubsteps(node.id)
 						}
 					: null
 		};
 
-		rows.push(newRow);
+		return newStep;
 	}
 
+	// steps
+	const mainSteps: TypstStep[] = [];
+	const splitSteps: Map<[number, number], TypstStep> = new Map();
+
+	// groups
+	const mainGroups: string[] = [];
+	const splitGroups: Map<number, string> = new Map();
+
+	// column allocation per split
+	let nextFreeCol = 0;
+
 	// main traversal queue
-	const queue: Array<{ id: string; row: number }> = [{ id: start.id, row: currentRow }];
-
+	const queue: string[] = [start.id];
 	while (queue.length > 0) {
-		const { id, row } = queue.shift()!;
-		currentRow = Math.max(currentRow, row);
-
-		emitNode(id, row);
+		const id = queue.shift()!;
 
 		const node = nodeById[id];
+		const step = createStep(node);
+
+		if ('row' in node.data && node.data.row !== null) {
+			// Steps
+			const row = node.data.row as number;
+			const col = colByNode.get(id) ?? 0;
+			splitSteps.set([row, col], step);
+
+			// Groups
+			const group = getGroup(node.id);
+			if (!splitGroups.has(row)) {
+				splitGroups.set(row, group);
+			}
+		} else {
+			// Steps
+			mainSteps.push(step);
+
+			// Groups
+			const group = getGroup(node.id);
+			mainGroups.push(group);
+		}
 
 		// STEP → next step or split
 		if (node.type === 'step' || node.type === 'start' || node.type === 'splitstart') {
 			const nextStep = (children[id] ?? []).find((cid) => nodeById[cid].type === 'step');
 
-			const split = (children[id] ?? []).find((cid) => nodeById[cid].type === 'split');
+			const nextSplit = (children[id] ?? []).find((cid) => nodeById[cid].type === 'split');
 
 			if (nextStep) {
 				colByNode.set(nextStep, colByNode.get(id)!);
-				queue.push({ id: nextStep, row: row + 1 });
+				queue.push(nextStep);
 				continue;
 			}
 
-			if (split) {
-				const splitStarts = (children[split] ?? []).filter(
+			if (nextSplit) {
+				const splitStarts = (children[nextSplit] ?? []).filter(
 					(cid) => nodeById[cid].type === 'splitstart'
 				);
 
 				for (const ss of splitStarts) {
 					colByNode.set(ss, nextFreeCol++);
-					queue.push({ id: ss, row: row + 1 });
+					queue.push(ss);
 				}
 			}
 		}
 	}
 
-	return rows;
+	const typeSteps: TypstSteps = [...mainSteps, ...mapToRectangular2DArray(splitSteps)];
+
+	const typeGroups: TypstGroups = (
+		[
+			...mainGroups,
+			...splitGroups
+				.entries()
+				.toArray()
+				.sort(([row, name]) => row)
+				.map(([row, name]) => name)
+		]
+			.entries()
+			.reduce(
+				(acc, [row, name]) => {
+					if (name.length > 0) {
+						(acc[name] ??= []).push(row);
+					}
+					return acc;
+				},
+				{} as { [key: string]: number[] }
+			)
+	);
+
+	return { steps: typeSteps, groups: typeGroups };
 }
 
 export function parseTypstFlowchartJSON(json: TypstFlowchartData): {

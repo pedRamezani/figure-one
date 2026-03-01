@@ -175,13 +175,17 @@
     // ----------------------------
     // Population + exclusion boxes
     // ----------------------------
-    // Sorting is needed for correct "d,r" arrows later
     for (row, val) in data.steps.enumerate() {
       let vals = as-array(val)
 
       let max-cols = vals.len()
 
       for (col, it) in vals.enumerate() {
+
+        if it == none {
+          continue
+        }
+
         // Population box
         let population-col = mapped-col(col, max-cols: max-cols)
         styled-node(
@@ -230,6 +234,10 @@
       if prev-vals.len() == max-cols {
         // Vertical flow
         for (col, (p-it, n-it)) in prev-vals.zip(next-vals).enumerate() {
+          if n-it == none {
+            continue
+          }
+
           let population-col = mapped-col(col, max-cols: max-cols)
           styled-edge(
             (population-col, row * 2),
@@ -237,10 +245,14 @@
             a.arrow,
           )
         }
-      } else {
+      } else if prev-vals.len() == 1 {
         // Split flow
         let p-it = prev-vals.at(0)
         for (col, n-it) in next-vals.enumerate() {
+          if n-it == none {
+            continue
+          }
+
           let population-col = mapped-col(col, max-cols: max-cols)
           let steps = (
             (mapped-col(0), row * 2),

@@ -89,19 +89,47 @@
 // Group calculation (by rows)
 // ----------------------------
 #let groups(data) = {
-  data.map(it => it.group).filter(g => g != "").dedup().map(
-    g => {
-      let rows = data.filter(it => it.group == g).map(it => it.row)
-      let r-min = calc.min(..rows)
-      let r-max = calc.max(..rows)
+  data.groups.remove("", default: none)
 
-      (
-        label: g,
+  let groups = ()
+  for (group, rows) in data.groups.pairs() {
+    let r-min = calc.min(..rows)
+    let r-max = none
+    for (prev, next) in rows.sorted().windows(2) {
+      if prev + 1 != next {
+        r-max = prev
+        groups.push((
+          label: group,
+          start: r-min,
+          end: r-max
+        ))
+        r-min = next
+        r-max = none
+      }
+    }
+
+    if r-max == none {
+      r-max = calc.max(..rows)
+      groups.push((
+        label: group,
         start: r-min,
         end: r-max
-      )
+      ))
     }
-  )
+  }
+  
+  groups
+}
+
+// ----------------------------
+// Array helper
+// ----------------------------
+#let as-array(value) = {
+  if type(value) == array {
+    value
+  } else {
+    (value, )
+  }
 }
 
 // ----------------------------
@@ -115,28 +143,29 @@
   let g = style.groupBox
 
   // Find split row
-  let split-row = data.map(it => it.row).sorted().windows(2).filter(w => w.at(0) == w.at(1)).map(w => w.at(0)).reduce((acc, it) => calc.min(acc, it))
-
+  // let n-splits = data.steps.find(it => type(it) == array).len()
+  // let split-row = data.map(it => it.row).sorted().windows(2).filter(w => w.at(0) == w.at(1)).map(w => w.at(0)).reduce((acc, it) => calc.min(acc, it))
+  // 
   // Find split parent if possible
-  let split-parent = none
-  if split-row != none {
-    split-parent = data.find(it => it.row == split-row - 1)
-  }
+  // let split-parent = none
+  // if split-row != none {
+  //   split-parent = data.find(it => it.row == split-row - 1)
+  // }
 
   // Calculate column shift for rows >= split-row
-  let max-col = data.map(it => it.col).reduce((acc, it) => calc.max(acc, it))
+  // let max-col = data.map(it => it.col).reduce((acc, it) => calc.max(acc, it))
 
   // Col mapping function
-  let mapped-col(col, row: none) = {
-    if row == none or split-row == none or row < split-row {
+  let mapped-col(col, max-cols: none) = {
+    if max-cols == none or max-cols <= 1 {
       col * 2
     } else {
-      col * 2 - max-col
+      col * 2 - max-cols + 1
     }
   }
 
   // Calculate min col - 1 for group box placement
-  let group-col = calc.min(..data.map(it => mapped-col(it.col, row: it.row))) - 1
+  let group-col = - 1
 
   diagram(
     spacing: d.spacing * 1pt,
@@ -147,73 +176,85 @@
     // Population + exclusion boxes
     // ----------------------------
     // Sorting is needed for correct "d,r" arrows later
-    for it in data.sorted(key: it => (it.col, it.row)) {
-      // Exclusion box (optional) + Edge
-      if it.delta != none {
-        // Population → exclusion
-        styled-edge(
-          "d,r", 
-          a.arrow
-        )
+    for (row, val) in data.steps.enumerate() {
+      let vals = as-array(val)
 
-        // Exclusion box
+      let max-cols = vals.len()
+
+      for (col, it) in vals.enumerate() {
+        // Population box
+        let population-col = mapped-col(col, max-cols: max-cols)
         styled-node(
-          (mapped-col(it.col, row: it.row) + 1, it.row * 2 - 1),
-          str(it.delta.value)
-            + " "
-            + it.delta.label
-            + for s in it.delta.substeps {
-              "\n    " + str(s.value) + " " + s.label
-            },
-          tint: tint-mapping.at(s.tint),
-          width: s.width * 1mm,
+          (population-col, row * 2),
+          it.label + "\n" + str(it.value),
+          tint: tint-mapping.at(m.tint),
+          width: m.width * 1mm,
         )
-      }
 
-      // Population box
-      styled-node(
-        (mapped-col(it.col, row: it.row), it.row * 2),
-        it.label + "\n" + str(it.value),
-        tint: tint-mapping.at(m.tint),
-        width: m.width * 1mm,
-      )
-    },
+        group-col = calc.min(group-col, population-col - 1)
 
-    // ----------------------------
-    // Vertical population flow
-    // ----------------------------
-    for it in data {
-      let next = data.find(
-        n => n.col == it.col and n.row == it.row + 1
-      )
+        // Exclusion box (optional) + Edge
+        if it.delta != none {
+          // Population → exclusion
+          styled-edge(
+            (population-col, (row - 1) * 2),
+            (population-col, row * 2 - 1),
+            (population-col + 1, row * 2 - 1),
+            a.arrow
+          )
 
-      if next != none and (
-        split-row == none
-        or next.row != split-row
-      ) {
-        styled-edge(
-          (mapped-col(it.col, row: it.row), it.row * 2),
-          (mapped-col(next.col, row: next.row), next.row * 2),
-          a.arrow,
-        )
+          // Exclusion box
+          styled-node(
+            (population-col + 1, row * 2 - 1),
+            str(it.delta.value)
+              + " "
+              + it.delta.label
+              + for s in it.delta.substeps {
+                "\n    " + str(s.value) + " " + s.label
+              },
+            tint: tint-mapping.at(s.tint),
+            width: s.width * 1mm,
+          )
+        }
       }
     },
 
     // ----------------------------
-    // Split population flow
+    // Population flow
     // ----------------------------
-    for it in data.filter(it => it.row == split-row) {
-      let steps = (
-        (mapped-col(split-parent.col), split-parent.row * 2),
-        (mapped-col(split-parent.col), split-parent.row * 2 + 1),
-        (mapped-col(it.col, row: it.row), split-parent.row * 2 + 1),
-        (mapped-col(it.col, row: it.row), split-row * 2)
-      ).dedup()
+    for (row, (prev, next)) in data.steps.windows(2).enumerate() {
+      let prev-vals = as-array(prev)
+      let next-vals = as-array(next)
 
-      styled-edge(
-        ..steps,
-        a.arrow,
-      )
+      let max-cols = next-vals.len()
+      if prev-vals.len() == max-cols {
+        // Vertical flow
+        for (col, (p-it, n-it)) in prev-vals.zip(next-vals).enumerate() {
+          let population-col = mapped-col(col, max-cols: max-cols)
+          styled-edge(
+            (population-col, row * 2),
+            (population-col, (row + 1) * 2),
+            a.arrow,
+          )
+        }
+      } else {
+        // Split flow
+        let p-it = prev-vals.at(0)
+        for (col, n-it) in next-vals.enumerate() {
+          let population-col = mapped-col(col, max-cols: max-cols)
+          let steps = (
+            (mapped-col(0), row * 2),
+            (mapped-col(0), row * 2 + 1),
+            (population-col, row * 2 + 1),
+            (population-col, (row + 1) * 2)
+          ).dedup()
+
+          styled-edge(
+            ..steps,
+            a.arrow,
+          )
+        }
+      }
     },
 
     // ----------------------------

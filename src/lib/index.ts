@@ -1,5 +1,5 @@
-import { parseTypstFlowchartJSON, type TypstFlowchartData } from './preview/json/convert';
-import { isFlowchartData, isFlowchartDataV1 } from './preview/json/validate';
+import { parseTypstFlowchartJSON, type TypstFlowchartData, type TypstSteps, type TypstStep, type TypstGroups } from './preview/json/convert';
+import { isTypstFlowchartData, isTypstFlowchartDataV1 } from './preview/json/validate';
 
 import { styleConfig, type TypstFlowchartConfig } from './preview/style/style-config.svelte';
 import { isFlowchartConfig } from './preview/style/validate';
@@ -41,18 +41,16 @@ export function parseProfileJSON(value: unknown): Profile | null {
 
 	// Data
 	let flowchartData: TypstFlowchartData;
-	if (isFlowchartData(value.data)) {
+	if (isTypstFlowchartData(value.data)) {
 		flowchartData = value.data;
-		console.log('newFD');
-	} else if (isFlowchartDataV1(value.data)) {
-		const parsedData: TypstFlowchartData = [];
+		console.info('JSONnewFD');
+	} else if (isTypstFlowchartDataV1(value.data)) {
+		const parsedMainSteps: TypstStep[] = [];
+		const parsedGroups: TypstGroups = {}
 		for (let i = 0; i <= value.data.length - 1; i++) {
 			const entry = value.data[i];
 			console.log(entry);
-			parsedData.push({
-				row: i,
-				col: 0,
-				group: entry.group,
+			parsedMainSteps.push({
 				label: entry.stepLabel,
 				value: entry.value,
 				delta:
@@ -67,10 +65,21 @@ export function parseProfileJSON(value: unknown): Profile | null {
 								}))
 							}
 			});
+
+			(parsedGroups[entry.group] ??= []).push(i)
 		}
+		const parsedSteps: TypstSteps = {
+			"main": parsedMainSteps,
+			"splits": []
+		}
+		const parsedData: TypstFlowchartData = {
+			"steps": parsedSteps,
+			"groups": parsedGroups
+		};
 		flowchartData = parsedData;
+		console.info('JSONlegacyFD');
 	} else {
-		console.log('notSupported');
+		console.error('JSONnotSupported');
 		return null;
 	}
 

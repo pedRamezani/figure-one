@@ -1,56 +1,78 @@
-import type { TypstFlowchartData, TypstFlowchartDataLegacyV1 } from './convert';
+import type { TypstFlowchartData, TypstStep, TypstFlowchartDataLegacyV1 } from './convert';
 
 import { isNumber, isObject } from '@/utils';
 
-export type TypstRow = {
-	row: number;
-	col: number;
-	group: string;
-	label: string;
-	value: number;
-	delta: {
-		label: string;
-		value: number;
-		substeps: {
-			label: string;
-			value: number;
-		}[];
-	} | null;
-};
+export function isTypstFlowchartData(value: unknown): value is TypstFlowchartData {
+	if (!isObject(value)) return false;
 
-export function isFlowchartData(value: unknown): value is TypstFlowchartData {
-	if (!Array.isArray(value) || value.length === 0) return false;
+	const maybe = value as any;
 
-	for (const item of value) {
-		if (!isObject(item)) return false;
+	// ---- groups ----
+	if (!isObject(maybe.groups)) return false;
 
-		const maybe = item as any;
-		if (!isNumber(maybe.row)) return false;
-		if (!isNumber(maybe.col)) return false;
-		if (typeof maybe.group !== 'string') return false;
-		if (typeof maybe.label !== 'string') return false;
-		if (!isNumber(maybe.value)) return false;
+	for (const key of Object.keys(maybe.groups)) {
+		const groupValue = maybe.groups[key];
+		if (!Array.isArray(groupValue)) return false;
 
-		if (maybe.delta === null) continue;
-		if (!isObject(maybe.delta)) return false;
+		for (const num of groupValue) {
+			if (!isNumber(num)) return false;
+		}
+	}
 
-		const deltaMaybe = maybe.delta as any;
-		if (typeof deltaMaybe.label !== 'string') return false;
-		if (!isNumber(deltaMaybe.value)) return false;
+	// ---- steps ----
+	if (!isObject(maybe.steps)) return false;
 
-		if (!Array.isArray(deltaMaybe.substeps)) return false;
-		for (const sd of deltaMaybe.substeps) {
-			if (!isObject(sd)) return false;
+	const steps = maybe.steps;
 
-			if (typeof (sd as any).label !== 'string') return false;
-			if (!isNumber((sd as any).value)) return false;
+	// main: TypstStep[]
+	if (!Array.isArray(steps.main)) return false;
+	for (const step of steps.main) {
+		if (!isTypstStep(step)) return false;
+	}
+
+	// splits: (TypstStep | null)[][]
+	if (!Array.isArray(steps.splits)) return false;
+	for (const row of steps.splits) {
+		if (!Array.isArray(row)) return false;
+
+		for (const entry of row) {
+			if (entry === null) continue;
+			if (!isTypstStep(entry)) return false;
 		}
 	}
 
 	return true;
 }
 
-export function isFlowchartDataV1(value: unknown): value is TypstFlowchartDataLegacyV1 {
+function isTypstStep(value: unknown): value is TypstStep {
+	if (!isObject(value)) return false;
+
+	const maybe = value as any;
+
+	if (typeof maybe.label !== "string") return false;
+	if (!isNumber(maybe.value)) return false;
+
+	if (maybe.delta === null) return true;
+
+	if (!isObject(maybe.delta)) return false;
+
+	const delta = maybe.delta as any;
+
+	if (typeof delta.label !== "string") return false;
+	if (!isNumber(delta.value)) return false;
+
+	if (!Array.isArray(delta.substeps)) return false;
+
+	for (const sub of delta.substeps) {
+		if (!isObject(sub)) return false;
+		if (typeof (sub as any).label !== "string") return false;
+		if (!isNumber((sub as any).value)) return false;
+	}
+
+	return true;
+}
+
+export function isTypstFlowchartDataV1(value: unknown): value is TypstFlowchartDataLegacyV1 {
 	if (!Array.isArray(value) || value.length === 0) return false;
 
 	for (const item of value) {

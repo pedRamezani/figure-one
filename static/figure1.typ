@@ -167,6 +167,8 @@
   // Calculate min col - 1 for group box placement
   let group-col = - 1
 
+  let steps = (..data.steps.main, ..data.steps.splits)
+
   diagram(
     spacing: d.spacing * 1pt,
     cell-size: (d.cellWidth * 1mm, d.cellHeight * 1mm),
@@ -175,7 +177,7 @@
     // ----------------------------
     // Population + exclusion boxes
     // ----------------------------
-    for (row, val) in data.steps.enumerate() {
+    for (row, val) in steps.enumerate() {
       let vals = as-array(val)
 
       let max-cols = vals.len()
@@ -226,7 +228,7 @@
     // ----------------------------
     // Population flow
     // ----------------------------
-    for (row, (prev, next)) in data.steps.windows(2).enumerate() {
+    for (row, (prev, next)) in steps.windows(2).enumerate() {
       let prev-vals = as-array(prev)
       let next-vals = as-array(next)
 

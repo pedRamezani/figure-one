@@ -1,6 +1,6 @@
 <script module>
 	let id = 1;
-	const getId = () => `${id++}`;
+	export const getId: () => string = () => `${id++}`;
 
 	export function addNode(
 		nodeType: RegisteredNodeType,

@@ -1,5 +1,7 @@
 import type { Node, Edge, Viewport } from '@xyflow/svelte';
 
+import { getId } from '../flow/Flow.svelte';
+
 import {
 	groupSource,
 	rowTargetGroup,
@@ -38,7 +40,10 @@ export type TypstStep = {
 	} | null;
 };
 
-export type TypstSteps = (TypstStep | (TypstStep | null)[])[];
+export type TypstSteps = {
+	main: TypstStep[];
+	splits: (TypstStep | null)[][];
+};
 
 export type TypstGroups = Record<string, number[]>;
 
@@ -72,6 +77,8 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	edges: Edge[];
 	viewport: Viewport;
 }): TypstFlowchartData {
+	console.log(raw.nodes);
+	console.log(raw.edges);
 	const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
 
 	// adjacency
@@ -116,7 +123,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 	const start = raw.nodes.find((n) => n.type === 'start');
 	if (!start) {
-		return { steps: [], groups: {} };
+		return { steps: { main: [], splits: [] }, groups: {} };
 	}
 
 	const colByNode = new Map<string, number>();
@@ -204,28 +211,29 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		}
 	}
 
-	const typeSteps: TypstSteps = [...mainSteps, ...mapToRectangular2DArray(splitSteps)];
+	const typeSteps: TypstSteps = {
+		main: mainSteps,
+		splits: mapToRectangular2DArray(splitSteps)
+	};
 
-	const typeGroups: TypstGroups = (
-		[
-			...mainGroups,
-			...splitGroups
-				.entries()
-				.toArray()
-				.sort(([row, name]) => row)
-				.map(([row, name]) => name)
-		]
+	const typeGroups: TypstGroups = [
+		...mainGroups,
+		...splitGroups
 			.entries()
-			.reduce(
-				(acc, [row, name]) => {
-					if (name.length > 0) {
-						(acc[name] ??= []).push(row);
-					}
-					return acc;
-				},
-				{} as { [key: string]: number[] }
-			)
-	);
+			.toArray()
+			.sort(([row, name]) => row)
+			.map(([row, name]) => name)
+	]
+		.entries()
+		.reduce(
+			(acc, [row, name]) => {
+				if (name.length > 0) {
+					(acc[name] ??= []).push(row);
+				}
+				return acc;
+			},
+			{} as { [key: string]: number[] }
+		);
 
 	return { steps: typeSteps, groups: typeGroups };
 }
@@ -234,140 +242,225 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 	nodes: Node[];
 	edges: Edge[];
 } {
+	const { main, splits } = json.steps;
+	const groups = json.groups ?? {};
+
 	const nodes: Node[] = [];
 	const edges: Edge[] = [];
 
-	if (!Array.isArray(json) || json.length === 0) return { nodes, edges };
+	const logicalMap: Map<number, [string, string]> = new Map(); // index → nodeId
+	let logicalIndex = 0;
 
-	// Create start node (use deterministic id)
-	const startEntry = json[0];
-	const startId = 'start';
-	nodes.push({
-		id: startId,
-		type: 'start',
-		data: {
-			label: startEntry.label,
-			value: startEntry.value
-		},
-		position: { x: 0, y: 0 },
-		deletable: false
-	} as Node);
+	const mainNodeIds: string[] = [];
 
-	// Steps begin at index 1
-	const stepIds: string[] = [];
+	// ========================
+	// 1. MAIN FLOW
+	// ========================
 
-	for (let i = 1; i < json.length; i++) {
-		const entry = json[i];
-		const stepId = `step-${i}`;
-		stepIds.push(stepId);
+	main.forEach((step, i) => {
+		const id = getId();
 
-		nodes.push({
-			id: stepId,
-			type: 'step',
-			data: {
-				stepLabel: entry.label,
-				droppedLabel: entry.delta?.label ?? '',
-				value: entry.value,
-				delta: entry.delta?.value ?? 0,
-				row: null
-			},
-			position: { x: 0, y: 0 }
-		} as Node);
+		if (i === 0) {
+			nodes.push({
+				id,
+				type: 'start',
+				data: { label: step.label, value: step.value, row: null },
+				position: { x: 0, y: 0 },
+				deletable: false
+			});
+		} else {
+			nodes.push({
+				id,
+				type: 'step',
+				data: {
+					stepLabel: step.label,
+					value: step.value,
+					delta: step.delta?.value ?? 0,
+					droppedLabel: step.delta?.label ?? '',
+					row: null
+				},
+				position: { x: 0, y: 0 }
+			});
+
+			edges.push({
+				id: `${mainNodeIds[i - 1]}-${id}`,
+				source: mainNodeIds[i - 1],
+				target: id,
+				sourceHandle: i == 1 ? 'start-output' : 'step-output',
+				targetHandle: 'step-input'
+			});
+		}
+
+		mainNodeIds.push(id);
+		logicalMap.set(logicalIndex++, ['step', id]);
 
 		// substeps
-		for (let j = 0; j < (entry.delta?.substeps.length ?? 0); j++) {
-			const s = entry.delta?.substeps[j];
-			const subId = `substep-${i}-${j}`;
+		step.delta?.substeps?.forEach((sub) => {
+			const subId = getId();
+
 			nodes.push({
 				id: subId,
 				type: 'substep',
-				data: { label: s?.label ?? '', delta: s?.value ?? 0 },
-				position: { x: 0, y: 0 },
-				origin: [0, 0.5],
-				row: null
-			} as Node);
-			const edgeId = `${stepId}-${subId}`;
+				data: { label: sub.label, delta: sub.value, row: null },
+				position: { x: 0, y: 0 }
+			});
+
 			edges.push({
-				id: edgeId,
-				source: stepId,
-				sourceHandle: stepSourceSubsteps.handleId,
+				id: `${id}-${subId}`,
+				source: id,
 				target: subId,
-				targetHandle: substepTarget.handleId
-			} as Edge);
-		}
-	}
+				sourceHandle: 'step-substeps',
+				targetHandle: 'substep'
+			});
+		});
+	});
 
-	// connect start -> first step (if exists)
-	if (stepIds.length > 0) {
-		const edgeId = `${startId}-${stepIds[0]}`;
+	console.log(mainNodeIds);
+
+	// ========================
+	// 2. SPLIT
+	// ========================
+	if (splits?.length) {
+		let splitId = getId();
+
+		nodes.push({
+			id: splitId,
+			type: 'split',
+			data: {},
+			position: { x: 0, y: 0 }
+		});
+
 		edges.push({
-			id: edgeId,
-			source: startId,
-			sourceHandle: startSourceOutput.handleId,
-			target: stepIds[0],
-			targetHandle: stepTargetInput.handleId
-		} as Edge);
-	}
+			id: `${mainNodeIds.at(-1) ?? ''}-${splitId}`,
+			source: mainNodeIds.at(-1) ?? '',
+			target: splitId,
+			sourceHandle: 'step-output',
+			targetHandle: 'split-input'
+		});
 
-	// connect steps sequentially
-	for (let k = 0; k < stepIds.length - 1; k++) {
-		const edgeId = `${stepIds[k]}-${stepIds[k + 1]}`;
-		edges.push({
-			id: edgeId,
-			source: stepIds[k],
-			sourceHandle: stepSourceOutput.handleId,
-			target: stepIds[k + 1],
-			targetHandle: stepTargetInput.handleId
-		} as Edge);
-	}
+		const columnMap: string[][] = [];
 
-	// Create unique group nodes and connect them to their start/step nodes
-	const groupMap = new Map<string, string>();
-	let gi = 0;
-	function ensureGroup(name: string) {
-		if (name !== '' && !groupMap.has(name)) {
-			const gid = `group-${gi++}`;
-			groupMap.set(name, gid);
+		splits.forEach((row, rowIndex) => {
+			const rowId = getId();
+
 			nodes.push({
-				id: gid,
-				type: 'groups',
-				data: { group: name },
-				position: { x: 0, y: 0 },
-				origin: [1, 0.5]
-			} as Node);
-		}
-		return groupMap.get(name)!;
+				id: rowId,
+				type: 'row',
+				data: {},
+				position: { x: 0, y: 0 }
+			});
+
+			row.forEach((cell, colIndex) => {
+				if (!cell) {
+					logicalIndex++;
+					return;
+				}
+
+				const id = getId();
+
+				if (rowIndex === 0) {
+					nodes.push({
+						id,
+						type: 'splitstart',
+						parentId: rowId,
+						data: {
+							label: cell.label,
+							value: cell.value,
+							row: rowIndex
+						},
+						position: { x: 0, y: 0 }
+					});
+				} else {
+					nodes.push({
+						id,
+						type: 'step',
+						parentId: rowId,
+						data: {
+							stepLabel: cell.label,
+							value: cell.value,
+							delta: cell.delta?.value ?? 0,
+							droppedLabel: cell.delta?.label ?? '',
+							row: rowIndex
+						},
+						position: { x: 0, y: 0 }
+					});
+				}
+
+				logicalMap.set(logicalIndex++, ['row', rowId]);
+
+				if (!columnMap[colIndex]) columnMap[colIndex] = [];
+				columnMap[colIndex][rowIndex] = id;
+
+				if (rowIndex === 0) {
+					edges.push({
+						id: `${splitId}-${id}`,
+						source: splitId,
+						target: id,
+						sourceHandle: 'split-output',
+						targetHandle: 'splitstart-input'
+					});
+				}
+
+				if (rowIndex > 0 && columnMap[colIndex][rowIndex - 1]) {
+					edges.push({
+						id: `${columnMap[colIndex][rowIndex - 1]}-${id}`,
+						source: columnMap[colIndex][rowIndex - 1],
+						target: id,
+						sourceHandle: rowIndex == 1 ? 'splitstart-output' : 'step-output',
+						targetHandle: 'step-input'
+					});
+				}
+
+				cell.delta?.substeps?.forEach((sub) => {
+					const subId = getId();
+
+					nodes.push({
+						id: subId,
+						type: 'substep',
+						parentId: rowId,
+						data: { label: sub.label, delta: sub.value, row: rowIndex },
+						position: { x: 0, y: 0 }
+					});
+
+					edges.push({
+						id: `${id}-${subId}`,
+						source: id,
+						target: subId,
+						sourceHandle: 'step-substeps',
+						targetHandle: 'substep'
+					});
+				});
+			});
+		});
 	}
 
-	// start
-	if (startEntry.group) {
-		const gid = ensureGroup(startEntry.group);
-		const edgeId = `${gid}-${startId}`;
-		edges.push({
-			id: edgeId,
-			source: gid,
-			sourceHandle: groupSource.handleId,
-			target: startId,
-			targetHandle: startTargetGroup.handleId
-		} as Edge);
-	}
+	// ========================
+	// 3. GROUPS
+	// ========================
 
-	// steps
-	for (let i = 1; i < json.length; i++) {
-		const entry = json[i];
-		const stepId = stepIds[i - 1];
-		if (entry.group) {
-			const gid = ensureGroup(entry.group);
-			const edgeId = `${gid}-${stepId}`;
+	Object.entries(groups).forEach(([groupName, indices]) => {
+		const groupId = getId();
+
+		nodes.push({
+			id: groupId,
+			type: 'groups',
+			data: { group: groupName },
+			position: { x: -500, y: 300 }
+		});
+
+		indices.forEach((index) => {
+			const [nodeType, targetId] = logicalMap.get(index) ?? ['split', ''];
+			if (!targetId) return;
+
 			edges.push({
-				id: edgeId,
-				source: gid,
-				sourceHandle: groupSource.handleId,
-				target: stepId,
-				targetHandle: stepTargetGroup.handleId
-			} as Edge);
-		}
-	}
+				id: `${groupId}-${targetId}`,
+				source: groupId,
+				target: targetId,
+				sourceHandle: 'group',
+				targetHandle: nodeType == 'step' ? 'step-group' : 'row-group'
+			});
+		});
+	});
 
 	return { nodes, edges };
 }

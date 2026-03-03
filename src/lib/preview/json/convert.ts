@@ -11,7 +11,11 @@ import {
 	stepSourceOutput,
 	stepTargetGroup,
 	stepTargetInput,
-	substepTarget
+	substepTarget,
+	splitSourceOutput,
+	splitTargetInput,
+	splitstartSourceOutput,
+	splitstartTargetInput
 } from '@/nodes/types';
 
 export type TypstFlowchartDataLegacyV1 = {
@@ -77,8 +81,6 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 	edges: Edge[];
 	viewport: Viewport;
 }): TypstFlowchartData {
-	console.log(raw.nodes);
-	console.log(raw.edges);
 	const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
 
 	// adjacency
@@ -263,7 +265,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		if (i === 0) {
 			nodes.push({
 				id,
-				type: 'start',
+				type: startSourceOutput.nodeType,
 				data: { label: step.label, value: step.value, row: null },
 				position: { x: 0, y: 0 },
 				deletable: false
@@ -271,7 +273,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		} else {
 			nodes.push({
 				id,
-				type: 'step',
+				type: stepSourceOutput.nodeType,
 				data: {
 					stepLabel: step.label,
 					value: step.value,
@@ -286,13 +288,13 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				id: `${mainNodeIds[i - 1]}-${id}`,
 				source: mainNodeIds[i - 1],
 				target: id,
-				sourceHandle: i == 1 ? 'start-output' : 'step-output',
-				targetHandle: 'step-input'
+				sourceHandle: i == 1 ? startSourceOutput.handleId : stepSourceOutput.handleId,
+				targetHandle: stepTargetInput.handleId
 			});
 		}
 
 		mainNodeIds.push(id);
-		logicalMap.set(logicalIndex++, ['step', id]);
+		logicalMap.set(logicalIndex++, [i == 0 ? 'START' : 'STEP', id]);
 
 		// substeps
 		step.delta?.substeps?.forEach((sub) => {
@@ -300,7 +302,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 
 			nodes.push({
 				id: subId,
-				type: 'substep',
+				type: substepTarget.nodeType,
 				data: { label: sub.label, delta: sub.value, row: null },
 				position: { x: 0, y: 0 }
 			});
@@ -309,13 +311,11 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				id: `${id}-${subId}`,
 				source: id,
 				target: subId,
-				sourceHandle: 'step-substeps',
-				targetHandle: 'substep'
+				sourceHandle: stepSourceSubsteps.handleId,
+				targetHandle: substepTarget.handleId
 			});
 		});
 	});
-
-	console.log(mainNodeIds);
 
 	// ========================
 	// 2. SPLIT
@@ -325,7 +325,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 
 		nodes.push({
 			id: splitId,
-			type: 'split',
+			type: splitSourceOutput.nodeType,
 			data: {},
 			position: { x: 0, y: 0 }
 		});
@@ -334,8 +334,8 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			id: `${mainNodeIds.at(-1) ?? ''}-${splitId}`,
 			source: mainNodeIds.at(-1) ?? '',
 			target: splitId,
-			sourceHandle: 'step-output',
-			targetHandle: 'split-input'
+			sourceHandle: stepSourceOutput.handleId,
+			targetHandle: splitTargetInput.handleId
 		});
 
 		const columnMap: string[][] = [];
@@ -345,7 +345,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 
 			nodes.push({
 				id: rowId,
-				type: 'row',
+				type: rowTargetGroup.nodeType,
 				data: {},
 				position: { x: 0, y: 0 }
 			});
@@ -361,7 +361,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				if (rowIndex === 0) {
 					nodes.push({
 						id,
-						type: 'splitstart',
+						type: splitstartSourceOutput.nodeType,
 						parentId: rowId,
 						data: {
 							label: cell.label,
@@ -373,7 +373,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				} else {
 					nodes.push({
 						id,
-						type: 'step',
+						type: stepSourceOutput.nodeType,
 						parentId: rowId,
 						data: {
 							stepLabel: cell.label,
@@ -386,7 +386,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 					});
 				}
 
-				logicalMap.set(logicalIndex++, ['row', rowId]);
+				logicalMap.set(logicalIndex++, ['ROW', rowId]);
 
 				if (!columnMap[colIndex]) columnMap[colIndex] = [];
 				columnMap[colIndex][rowIndex] = id;
@@ -396,8 +396,8 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 						id: `${splitId}-${id}`,
 						source: splitId,
 						target: id,
-						sourceHandle: 'split-output',
-						targetHandle: 'splitstart-input'
+						sourceHandle: splitSourceOutput.handleId,
+						targetHandle: splitstartTargetInput.handleId
 					});
 				}
 
@@ -406,8 +406,9 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 						id: `${columnMap[colIndex][rowIndex - 1]}-${id}`,
 						source: columnMap[colIndex][rowIndex - 1],
 						target: id,
-						sourceHandle: rowIndex == 1 ? 'splitstart-output' : 'step-output',
-						targetHandle: 'step-input'
+						sourceHandle:
+							rowIndex == 1 ? splitstartSourceOutput.handleId : stepSourceOutput.handleId,
+						targetHandle: stepTargetInput.handleId
 					});
 				}
 
@@ -416,7 +417,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 
 					nodes.push({
 						id: subId,
-						type: 'substep',
+						type: substepTarget.nodeType,
 						parentId: rowId,
 						data: { label: sub.label, delta: sub.value, row: rowIndex },
 						position: { x: 0, y: 0 }
@@ -426,8 +427,8 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 						id: `${id}-${subId}`,
 						source: id,
 						target: subId,
-						sourceHandle: 'step-substeps',
-						targetHandle: 'substep'
+						sourceHandle: stepSourceSubsteps.handleId,
+						targetHandle: substepTarget.handleId
 					});
 				});
 			});
@@ -443,21 +444,26 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 
 		nodes.push({
 			id: groupId,
-			type: 'groups',
+			type: groupSource.nodeType,
 			data: { group: groupName },
 			position: { x: -500, y: 300 }
 		});
 
 		indices.forEach((index) => {
-			const [nodeType, targetId] = logicalMap.get(index) ?? ['split', ''];
+			const [nodeType, targetId] = logicalMap.get(index) ?? ['STEP', ''];
 			if (!targetId) return;
 
 			edges.push({
 				id: `${groupId}-${targetId}`,
 				source: groupId,
 				target: targetId,
-				sourceHandle: 'group',
-				targetHandle: nodeType == 'step' ? 'step-group' : 'row-group'
+				sourceHandle: groupSource.handleId,
+				targetHandle:
+					nodeType == 'START'
+						? startTargetGroup.handleId
+						: nodeType == 'STEP'
+							? stepTargetGroup.handleId
+							: rowTargetGroup.handleId
 			});
 		});
 	});

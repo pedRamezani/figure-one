@@ -49,7 +49,6 @@ export function parseProfileJSON(value: unknown): Profile | null {
 		const parsedGroups: TypstGroups = {}
 		for (let i = 0; i <= value.data.length - 1; i++) {
 			const entry = value.data[i];
-			console.log(entry);
 			parsedMainSteps.push({
 				label: entry.stepLabel,
 				value: entry.value,

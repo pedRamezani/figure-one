@@ -1,52 +1,53 @@
 <script lang="ts">
-	import {
-		useSvelteFlow,
-		useNodeConnections,
-		useNodesData,
-		type NodeProps,
-		type IsValidConnection
-	} from '@xyflow/svelte';
+	import { useSvelteFlow, useNodeConnections, useNodesData, type NodeProps } from '@xyflow/svelte';
 
 	import Label from '@/components/ui/label/label.svelte';
 	import Input from '@/components/ui/input/input.svelte';
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
-	const { id, data }: NodeProps = $props();
+	import { substepTarget } from './types';
+
+	const { id, data, type }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
 
-	// const connectionsTarget = useNodeConnections({
-	// 	handleType: 'target'
-	// });
+	const connectionsTarget = useNodeConnections({
+		handleId: substepTarget.handleId,
+		handleType: substepTarget.handleType
+	});
 
-	// const targetData = $derived(
-	// 	useNodesData(connectionsTarget.current.map((connection) => connection.source))
-	// );
+	const targetData = $derived(
+		useNodesData(connectionsTarget.current.map((connection) => connection.source))
+	);
 
-	// const noConnection = $derived<boolean>(targetData.current.length === 0);
+	const noConnection = $derived<boolean>(targetData.current.length === 0);
 
-	// $effect(function () {
-	// 	if (noConnection) {
-	// 		if (data.value !== null) {
-	// 			updateNodeData(id, { value: null });
-	// 		}
-	// 		return;
-	// 	}
+	$effect(function () {
+		if (noConnection) {
+			if (data.row !== null) {
+				updateNodeData(id, { row: null });
+			}
+			return;
+		}
 
-	// 	// There should only be one connection anyway
-	// 	const connection = targetData.current[0];
-	// 	const value = connection.data?.value as number;
-	// 	const newValue = value - (data.delta as number);
+		// There should only be one connection anyway
+		const connection = targetData.current[0];
 
-	// 	// IMPORTANT: Removing this will cause an infinite loop.
-	// 	if (newValue && data.value != newValue) {
-	// 		updateNodeData(id, { value: newValue });
-	// 	}
-	// });
+		const row = ('row' in connection.data ? connection.data?.row : null) as number | null;
+
+		// IMPORTANT: Removing this will cause an infinite loop.
+		if (row === null) {
+			if (data.row !== null) {
+				updateNodeData(id, { row: null });
+			}
+		} else if (data.row !== row) {
+			updateNodeData(id, { row: row });
+		}
+	});
 </script>
 
-<NodeWrapper title="Substep" description="Inclusion or Exclusion" nodeId={id} nodeType="substep">
+<NodeWrapper title="Substep" description="Inclusion or Exclusion" nodeId={id} nodeType={type}>
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="label">Label</Label>
@@ -68,7 +69,7 @@
 				type="number"
 				oninput={(evt) => {
 					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-					const parsedDelta = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : 0;
+					const parsedDelta = Number.isFinite(Number(raw)) && raw !== '' ? parseInt(raw, 10) : 0;
 					updateNodeData(id, { delta: parsedDelta });
 				}}
 				class="nodrag"

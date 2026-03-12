@@ -1,19 +1,42 @@
 <script lang="ts">
-	import { useSvelteFlow, type NodeProps } from '@xyflow/svelte';
+	import { useSvelteFlow, useNodeConnections, type NodeProps } from '@xyflow/svelte';
 
 	import Label from '@/components/ui/label/label.svelte';
 	import Input from '@/components/ui/input/input.svelte';
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
+	import { splitstartTargetInput } from './types';
+
 	const { id, data, type }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
+
+	const connectionsTargetInput = useNodeConnections({
+		handleId: splitstartTargetInput.handleId,
+		handleType: splitstartTargetInput.handleType
+	});
+
+	const noConnection = $derived<boolean>(connectionsTargetInput.current.length === 0);
+
+	$effect(function () {
+		if (noConnection) {
+			if (data.row !== null) {
+				updateNodeData(id, { row: null });
+			}
+			return;
+		}
+
+		// IMPORTANT: Removing this will cause an infinite loop.
+		if (data.row !== 0) {
+			updateNodeData(id, { row: 0 });
+		}
+	});
 </script>
 
 <NodeWrapper
-	title="CONSORT Start"
-	description="The flowchart will start from here."
+	title="Split Start"
+	description="The split will start from here."
 	nodeId={id}
 	nodeType={type}
 >
@@ -32,7 +55,7 @@
 			/>
 
 			<!-- Main Section -->
-			<Label for="start">Population size</Label>
+			<Label for="start">Split population size</Label>
 			<Input
 				name="start"
 				value={data.value}

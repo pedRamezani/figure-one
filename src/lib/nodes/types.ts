@@ -1,4 +1,6 @@
 import GroupNode from './GroupNode.svelte';
+import SplitNode from './SplitNode.svelte';
+import SplitStartNode from './SplitStartNode.svelte';
 import StartNode from './StartNode.svelte';
 import StepNode from './StepNode.svelte';
 import SubstepNode from './SubstepNode.svelte';
@@ -6,14 +8,20 @@ import SubstepNode from './SubstepNode.svelte';
 import type { Component } from 'svelte';
 import { type NodeProps, type HandleProps, Position } from '@xyflow/svelte';
 
+import SplitIcon from '@lucide/svelte/icons/git-fork';
 import StepIcon from '@lucide/svelte/icons/square';
 import SubstepIcon from '@lucide/svelte/icons/workflow';
 import GroupIcon from '@lucide/svelte/icons/workflow';
+import RowNode from './RowNode.svelte';
 
 // Node Types and Defaults
-export type RegisteredNodeType = 'group' | 'start' | 'step' | 'substep';
+// Use 'groups' instead of 'group' to avoid css name conflicts
+export type RegisteredNodeType = 'groups' | 'row' |'split' | 'splitstart' | 'start' | 'step' | 'substep';
 export const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>> = {
-	group: GroupNode,
+	groups: GroupNode,
+	row: RowNode,
+	split: SplitNode,
+	splitstart: SplitStartNode,
 	start: StartNode,
 	step: StepNode,
 	substep: SubstepNode
@@ -21,20 +29,24 @@ export const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>>
 
 export const getNodeDataDefaults = (type: RegisteredNodeType): Record<string, unknown> => {
 	switch (type) {
-		case 'group':
+		case 'groups':
 			return { group: '' };
+		case 'splitstart':
+			return { label: 'Split start population', value: 0, row: null };
 		case 'step':
 			return {
 				value: null,
 				delta: 0,
 				stepLabel: 'Step',
-				droppedLabel: 'excluded'
+				droppedLabel: 'excluded',
+				row: null
 			};
 		case 'substep':
-			return { delta: 0, label: 'Substep' };
+			return { delta: 0, label: 'Substep', row: null };
 		case 'start':
 			return { label: 'Start population', value: 1000 };
 		default:
+			// split, row
 			return {};
 	}
 };
@@ -50,10 +62,52 @@ export type Handle = {
 };
 
 export const groupSource: Handle = {
-	nodeType: 'group',
+	nodeType: 'groups',
 	handleId: 'group',
 	handleType: 'source',
 	position: Position.Right
+};
+
+export const rowTargetGroup: Handle = {
+	nodeType: 'row',
+	handleId: 'row-group',
+	handleType: 'target',
+	position: Position.Left
+};
+
+export const splitSourceOutput: Handle = {
+	nodeType: 'split',
+	handleId: 'split-output',
+	handleType: 'source',
+	position: Position.Bottom
+};
+
+export const splitTargetInput: Handle = {
+	nodeType: 'split',
+	handleId: 'split-input',
+	handleType: 'target',
+	position: Position.Top
+};
+
+export const splitstartSourceOutput: Handle = {
+	nodeType: 'splitstart',
+	handleId: 'splitstart-output',
+	handleType: 'source',
+	position: Position.Bottom
+};
+
+// export const splitstartTargetGroup: Handle = {
+// 	nodeType: 'splitstart',
+// 	handleId: 'splitstart-group',
+// 	handleType: 'target',
+// 	position: Position.Left
+// };
+
+export const splitstartTargetInput: Handle = {
+	nodeType: 'splitstart',
+	handleId: 'splitstart-input',
+	handleType: 'target',
+	position: Position.Top
 };
 
 export const startSourceOutput: Handle = {
@@ -138,9 +192,14 @@ class Graph<T> {
 
 export const handleGraph = (): Graph<Handle> => {
 	const graph = new Graph<Handle>();
+	graph.addEdge(splitSourceOutput, splitstartTargetInput);
+	graph.addEdge(splitstartSourceOutput, stepTargetInput);
 	graph.addEdge(startSourceOutput, stepTargetInput);
 	graph.addEdge(stepSourceOutput, stepTargetInput);
+	graph.addEdge(stepSourceOutput, splitTargetInput);
 	graph.addEdge(stepSourceSubsteps, substepTarget);
+	// graph.addEdge(groupSource, splitstartTargetGroup);
+	graph.addEdge(groupSource, rowTargetGroup);
 	graph.addEdge(groupSource, startTargetGroup);
 	graph.addEdge(groupSource, stepTargetGroup);
 	return graph;
@@ -148,32 +207,48 @@ export const handleGraph = (): Graph<Handle> => {
 
 export const handleConnectionLimits: Map<Handle, number> = new Map([
 	[groupSource, Infinity],
+	[rowTargetGroup, 1],
+	[splitSourceOutput, Infinity],
+	[splitTargetInput, 1],
+	[splitstartSourceOutput, 1],
+	// [splitstartTargetGroup, 1],
+	[splitstartTargetInput, 1],
 	[startSourceOutput, 1],
 	[startTargetGroup, 1],
 	[stepSourceOutput, 1],
 	[stepSourceSubsteps, Infinity],
-	[stepTargetInput, 1],
 	[stepTargetGroup, 1],
+	[stepTargetInput, 1],
 	[substepTarget, 1]
 ]);
 
 export const handleDragCreate: Map<Handle, Handle> = new Map([
+	[rowTargetGroup, groupSource],
+	[splitSourceOutput, splitstartTargetInput],
+	[splitstartSourceOutput, stepTargetInput],
+	// [splitstartTargetGroup, groupSource],
 	[startSourceOutput, stepTargetInput],
 	[startTargetGroup, groupSource],
 	[stepSourceOutput, stepTargetInput],
 	[stepTargetGroup, groupSource],
-	[stepSourceSubsteps, substepTarget]
+	[stepSourceSubsteps, substepTarget],
 ]);
 
-export const dragPanelNodes: Map<RegisteredNodeType, {
-	icon: Component;
-	label: string;
-	class?: string;
-} | null> = new Map([
-	["start", null],
-	["step", { icon: StepIcon, label: 'Step' }],
-	["substep", { icon: SubstepIcon, label: 'Substep' }],
-	["group", { icon: GroupIcon, label: 'Group', class: '-rotate-90' }],
+export const dragPanelNodes: Map<
+	RegisteredNodeType,
+	{
+		icon: Component;
+		label: string;
+		class?: string;
+		maxCount?: number;
+	} | null
+> = new Map([
+	['start', null],
+	['splitstart', null],
+	['step', { icon: StepIcon, label: 'Step' }],
+	['substep', { icon: SubstepIcon, label: 'Substep' }],
+	['groups', { icon: GroupIcon, label: 'Group', class: '-rotate-90' }],
+	['split', { icon: SplitIcon, label: 'Split', maxCount: 1 }],
 ]);
 
 // Mixed Types
@@ -182,7 +257,10 @@ export type NodeHandleMap = {
 };
 
 export const nodeHandles: NodeHandleMap = {
-	group: [groupSource],
+	groups: [groupSource],
+	row: [rowTargetGroup],
+	split: [splitSourceOutput, splitTargetInput],
+	splitstart: [splitstartSourceOutput, splitstartTargetInput], // splitstartTargetGroup
 	start: [startSourceOutput, startTargetGroup],
 	step: [stepSourceOutput, stepSourceSubsteps, stepTargetInput, stepTargetGroup],
 	substep: [substepTarget]

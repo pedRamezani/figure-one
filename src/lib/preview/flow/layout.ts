@@ -82,56 +82,66 @@ export function getLayoutedElements(
 			y: number;
 		};
 	} = {};
-	const substepNodes = rawSubstepNodes.map((ssNode) => {
-		const source = edges.find((edge) => edge.target == ssNode.id)?.source;
-		if (source === undefined) {
-			return { ...ssNode, position: { x: 0, y: 0 } } as Node;
-		}
+	const substepNodes = rawSubstepNodes
+		.sort((n1, n2) => {
+			const n1Source = edges.find((edge) => edge.target == n1.id)?.source;
+			const n2Source = edges.find((edge) => edge.target == n2.id)?.source;
 
-		let anchorNode = tbNodes.find((node) => node.id == source);
-		if ('row' in ssNode.data && ssNode.data.row !== null) {
-			const stepNodes = tbNodes
-				.filter((n) => n.parentId === ssNode.parentId && n.type === stepTargetInput.nodeType)
-				.sort((n1, n2) => n2.position.x - n1.position.x);
+			const n1PosX = tbNodes.find((node) => node.id === n1Source)?.position.x ?? 0;
+			const n2PosX = tbNodes.find((node) => node.id === n2Source)?.position.x ?? 0;
 
-			if (stepNodes.length !== 0) {
-				anchorNode = stepNodes[0];
+			return n1PosX - n2PosX;
+		})
+		.map((ssNode) => {
+			const source = edges.find((edge) => edge.target == ssNode.id)?.source;
+			if (source === undefined) {
+				return { ...ssNode, position: { x: 0, y: 0 } } as Node;
 			}
-		}
 
-		if (anchorNode === undefined) {
-			return { ...ssNode, position: { x: 0, y: 0 } } as Node;
-		}
+			let anchorNode = tbNodes.find((node) => node.id === source);
+			if ('row' in ssNode.data && ssNode.data.row !== null) {
+				const stepNodes = tbNodes
+					.filter((n) => n.parentId === ssNode.parentId && n.type === stepTargetInput.nodeType)
+					.sort((n1, n2) => n2.position.x - n1.position.x);
 
-		if (!(anchorNode.id in counts)) {
-			const [anchorAnchorX, anchorAnchorY] = anchorNode?.origin ?? [0, 0];
-			const anchorNodeWidth = anchorNode?.measured?.width ?? 0;
-			const anchorNodeHeight = anchorNode?.measured?.height ?? 0;
-			const anchorNodeX = (anchorNode?.position.x ?? 0) - anchorAnchorX * anchorNodeWidth;
-			const anchorNodeY = (anchorNode?.position.y ?? 0) - anchorAnchorY * anchorNodeHeight;
-			counts[anchorNode.id] = {
-				x: anchorNodeX + anchorNodeWidth + gap,
-				y: anchorNodeY
+				if (stepNodes.length !== 0) {
+					anchorNode = stepNodes[0];
+				}
+			}
+
+			if (anchorNode === undefined) {
+				return { ...ssNode, position: { x: 0, y: 0 } } as Node;
+			}
+
+			if (!(anchorNode.id in counts)) {
+				const [anchorAnchorX, anchorAnchorY] = anchorNode?.origin ?? [0, 0];
+				const anchorNodeWidth = anchorNode?.measured?.width ?? 0;
+				const anchorNodeHeight = anchorNode?.measured?.height ?? 0;
+				const anchorNodeX = (anchorNode?.position.x ?? 0) - anchorAnchorX * anchorNodeWidth;
+				const anchorNodeY = (anchorNode?.position.y ?? 0) - anchorAnchorY * anchorNodeHeight;
+				counts[anchorNode.id] = {
+					x: anchorNodeX + anchorNodeWidth + gap,
+					y: anchorNodeY
+				};
+			} else {
+				const nodeWidth = ssNode?.measured?.width ?? 0;
+				counts[anchorNode.id] = {
+					...counts[anchorNode.id],
+					x: counts[anchorNode.id].x + nodeWidth + gap
+				};
+			}
+
+			const [anchorX, anchorY] = ssNode.origin ?? [0, 0];
+			// We are shifting the node position (anchor=top left) to the anchor
+			// so it matches the Svelte Flow node anchor point (default: top left).
+			const x = counts[anchorNode.id].x + anchorX * (ssNode.measured?.width ?? 0);
+			const y = counts[anchorNode.id].y + anchorY * (ssNode.measured?.height ?? 0);
+
+			return {
+				...ssNode,
+				position: { x, y }
 			};
-		} else {
-			const nodeWidth = ssNode?.measured?.width ?? 0;
-			counts[anchorNode.id] = {
-				...counts[anchorNode.id],
-				x: counts[anchorNode.id].x + nodeWidth + gap
-			};
-		}
-
-		const [anchorX, anchorY] = ssNode.origin ?? [0, 0];
-		// We are shifting the node position (anchor=top left) to the anchor
-		// so it matches the Svelte Flow node anchor point (default: top left).
-		const x = counts[anchorNode.id].x + anchorX * (ssNode.measured?.width ?? 0);
-		const y = counts[anchorNode.id].y + anchorY * (ssNode.measured?.height ?? 0);
-
-		return {
-			...ssNode,
-			position: { x, y }
-		};
-	});
+		});
 
 	// Manually layout group nodes to the left of their connected start/step nodes.
 	const groupNodes = rawGroupNodes.map((gNode) => {

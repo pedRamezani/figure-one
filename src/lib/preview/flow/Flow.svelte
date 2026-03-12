@@ -105,6 +105,7 @@
 
 	import * as ButtonGroup from '@/components/ui/button-group/index.js';
 	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
+	import { ConfirmDeleteDialog, confirmDelete } from '$lib/components/ui/confirm-delete-dialog';
 	import { ThemeSelector } from '@/components/ui/theme-selector';
 
 	import InfoButton from './InfoButton.svelte';
@@ -206,7 +207,7 @@
 		fitView();
 	}
 
-	function clearNodes() {
+	async function clearNodes() {
 		nodes = [...nodes.filter((node) => node.deletable === false)];
 		edges = [
 			...edges.filter(
@@ -288,6 +289,8 @@
 	});
 </script>
 
+<ConfirmDeleteDialog />
+
 <SvelteFlow
 	bind:nodes
 	bind:edges
@@ -311,8 +314,17 @@
 		<ControlButton title="Layout flowchart" aria-label="Layout flowchart" onclick={layoutNodes}
 			><LayoutIcon class="fill-primary" /></ControlButton
 		>
-		<ControlButton title="Clear flowchart" aria-label="Clear flowchart" onclick={clearNodes}
-			><ClearIcon class="fill-primary" /></ControlButton
+		<ControlButton
+			title="Clear flowchart"
+			aria-label="Clear flowchart"
+			onclick={(e: MouseEvent) => {
+				confirmDelete({
+					title: 'Delete',
+					description: 'Are you sure you want to delete all nodes?',
+					skipConfirmation: e.shiftKey,
+					onConfirm: clearNodes
+				});
+			}}><ClearIcon class="fill-primary" /></ControlButton
 		>
 	</Controls>
 	<Background variant={BackgroundVariant.Dots} size={1.2} />

@@ -142,19 +142,6 @@
   let s = style.stepBox
   let g = style.groupBox
 
-  // Find split row
-  // let n-splits = data.steps.find(it => type(it) == array).len()
-  // let split-row = data.map(it => it.row).sorted().windows(2).filter(w => w.at(0) == w.at(1)).map(w => w.at(0)).reduce((acc, it) => calc.min(acc, it))
-  // 
-  // Find split parent if possible
-  // let split-parent = none
-  // if split-row != none {
-  //   split-parent = data.find(it => it.row == split-row - 1)
-  // }
-
-  // Calculate column shift for rows >= split-row
-  // let max-col = data.map(it => it.col).reduce((acc, it) => calc.max(acc, it))
-
   // Col mapping function
   let mapped-col(col, max-cols: none) = {
     if max-cols == none or max-cols <= 1 {
@@ -274,15 +261,31 @@
     // ----------------------------
     // Group boxes
     // ----------------------------
+    let interpolate = 0.25,
     for gr in groups(data) {
+      let at-start = gr.start == 0
+      let at-end = gr.end == steps.len() -1
+
+      let start-offset = if at-start {
+        0
+      } else {
+        -1
+      }
+
+      let end-offset = if at-end {
+        1
+      } else {
+        0
+      }
+
       styled-node(
         (group-col, -1),
         rotate(gr.label, -90deg, reflow: true),
         tint: tint-mapping.at(g.tint),
         width: auto,
         enclose: (
-          (group-col, 2 * gr.start - 0.25),
-          (group-col, 2 * gr.end + 1 + 0.25)
+          (group-col, 2 * gr.start + start-offset - interpolate),
+          (group-col, 2 * gr.end + + end-offset + interpolate)
         ),
       )
     }

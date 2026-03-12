@@ -65,7 +65,9 @@ export function parseProfileJSON(value: unknown): Profile | null {
 							}
 			});
 
-			(parsedGroups[entry.group] ??= []).push(i)
+			if (entry.group.length > 0) {
+				(parsedGroups[entry.group] ??= []).push(i)
+			}
 		}
 		const parsedSteps: TypstSteps = {
 			"main": parsedMainSteps,

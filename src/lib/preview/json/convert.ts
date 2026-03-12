@@ -223,7 +223,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		...splitGroups
 			.entries()
 			.toArray()
-			.sort(([row, name]) => row)
+			.sort(([row1, name1], [row2, name2]) => row1 - row2)
 			.map(([row, name]) => name)
 	]
 		.entries()

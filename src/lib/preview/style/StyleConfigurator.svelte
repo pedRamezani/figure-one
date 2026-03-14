@@ -6,14 +6,27 @@
 		arrowHeads,
 		aligmentOptions,
 		type ArrowBody,
-		type ArrowHead
+		type ArrowHead,
+		type Alignment
 	} from './style-config.svelte';
 
 	import Button from '@/components/ui/button/button.svelte';
 	import * as Field from '@/components/ui/field/index.js';
 	import * as Select from '@/components/ui/select';
+	import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
 
 	import SimpleField from './SimpleField.svelte';
+
+	import TextAlignStartIcon from '@lucide/svelte/icons/text-align-start';
+	import TextAlignCenterIcon from '@lucide/svelte/icons/text-align-center';
+	import TextAlignEndIcon from '@lucide/svelte/icons/text-align-end';
+	import type { Component } from 'svelte';
+
+	const aligmentMapping: Record<Alignment, Component> = {
+		left: TextAlignStartIcon,
+		center: TextAlignCenterIcon,
+		right: TextAlignEndIcon
+	};
 
 	let arrowBody = $state<ArrowBody>('-');
 	let arrowHead = $state<ArrowHead>('|>');
@@ -35,9 +48,9 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<SimpleField title="Title" name="page-title" bind:value={styleConfig.current.page.title} />
 
-			<Field.Field class="max-w-xs">
+			<Field.Field class="max-w-fit">
 				<Field.Label for="page-title-aligment">Title Aligment</Field.Label>
-				<Select.Root
+				<!-- <Select.Root
 					name="page-title-aligment"
 					type="single"
 					bind:value={styleConfig.current.page.titleAlign}
@@ -48,10 +61,27 @@
 							<Select.Item value={body}>{body}</Select.Item>
 						{/each}
 					</Select.Content>
-				</Select.Root>
+				</Select.Root> -->
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.page.titleAlign}
+				>
+					{#each aligmentOptions as alignment}
+						<ToggleGroup.Item
+							value={alignment}
+							aria-label="Toggle star"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary"
+						>
+							{@const Icon = aligmentMapping[alignment]}
+							<Icon />
+							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
 			</Field.Field>
 
-			<Field.Field class="max-w-xs">
+			<Field.Field class="max-w-2xs">
 				<Field.Label for="page-tint">Tint</Field.Label>
 				<Select.Root name="page-tint" type="single" bind:value={styleConfig.current.page.tint}>
 					<Select.Trigger>{styleConfig.current.page.tint}</Select.Trigger>
@@ -150,7 +180,7 @@
 		<Field.Legend>Arrow</Field.Legend>
 		<Field.Description>Customise general arrow appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
-			<Field.Field class="max-w-xs">
+			<Field.Field class="max-w-2xs">
 				<Field.Label>Arrow Body</Field.Label>
 				<Select.Root type="single" bind:value={arrowBody} onValueChange={arrowUpdate}>
 					<Select.Trigger>{arrowBody}</Select.Trigger>
@@ -162,7 +192,7 @@
 				</Select.Root>
 			</Field.Field>
 
-			<Field.Field class="max-w-xs">
+			<Field.Field class="max-w-2xs">
 				<Field.Label>Arrow Head</Field.Label>
 				<Select.Root type="single" bind:value={arrowHead} onValueChange={arrowUpdate}>
 					<Select.Trigger>{arrowHead}</Select.Trigger>
@@ -179,7 +209,7 @@
 				name="edge-corner-radius"
 				bind:value={styleConfig.current.mark.markScale}
 				min={0}
-				max={100}
+				max={300}
 			/>
 		</Field.Group>
 	</Field.Set>
@@ -190,7 +220,7 @@
 		<Field.Legend>Main Box</Field.Legend>
 		<Field.Description>Customise main box appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
-			<Field.Field class="max-w-xs">
+			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
 				<Select.Root type="single" bind:value={styleConfig.current.mainBox.tint}>
 					<Select.Trigger>{styleConfig.current.mainBox.tint}</Select.Trigger>
@@ -217,7 +247,7 @@
 		<Field.Legend>Step Box</Field.Legend>
 		<Field.Description>Customise step box appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
-			<Field.Field class="max-w-xs">
+			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
 				<Select.Root type="single" bind:value={styleConfig.current.stepBox.tint}>
 					<Select.Trigger>{styleConfig.current.stepBox.tint}</Select.Trigger>
@@ -244,7 +274,7 @@
 		<Field.Legend>Group Box</Field.Legend>
 		<Field.Description>Customise group box appearance.</Field.Description>
 		<Field.Group class="flex flex-row flex-wrap">
-			<Field.Field class="max-w-xs">
+			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
 				<Select.Root type="single" bind:value={styleConfig.current.groupBox.tint}>
 					<Select.Trigger>{styleConfig.current.groupBox.tint}</Select.Trigger>

@@ -202,9 +202,20 @@
             str(it.delta.value)
               + " "
               + it.delta.label
-              + for s in it.delta.substeps {
-                "\n    " + str(s.value) + " " + s.label
-              },
+              + pad(
+                grid(
+                  ..for s in it.delta.substeps {
+                    (str(s.value), s.label)
+                  }, 
+                  inset: 0pt,
+                  column-gutter: 0.4em,
+                  row-gutter:  0.6em,
+                  columns: 2,
+                  align: (right, left),
+                ), 
+                left: 3 * 0.5em, 
+                top: -1.2em + 0.6em
+              ),
             tint: tint-mapping.at(s.tint),
             width: s.width * 1mm,
           )

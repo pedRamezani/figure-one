@@ -452,13 +452,13 @@
 
 {#snippet arrayHeadSvg(id: ArrowHead)}
 	<svg
-		viewBox="0 0 5 5"
-		width="30pt"
+		viewBox="0 0 6 6"
+		width="5pt"
 		height="5pt"
 		xmlns="http://www.w3.org/2000/svg"
 		xmlns:xlink="http://www.w3.org/1999/xlink"
 		class="text-card-foreground"
-		><use transform="translate(2.5 2.5)" xlink:href={`#${arrowHeadMapping[id]}`} /></svg
+		><use transform="translate(3 3)" xlink:href={`#${arrowHeadMapping[id]}`} /></svg
 	>
 {/snippet}
 

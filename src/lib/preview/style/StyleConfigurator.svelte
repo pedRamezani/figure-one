@@ -15,6 +15,7 @@
 	import * as Select from '@/components/ui/select';
 	import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
 
+	import ColorPicker from '@/components/ui/color-picker/color-picker.svelte';
 	import SimpleField from './SimpleField.svelte';
 
 	import TextAlignStartIcon from '@lucide/svelte/icons/text-align-start';
@@ -632,14 +633,7 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
-				<Select.Root type="single" bind:value={styleConfig.current.mainBox.tint}>
-					<Select.Trigger>{styleConfig.current.mainBox.tint}</Select.Trigger>
-					<Select.Content>
-						{#each tintOptions as t}
-							<Select.Item value={t}>{t}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+				<ColorPicker bind:value={styleConfig.current.mainBox.tint} />
 			</Field.Field>
 
 			<SimpleField
@@ -659,14 +653,7 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
-				<Select.Root type="single" bind:value={styleConfig.current.stepBox.tint}>
-					<Select.Trigger>{styleConfig.current.stepBox.tint}</Select.Trigger>
-					<Select.Content>
-						{#each tintOptions as t}
-							<Select.Item value={t}>{t}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+				<ColorPicker bind:value={styleConfig.current.stepBox.tint} />
 			</Field.Field>
 
 			<SimpleField
@@ -686,14 +673,7 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
-				<Select.Root type="single" bind:value={styleConfig.current.groupBox.tint}>
-					<Select.Trigger>{styleConfig.current.groupBox.tint}</Select.Trigger>
-					<Select.Content>
-						{#each tintOptions as t}
-							<Select.Item value={t}>{t}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+				<ColorPicker bind:value={styleConfig.current.groupBox.tint} />
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>

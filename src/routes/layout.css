@@ -328,4 +328,28 @@
 	.svelte-flow__controls-button svg {
 		@apply size-4! max-h-4! max-w-4!;
 	}
+
+  /* ColorPicker CSS Variables */
+  :root {
+    /* Metrics */
+    --cp-size: calc(var(--spacing) * 9);
+    --cp-swatch-width: 2rem;
+    --cp-border-radius-sm: var(--radius-sm);
+    --cp-border-radius-lg: var(--radius-lg);
+    
+    /* Colors */
+    --cp-body-bg: var(--color-card);
+    --cp-body-color: var(--color-card-foreground);
+    --cp-border-color: var(--color-border);
+    --cp-bg-checker: repeating-conic-gradient(#808080 0% 25%, transparent 0% 50%) 50% / 0.5rem 0.5rem;
+    --cp-border-color-translucent: rgba(0, 0, 0, 0.175);
+    --cp-tertiary-color: rgba(33, 37, 41, 0.5);
+    
+    /* Shadows */
+    --cp-box-shadow: var(--shadow);
+    --cp-box-shadow-sm: var(--shadow-sm);
+
+    /* Animations (set to 0s to disable) */
+    --cp-delay: 150ms;
+  }
 }

@@ -32,6 +32,14 @@
   lime: rgb("#01ff70"),
 )
 
+#let get-tint(value) = {
+  if value in tint-mapping {
+    return tint-mapping.at(value)
+  } else {
+    return rgb(value)
+  }
+}
+
 #let alignment-mapping = (
   left: alignment.left,
   center: alignment.center,
@@ -53,7 +61,7 @@
   width: auto, 
   height: auto,
   margin: style.page.margin * 1mm,
-  fill: tint-mapping.at(style.page.tint).lighten(80%)
+  fill: get-tint(style.page.tint).lighten(80%)
 )
 
 #set text(font: "New Computer Modern")
@@ -180,7 +188,7 @@
         styled-node(
           (population-col, row * 2),
           it.label + "\n" + str(it.value),
-          tint: tint-mapping.at(m.tint),
+          tint: get-tint(m.tint),
           width: m.width * 1mm,
         )
 
@@ -216,7 +224,7 @@
                 left: 3 * 0.5em, 
                 top: -1.2em + 0.6em
               ),
-            tint: tint-mapping.at(s.tint),
+            tint: get-tint(s.tint),
             width: s.width * 1mm,
           )
         }
@@ -292,7 +300,7 @@
       styled-node(
         (group-col, -1),
         rotate(gr.label, -90deg, reflow: true),
-        tint: tint-mapping.at(g.tint),
+        tint: get-tint(g.tint),
         width: auto,
         enclose: (
           (group-col, 2 * gr.start + start-offset - interpolate),

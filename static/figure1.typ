@@ -1,12 +1,16 @@
-// Module imports
+// ============================
+// Imports
+// ============================
+// Module
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, edge, node
-#import fletcher.shapes: hexagon, house
 
-// Data imports
+// Data
 #let style = json("/assets/style.json")
 #let data = json("/assets/flowchart.json")
 
+// ============================
 // Helpers
+// ============================
 #let tint-mapping = (
   black: luma(0),
   gray: luma(170),
@@ -28,18 +32,43 @@
   lime: rgb("#01ff70"),
 )
 
+#let get-tint(value) = {
+  if value in tint-mapping {
+    return tint-mapping.at(value)
+  } else {
+    return rgb(value)
+  }
+}
+
 #let alignment-mapping = (
   left: alignment.left,
   center: alignment.center,
   right: alignment.right,
 )
 
-// Page settings
-#set document(title: "Figure 1", author: "Pedram Ramezani", description: "A consort flowchart diagram.", keywords: ("flowchart", "figure1"))
+// ============================
+// Page
+// ============================
+#set document(
+  title: style.page.title,
+  description: "A CONSORT flowchart diagram",
+  keywords: ("flowchart", "figure1")
+)
+
 #show heading: set align(alignment-mapping.at(style.page.titleAlign))
-#set page(width: auto, height: auto, margin: style.page.margin * 1mm, fill: tint-mapping.at(style.page.tint).lighten(80%))
+
+#set page(
+  width: auto, 
+  height: auto,
+  margin: style.page.margin * 1mm,
+  fill: get-tint(style.page.tint).lighten(80%)
+)
+
 #set text(font: "New Computer Modern")
 
+// ============================
+// Styled primitives
+// ============================
 #let styled-node(pos, label, width: 80mm, tint: white, ..args) = {
   let n = style.node
 
@@ -54,98 +83,236 @@
   )
 }
 
-#let styled-edge(width: 80mm, tint: black, ..args) = {
+#let styled-edge(tint: black, ..args) = {
   let e = style.edge
 
   edge(
     stroke: e.stroke * 1pt + tint,
     corner-radius: e.cornerRadius * 1pt,
-    ..args,
+    ..args
   )
 }
 
-#let figure-1(data, groups) = {
+// ----------------------------
+// Group calculation (by rows)
+// ----------------------------
+#let groups(data) = {
+  data.groups.remove("", default: none)
+
+  let groups = ()
+  for (group, rows) in data.groups.pairs() {
+    let r-min = calc.min(..rows)
+    let r-max = none
+    for (prev, next) in rows.sorted().windows(2) {
+      if prev + 1 != next {
+        r-max = prev
+        groups.push((
+          label: group,
+          start: r-min,
+          end: r-max
+        ))
+        r-min = next
+        r-max = none
+      }
+    }
+
+    if r-max == none {
+      r-max = calc.max(..rows)
+      groups.push((
+        label: group,
+        start: r-min,
+        end: r-max
+      ))
+    }
+  }
+  
+  groups
+}
+
+// ----------------------------
+// Array helper
+// ----------------------------
+#let as-array(value) = {
+  if type(value) == array {
+    value
+  } else {
+    (value, )
+  }
+}
+
+// ----------------------------
+// Diagram
+// ----------------------------
+#let figure-1(data) = {
   let d = style.diagram
   let a = style.mark
   let m = style.mainBox
   let s = style.stepBox
   let g = style.groupBox
 
+  // Col mapping function
+  let mapped-col(col, max-cols: none) = {
+    if max-cols == none or max-cols <= 1 {
+      col * 2
+    } else {
+      col * 2 - max-cols + 1
+    }
+  }
+
+  // Calculate min col - 1 for group box placement
+  let group-col = - 1
+
+  let steps = (..data.steps.main, ..data.steps.splits)
+
   diagram(
     spacing: d.spacing * 1pt,
     cell-size: (d.cellWidth * 1mm, d.cellHeight * 1mm),
     mark-scale: a.markScale * 1%,
 
-    for (i, value) in data.enumerate() {
-      // Main Box
-      styled-node(
-        (0, 2 * i),
-        data.at(i).stepLabel + "\n" + str(data.at(i).value),
-        tint: tint-mapping.at(m.tint),
-        width: m.width * 1mm,
-      )
+    // ----------------------------
+    // Population + exclusion boxes
+    // ----------------------------
+    for (row, val) in steps.enumerate() {
+      let vals = as-array(val)
 
-      if i != data.len() - 1 {
-        // Main to main
-        styled-edge((0, 2 * i), (0, 2 * (i + 1)), a.arrow)
-        // Main to step
-        styled-edge("d,r", a.arrow)
-        // Step Box
+      let max-cols = vals.len()
+
+      for (col, it) in vals.enumerate() {
+
+        if it == none {
+          continue
+        }
+
+        // Population box
+        let population-col = mapped-col(col, max-cols: max-cols)
         styled-node(
-          (1, 2 * i + 1),
-          str(data.at(i + 1).delta)
-            + " "
-            + data.at(i + 1).droppedLabel
-            + for value in data.at(i + 1).substepDeltas {
-              "\n    " + str(value.delta) + " " + value.label
-            },
-          tint: tint-mapping.at(s.tint),
-          width: s.width * 1mm,
+          (population-col, row * 2),
+          it.label + "\n" + str(it.value),
+          tint: get-tint(m.tint),
+          width: m.width * 1mm,
         )
+
+        group-col = calc.min(group-col, population-col - 1)
+
+        // Exclusion box (optional) + Edge
+        if it.delta != none {
+          // Population → exclusion
+          styled-edge(
+            (population-col, (row - 1) * 2),
+            (population-col, row * 2 - 1),
+            (population-col + 1, row * 2 - 1),
+            a.arrow
+          )
+
+          // Exclusion box
+          styled-node(
+            (population-col + 1, row * 2 - 1),
+            str(it.delta.value)
+              + " "
+              + it.delta.label
+              + pad(
+                grid(
+                  ..for s in it.delta.substeps {
+                    (str(s.value), s.label)
+                  }, 
+                  inset: 0pt,
+                  column-gutter: 0.4em,
+                  row-gutter:  0.6em,
+                  columns: 2,
+                  align: (right, left),
+                ), 
+                left: 3 * 0.5em, 
+                top: -1.2em + 0.6em
+              ),
+            tint: get-tint(s.tint),
+            width: s.width * 1mm,
+          )
+        }
       }
     },
 
-    for (start, end) in groups {
-      // Group Box
-      styled-node(
-        (-1, -1),
-        rotate(data.at(start).group, -90deg, reflow: true),
-        tint: tint-mapping.at(g.tint),
-        width: auto,
-        enclose: ((-1, 2 * start - 0.25), (-1, 2 * end + 1 + 0.25)),
-      )
+    // ----------------------------
+    // Population flow
+    // ----------------------------
+    for (row, (prev, next)) in steps.windows(2).enumerate() {
+      let prev-vals = as-array(prev)
+      let next-vals = as-array(next)
+
+      let max-cols = next-vals.len()
+      if prev-vals.len() == max-cols {
+        // Vertical flow
+        for (col, (p-it, n-it)) in prev-vals.zip(next-vals).enumerate() {
+          if n-it == none {
+            continue
+          }
+
+          let population-col = mapped-col(col, max-cols: max-cols)
+          styled-edge(
+            (population-col, row * 2),
+            (population-col, (row + 1) * 2),
+            a.arrow,
+          )
+        }
+      } else if prev-vals.len() == 1 {
+        // Split flow
+        let p-it = prev-vals.at(0)
+        for (col, n-it) in next-vals.enumerate() {
+          if n-it == none {
+            continue
+          }
+
+          let population-col = mapped-col(col, max-cols: max-cols)
+          let steps = (
+            (mapped-col(0), row * 2),
+            (mapped-col(0), row * 2 + 1),
+            (population-col, row * 2 + 1),
+            (population-col, (row + 1) * 2)
+          ).dedup()
+
+          styled-edge(
+            ..steps,
+            a.arrow,
+          )
+        }
+      }
     },
+
+    // ----------------------------
+    // Group boxes
+    // ----------------------------
+    let interpolate = 0.25,
+    for gr in groups(data) {
+      let at-start = gr.start == 0
+      let at-end = gr.end == steps.len() -1
+
+      let start-offset = if at-start {
+        0
+      } else {
+        -1
+      }
+
+      let end-offset = if at-end {
+        1
+      } else {
+        0
+      }
+
+      styled-node(
+        (group-col, -1),
+        rotate(gr.label, -90deg, reflow: true),
+        tint: get-tint(g.tint),
+        width: auto,
+        enclose: (
+          (group-col, 2 * gr.start + start-offset - interpolate),
+          (group-col, 2 * gr.end + + end-offset + interpolate)
+        ),
+      )
+    }
   )
 }
 
-#let groups(data) = {
-  let result = ()
-  let current = none
-
-  for (i, key) in data.enumerate() {
-    if key.group == "" {
-      if current != none {
-        result.push((current, i - 1))
-        current = none
-      }
-    } else {
-      if current == none {
-        current = i
-      } else if key.group != data.at(i - 1).group {
-        result.push((current, i - 1))
-        current = i
-      }
-    }
-  }
-
-  if current != none {
-    result.push((current, data.len() - 1))
-  }
-
-  result
-}
-
-#let groups = groups(data);
-
+// ----------------------------
+// Render
+// ----------------------------
 #heading(text(style.page.title))
-#figure-1(data, groups)
+#figure-1(data)

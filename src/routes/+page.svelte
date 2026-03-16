@@ -48,8 +48,8 @@
 				<ScrollArea class="h-full">
 					<Tabs.Root value="typst" class="h-full p-4 md:p-8">
 						<Tabs.List>
-							<Tabs.Trigger value="typst">Typst</Tabs.Trigger>
-							<Tabs.Trigger value="json">JSON</Tabs.Trigger>
+							<Tabs.Trigger value="typst">Preview</Tabs.Trigger>
+							<Tabs.Trigger value="json">Profile</Tabs.Trigger>
 						</Tabs.List>
 						<Tabs.Content value="typst">
 							<TypstPreview />

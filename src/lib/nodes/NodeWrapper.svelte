@@ -3,13 +3,14 @@
 	import type { Snippet } from 'svelte';
 	import { type RegisteredNodeType, nodeHandles } from '@/nodes/types';
 
-	import SimpleHandle from '@/handles/SimpleHandle.svelte';
+	import HandleWrapper from '@/handles/HandleWrapper.svelte';
 
 	let {
 		nodeId,
 		nodeType,
 		title,
 		description,
+		excludedHandles,
 		content,
 		footer
 	}: {
@@ -17,11 +18,14 @@
 		nodeType: RegisteredNodeType;
 		title: string;
 		description?: string;
+		excludedHandles?: string[];
 		content: Snippet;
 		footer?: Snippet;
 	} = $props();
 
-	const handles = $derived(nodeHandles[nodeType]);
+	const handles = $derived(
+		nodeHandles[nodeType].filter((handle) => !(excludedHandles ?? []).includes(handle.handleId))
+	);
 </script>
 
 <Card.Root>
@@ -36,7 +40,7 @@
 
 		<!-- Handles -->
 		{#each handles as handle}
-			<SimpleHandle {nodeId} {handle} />
+			<HandleWrapper {nodeId} {handle} />
 		{/each}
 	</Card.Content>
 	{#if footer}

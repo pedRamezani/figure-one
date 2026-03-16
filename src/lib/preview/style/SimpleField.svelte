@@ -26,7 +26,7 @@
 	}: SimpleFieldProps = $props();
 </script>
 
-<Field.Field class={cn('max-w-xs', className)}>
+<Field.Field class={cn(typeof value == 'number' ? 'max-w-48' : 'max-w-2xs', className)}>
 	<Field.Label for={name}>{title}</Field.Label>
 	<Input {name} type={typeof value == 'number' ? 'number' : 'text'} bind:value {...restProps} />
 </Field.Field>

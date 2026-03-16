@@ -21,6 +21,8 @@
 
 	import { useNodes, useSvelteFlow } from '@xyflow/svelte';
 
+	import { scale } from 'svelte/transition';
+
 	const nodes = useNodes();
 	const { fitView } = useSvelteFlow();
 	const offset: [number, number] = [0.3, 0.3];
@@ -49,17 +51,30 @@
 
 		event.dataTransfer.effectAllowed = 'move';
 	};
+
+	const nodeTypeCounts = $derived(
+		nodes.current
+			.map((node) => node.type ?? '')
+			.reduce(
+				(d, nodeType) => {
+					if (nodeType in d) {
+						d[nodeType] += 1;
+					} else {
+						d[nodeType] = 1;
+					}
+					return d;
+				},
+				{} as { [key: string]: number }
+			)
+	);
 </script>
 
 {#snippet panelContent()}
 	{#each dragPanelNodes as [nodeType, config]}
-		{#if config !== null}
-			<nav on:dragstart={(event) => onDragStart(event, nodeType)} draggable={true}>
+		{#if config !== null && (config.maxCount === undefined || (nodeTypeCounts[nodeType] ?? 0) < config.maxCount)}
+			<nav ondragstart={(event) => onDragStart(event, nodeType)} draggable={true} transition:scale>
 				<Button variant="secondary" size="sm" onclick={() => onClick(nodeType)}
-					><svelte:component
-						this={config.icon}
-						class={cn('size-4! stroke-2', config.class)}
-					/>{config.label}</Button
+					><config.icon class={cn('size-4! stroke-2', config.class)} />{config.label}</Button
 				>
 			</nav>
 		{/if}
@@ -71,7 +86,11 @@
 		<Popover.Trigger
 			title="Open Drag & Drop Panel"
 			aria-label="Open Drag & Drop Panel"
-			class={buttonVariants({ variant: 'outline', size: 'icon' })}><OpenIcon /></Popover.Trigger
+			class={buttonVariants({
+				variant: 'outline',
+				size: 'icon',
+				class: 'bg-card/90!'
+			})}><OpenIcon /></Popover.Trigger
 		>
 		<Popover.Content align="end" side="top" class="max-w-xs">
 			<div class="grid gap-4">

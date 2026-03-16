@@ -3,8 +3,8 @@
 
 	import Button from '@/components/ui/button/button.svelte';
 	import * as ButtonGroup from '@/components/ui/button-group/';
-	import Input from '@/components/ui/input/input.svelte';
 	import Label from '@/components/ui/label/label.svelte';
+	import * as NumberField from '$lib/components/ui/number-field';
 
 	import { SquarePlusIcon } from '@lucide/svelte';
 
@@ -40,8 +40,8 @@
 	);
 
 	// Generate Nodes based on specified splits
-	let rawSplits = $state<number | undefined>(2);
-	const splits = $derived<number>(rawSplits === undefined || rawSplits < 2 ? 2 : rawSplits);
+	let rawSplits = $state<number>(2);
+	const splits = $derived<number>(rawSplits < 2 ? 2 : rawSplits);
 	const { getNodesBounds } = useSvelteFlow();
 	function generateSplits() {
 		if (targetSummedValue === null) return;
@@ -98,22 +98,23 @@
 		{#if targetSummedValue && noSourceConnection}
 			<div class="flex flex-col gap-2" transition:slide>
 				<Label for="split">Splits</Label>
-				<ButtonGroup.Root>
-					<Input
-						type="split"
-						bind:value={rawSplits}
-						placeholder="2"
-						min={2}
-						max={10}
-						class="nodrag"
-					/>
+				<ButtonGroup.Root orientation="vertical" class="w-full">
+					<NumberField.Root min={2} bind:value={rawSplits}>
+						<NumberField.Group class="nodrag">
+							<NumberField.Decrement />
+							<NumberField.Input class="w-[10ch]" name="split" />
+							<NumberField.Increment />
+						</NumberField.Group>
+					</NumberField.Root>
+
 					<Button
 						variant="outline"
-						size="icon"
+						size="default"
+						class="w-full"
 						aria-label="Generate Split Nodes"
 						onclick={generateSplits}
 					>
-						<SquarePlusIcon />
+						<SquarePlusIcon /> Generate Splits
 					</Button>
 				</ButtonGroup.Root>
 			</div>

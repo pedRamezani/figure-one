@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { useSvelteFlow, useNodeConnections, useNodesData, type NodeProps } from '@xyflow/svelte';
 
-	import Label from '@/components/ui/label/label.svelte';
 	import Input from '@/components/ui/input/input.svelte';
+	import Label from '@/components/ui/label/label.svelte';
+	import * as NumberField from '$lib/components/ui/number-field';
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
@@ -12,6 +13,7 @@
 
 	const { updateNodeData } = useSvelteFlow();
 
+	// Row effect
 	const connectionsTarget = useNodeConnections({
 		handleId: substepTarget.handleId,
 		handleType: substepTarget.handleType
@@ -45,6 +47,15 @@
 			updateNodeData(id, { row: row });
 		}
 	});
+
+	// Delta effect
+	let delta = $state(data.delta as number);
+	$effect(() => {
+		const parsedDelta = Number.isFinite(delta) ? delta : 0;
+		if (data.delta !== parsedDelta) {
+			updateNodeData(id, { delta: parsedDelta });
+		}
+	});
 </script>
 
 <NodeWrapper title="Substep" description="Inclusion or Exclusion" nodeId={id} nodeType={type}>
@@ -63,17 +74,13 @@
 			/>
 
 			<Label for="delta">Dropped</Label>
-			<Input
-				name="delta"
-				value={data.delta}
-				type="number"
-				oninput={(evt) => {
-					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-					const parsedDelta = Number.isFinite(Number(raw)) && raw !== '' ? parseInt(raw, 10) : 0;
-					updateNodeData(id, { delta: parsedDelta });
-				}}
-				class="nodrag"
-			/>
+			<NumberField.Root min={0} bind:value={delta}>
+				<NumberField.Group class="nodrag">
+					<NumberField.Decrement />
+					<NumberField.Input class="w-[10ch]" name="delta" />
+					<NumberField.Increment />
+				</NumberField.Group>
+			</NumberField.Root>
 		</div>
 	{/snippet}
 </NodeWrapper>

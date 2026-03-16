@@ -10,6 +10,15 @@
 	const { id, data, type }: NodeProps = $props();
 
 	const { updateNodeData } = useSvelteFlow();
+
+	// Population size effect
+	let populationSize = $state(data.value as number);
+	$effect(() => {
+		const parsedValue = Number.isFinite(populationSize) ? populationSize : 0;
+		if (data.value !== parsedValue) {
+			updateNodeData(id, { value: parsedValue });
+		}
+	});
 </script>
 
 <NodeWrapper
@@ -34,18 +43,10 @@
 
 			<!-- Main Section -->
 			<Label for="start">Population size</Label>
-			<NumberField.Root min={0} value={data.value as number | undefined}>
+			<NumberField.Root min={0} bind:value={populationSize}>
 				<NumberField.Group class="nodrag">
 					<NumberField.Decrement />
-					<NumberField.Input
-						class="w-[10ch]"
-						name="start"
-						oninput={(evt) => {
-							const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-							const parsedValue = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : 0;
-							updateNodeData(id, { value: parsedValue });
-						}}
-					/>
+					<NumberField.Input class="w-[10ch]" name="start" />
 					<NumberField.Increment />
 				</NumberField.Group>
 			</NumberField.Root>

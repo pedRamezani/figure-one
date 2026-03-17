@@ -20,6 +20,7 @@
 
 	const noConnection = $derived<boolean>(connectionsTargetInput.current.length === 0);
 
+	// Row initiation effect
 	$effect(function () {
 		if (noConnection) {
 			if (data.row !== null) {
@@ -37,6 +38,8 @@
 	// Split population size effect
 	let splitPopulationSize = $state(data.value as number);
 	$effect(() => {
+		// splitPopulationSize is actually number | null
+		// null if no value → Number.isFinite(null) == false → parsedValue = 0
 		const parsedValue = Number.isFinite(splitPopulationSize) ? splitPopulationSize : 0;
 		if (data.value !== parsedValue) {
 			updateNodeData(id, { value: parsedValue });
@@ -67,7 +70,7 @@
 			<!-- Main Section -->
 			<Label for="start">Split population size</Label>
 			<NumberField.Root min={0} bind:value={splitPopulationSize}>
-				<NumberField.Group class="nodrag">
+				<NumberField.Group class="nodrag bg-background dark:bg-input/30 border dark:border-input">
 					<NumberField.Decrement />
 					<NumberField.Input class="w-[10ch]" name="start" />
 					<NumberField.Increment />

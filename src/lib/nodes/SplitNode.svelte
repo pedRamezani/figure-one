@@ -41,6 +41,7 @@
 
 	// Generate Nodes based on specified splits
 	let rawSplits = $state<number>(2);
+	// rawSplits is actually number | null, but null < 2 is true
 	const splits = $derived<number>(rawSplits < 2 ? 2 : rawSplits);
 	const { getNodesBounds } = useSvelteFlow();
 	function generateSplits() {
@@ -100,7 +101,9 @@
 				<Label for="split">Splits</Label>
 				<ButtonGroup.Root orientation="vertical" class="w-full">
 					<NumberField.Root min={2} bind:value={rawSplits}>
-						<NumberField.Group class="nodrag">
+						<NumberField.Group
+							class="nodrag bg-background dark:bg-input/30 border dark:border-input"
+						>
 							<NumberField.Decrement />
 							<NumberField.Input class="w-[10ch]" name="split" />
 							<NumberField.Increment />

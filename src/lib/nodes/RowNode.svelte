@@ -145,6 +145,7 @@
 		);
 	}
 
+	// Expansion effect
 	const expansion = $derived(resolveExpansion(childBounds));
 	$effect(() => {
 		if (expansion.changed && expansion.valid) {
@@ -152,6 +153,7 @@
 		}
 	});
 
+	// Deletion effect
 	$effect(() => {
 		if (noChildren) {
 			deleteElements({ nodes: [{ id: id }] });

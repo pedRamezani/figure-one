@@ -24,6 +24,7 @@
 
 	const noConnection = $derived<boolean>(sourceData.current.length === 0);
 
+	// Disconnect effect: Delete outgoing edges connected to node with row !== null → node has row node parent
 	$effect(function () {
 		if (noConnection) {
 			return;

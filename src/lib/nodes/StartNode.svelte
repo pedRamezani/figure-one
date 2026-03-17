@@ -21,8 +21,6 @@
 			updateNodeData(id, { value: parsedValue });
 		}
 	});
-
-	$inspect(populationSize);
 </script>
 
 <NodeWrapper

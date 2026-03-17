@@ -13,7 +13,6 @@
 
 	const { updateNodeData } = useSvelteFlow();
 
-	// Row effect
 	const connectionsTarget = useNodeConnections({
 		handleId: substepTarget.handleId,
 		handleType: substepTarget.handleType
@@ -25,6 +24,7 @@
 
 	const noConnection = $derived<boolean>(targetData.current.length === 0);
 
+	// Row inheritance effect
 	$effect(function () {
 		if (noConnection) {
 			if (data.row !== null) {
@@ -51,6 +51,8 @@
 	// Delta effect
 	let delta = $state(data.delta as number);
 	$effect(() => {
+		// delta is actually number | null
+		// null if no value → Number.isFinite(null) == false → parsedDelta = 0
 		const parsedDelta = Number.isFinite(delta) ? delta : 0;
 		if (data.delta !== parsedDelta) {
 			updateNodeData(id, { delta: parsedDelta });
@@ -75,7 +77,7 @@
 
 			<Label for="delta">Dropped</Label>
 			<NumberField.Root min={0} bind:value={delta}>
-				<NumberField.Group class="nodrag">
+				<NumberField.Group class="nodrag bg-background dark:bg-input/30 border dark:border-input">
 					<NumberField.Decrement />
 					<NumberField.Input class="w-[10ch]" name="delta" />
 					<NumberField.Increment />

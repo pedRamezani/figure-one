@@ -14,11 +14,15 @@
 	// Population size effect
 	let populationSize = $state(data.value as number);
 	$effect(() => {
+		// populationSize is actually number | null
+		// null if no value → Number.isFinite(null) == false → parsedValue = 0
 		const parsedValue = Number.isFinite(populationSize) ? populationSize : 0;
 		if (data.value !== parsedValue) {
 			updateNodeData(id, { value: parsedValue });
 		}
 	});
+
+	$inspect(populationSize);
 </script>
 
 <NodeWrapper
@@ -44,7 +48,7 @@
 			<!-- Main Section -->
 			<Label for="start">Population size</Label>
 			<NumberField.Root min={0} bind:value={populationSize}>
-				<NumberField.Group class="nodrag">
+				<NumberField.Group class="nodrag bg-background dark:bg-input/30 border dark:border-input">
 					<NumberField.Decrement />
 					<NumberField.Input class="w-[10ch]" name="start" />
 					<NumberField.Increment />

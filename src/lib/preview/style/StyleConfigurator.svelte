@@ -642,6 +642,39 @@
 				bind:value={styleConfig.current.mainBox.width}
 				min={0}
 			/>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="node-value-aligment">Value Aligment</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.mainBox.valueAlign}
+				>
+					{#each aligmentOptions as alignment}
+						<ToggleGroup.Item
+							value={alignment}
+							aria-label="Toggle star"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = aligmentMapping[alignment]}
+							<Icon />
+							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<SimpleField
+				title="Value Prefix"
+				name="page-title"
+				bind:value={styleConfig.current.mainBox.valuePrefix}
+			/>
+
+			<SimpleField
+				title="Value Suffix"
+				name="page-title"
+				bind:value={styleConfig.current.mainBox.valueSuffix}
+			/>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />

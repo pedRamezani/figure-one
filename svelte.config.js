@@ -15,16 +15,16 @@ const config = {
 		alias: {
 			'@/*': './src/lib/*'
 		},
-		typescript: {
-			config: (config) => {
-				config["include"] = [
-					...config["include"],
-					"../src/lib/components/ui/color-picker/colorpicker.d.ts"
-				]
+		// typescript: {
+		// 	config: (config) => {
+		// 		config["include"] = [
+		// 			...config["include"],
+		// 			"../src/lib/components/ui/color-picker/colorpicker.d.ts"
+		// 		]
 
-				return config
-			}
-		}
+		// 		return config
+		// 	}
+		// }
 	}
 };
 

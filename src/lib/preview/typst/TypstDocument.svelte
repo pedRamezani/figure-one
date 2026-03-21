@@ -19,6 +19,8 @@
 
 	import { cn } from '@/utils';
 	import './typst.css';
+	import SvgPanZoom from './SvgPanZoom.svelte';
+	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 
 	/* ---------------- props ---------------- */
 	let {
@@ -70,7 +72,7 @@
 	};
 
 	/* ---------------- state ---------------- */
-	let displayDiv: HTMLDivElement | null = $state<HTMLDivElement | null>(null);
+	let svgHTML = $state<string | null>(null);
 
 	interface RendererResource {
 		session: typst.RenderSession;
@@ -143,22 +145,8 @@
 
 	/* ---------------- render effect ---------------- */
 	$effect(() => {
-		if (!displayDiv) return;
-
-		if (!displayDiv.firstElementChild) {
-			const wrapper = document.createElement('div');
-			wrapper.className = 'display-layer-wrapper';
-			displayDiv.appendChild(wrapper);
-
-			const div = document.createElement('div');
-			wrapper.appendChild(div);
-		}
-
-		const wrapElem = displayDiv.firstElementChild as HTMLDivElement;
-		const divElem = wrapElem.firstElementChild as HTMLDivElement;
-
 		if (!finalArtifact?.length) {
-			divElem.innerHTML = '';
+			svgHTML = null;
 			return;
 		}
 
@@ -213,13 +201,20 @@
 				.then((svg) => {
 					const processedSvg = svg.replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, '');
 					onSvgChange?.(processedSvg);
-					divElem.innerHTML = processedSvg.replace(
-						'<svg ',
-						'<svg style="width: 100%; height: auto"'
-					);
+					svgHTML = processedSvg.replace('<svg ', '<svg style="width: 100%; height: auto"');
 				});
 		}
 	});
 </script>
 
-<div class={cn('typst-app', className)} bind:this={displayDiv}></div>
+<div class="h-full">
+	{#if svgHTML}
+		<SvgPanZoom class={cn('typst-app', className)}>
+			{#snippet svg()}
+				{@html svgHTML}
+			{/snippet}
+		</SvgPanZoom>
+	{:else}
+		<Skeleton class="w-full aspect-[3]" />
+	{/if}
+</div>

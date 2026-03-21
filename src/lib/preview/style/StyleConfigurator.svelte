@@ -482,7 +482,7 @@
 						<ToggleGroup.Item
 							value={alignment}
 							aria-label="Toggle star"
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
 						>
 							{@const Icon = aligmentMapping[alignment]}
 							<Icon />

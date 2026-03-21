@@ -1,8 +1,14 @@
-import { parseTypstFlowchartJSON, type TypstFlowchartData, type TypstSteps, type TypstStep, type TypstGroups } from './preview/json/convert';
+import {
+	parseTypstFlowchartJSON,
+	type TypstFlowchartData,
+	type TypstSteps,
+	type TypstStep,
+	type TypstGroups
+} from './preview/json/convert';
 import { isTypstFlowchartData, isTypstFlowchartDataV1 } from './preview/json/validate';
 
 import { styleConfig, type TypstFlowchartConfig } from './preview/style/style-config.svelte';
-import { isFlowchartConfig } from './preview/style/validate';
+import { isPartialFlowchartConfig, mergePartialFlowchartConfig } from './preview/style/validate';
 
 import { setEdges, setNodes } from './preview/flow/Flow.svelte';
 
@@ -46,7 +52,7 @@ export function parseProfileJSON(value: unknown): Profile | null {
 		console.info('JSONnewFD');
 	} else if (isTypstFlowchartDataV1(value.data)) {
 		const parsedMainSteps: TypstStep[] = [];
-		const parsedGroups: TypstGroups = {}
+		const parsedGroups: TypstGroups = {};
 		for (let i = 0; i <= value.data.length - 1; i++) {
 			const entry = value.data[i];
 			parsedMainSteps.push({
@@ -66,16 +72,16 @@ export function parseProfileJSON(value: unknown): Profile | null {
 			});
 
 			if (entry.group.length > 0) {
-				(parsedGroups[entry.group] ??= []).push(i)
+				(parsedGroups[entry.group] ??= []).push(i);
 			}
 		}
 		const parsedSteps: TypstSteps = {
-			"main": parsedMainSteps,
-			"splits": []
-		}
+			main: parsedMainSteps,
+			splits: []
+		};
 		const parsedData: TypstFlowchartData = {
-			"steps": parsedSteps,
-			"groups": parsedGroups
+			steps: parsedSteps,
+			groups: parsedGroups
 		};
 		flowchartData = parsedData;
 		console.info('JSONlegacyFD');
@@ -85,12 +91,12 @@ export function parseProfileJSON(value: unknown): Profile | null {
 	}
 
 	// Config
-	if (!isFlowchartConfig(value.config)) return null;
+	if (!isPartialFlowchartConfig(value.config)) return null;
 
 	return {
 		$version: value.$version,
 		data: flowchartData,
-		config: value.config
+		config: mergePartialFlowchartConfig(value.config)
 	};
 }
 

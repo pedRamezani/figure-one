@@ -21,7 +21,9 @@ export const tintOptions = [
 	'green',
 	'lime'
 ] as const;
-export type Tint = (typeof tintOptions)[number];
+export type Hex = `#${string}`;
+export type Swatch = (typeof tintOptions)[number];
+export type Tint = Swatch | Hex;
 
 // -------------------------------------------------------------
 // Arrow Body + Head Definitions
@@ -86,7 +88,15 @@ export interface DiagramConfig {
 	cellHeight: number; // mm
 }
 
-export interface BoxConfig {
+export interface MainBoxConfig {
+	tint: Tint;
+	width: number | 'auto'; // mm or auto
+	valueAlign: Alignment;
+	valuePrefix: string;
+	valueSuffix: string;
+}
+
+export interface StepBoxConfig {
 	tint: Tint;
 	width: number | 'auto'; // mm or auto
 }
@@ -104,8 +114,8 @@ export interface TypstFlowchartConfig {
 	edge: EdgesConfig;
 	mark: MarkConfig;
 	diagram: DiagramConfig;
-	mainBox: BoxConfig;
-	stepBox: BoxConfig;
+	mainBox: MainBoxConfig;
+	stepBox: StepBoxConfig;
 	groupBox: GroupBoxConfig;
 }
 
@@ -138,7 +148,10 @@ export const defaultConfig: TypstFlowchartConfig = {
 	},
 	mainBox: {
 		tint: 'white',
-		width: 80
+		width: 80,
+		valueAlign: 'left',
+		valuePrefix: '',
+		valueSuffix: ''
 	},
 	stepBox: {
 		tint: 'white',

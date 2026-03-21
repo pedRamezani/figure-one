@@ -187,7 +187,13 @@
         let population-col = mapped-col(col, max-cols: max-cols)
         styled-node(
           (population-col, row * 2),
-          it.label + "\n" + str(it.value),
+          it.label + pad(
+            align(
+              m.valuePrefix + str(it.value) + m.valueSuffix,
+              alignment-mapping.at(m.valueAlign)
+            ),
+            top: -0.5em
+          ),
           tint: get-tint(m.tint),
           width: m.width * 1mm,
         )

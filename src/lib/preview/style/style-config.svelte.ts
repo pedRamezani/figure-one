@@ -96,6 +96,7 @@ export interface DiagramConfig {
 export interface MainBoxConfig {
 	tint: Tint;
 	width: number | 'auto'; // mm or auto
+	textAlign: Alignment;
 	valueAlign: ValueAligment;
 	valuePrefix: string;
 	valueSuffix: string;
@@ -154,6 +155,7 @@ export const defaultConfig: TypstFlowchartConfig = {
 	mainBox: {
 		tint: 'white',
 		width: 80,
+		textAlign: 'left',
 		valueAlign: 'left',
 		valuePrefix: '',
 		valueSuffix: ''

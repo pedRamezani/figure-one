@@ -209,7 +209,7 @@
         }
         styled-node(
           (population-col, row * 2),
-          population-label,
+          align(alignment-mapping.at(m.textAlign), population-label),
           tint: get-tint(m.tint),
           width: m.width * 1mm,
         )

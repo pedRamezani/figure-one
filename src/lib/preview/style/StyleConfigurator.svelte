@@ -487,6 +487,7 @@
 				>
 					{#each aligmentOptions as alignment}
 						<ToggleGroup.Item
+							name="page-title-aligment"
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
@@ -651,6 +652,28 @@
 			/>
 
 			<Field.Field class="max-w-fit">
+				<Field.Label for="node-text-aligment">Text Aligment</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.mainBox.textAlign}
+				>
+					{#each aligmentOptions as alignment}
+						<ToggleGroup.Item
+							name="node-text-aligment"
+							value={alignment}
+							aria-label="Toggle star"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = alignmentMapping[alignment]}
+							<Icon />
+							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-fit">
 				<Field.Label for="node-value-aligment">Value Aligment</Field.Label>
 				<ToggleGroup.Root
 					type="single"
@@ -659,6 +682,7 @@
 				>
 					{#each textAligmentOptions as alignment}
 						<ToggleGroup.Item
+							name="node-value-aligment"
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
@@ -677,6 +701,7 @@
 				>
 					{#each aligmentOptions as alignment}
 						<ToggleGroup.Item
+							name="node-value-aligment"
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"

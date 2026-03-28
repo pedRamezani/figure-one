@@ -5,9 +5,11 @@
 		arrowBodies,
 		arrowHeads,
 		aligmentOptions,
+		textAligmentOptions,
 		type ArrowBody,
 		type ArrowHead,
-		type Alignment
+		type Alignment,
+		type TextAlignment
 	} from './style-config.svelte';
 
 	import Button from '@/components/ui/button/button.svelte';
@@ -23,10 +25,15 @@
 	import TextAlignEndIcon from '@lucide/svelte/icons/text-align-end';
 	import type { Component } from 'svelte';
 
-	const aligmentMapping: Record<Alignment, Component> = {
+	const alignmentMapping: Record<Alignment, Component> = {
 		left: TextAlignStartIcon,
 		center: TextAlignCenterIcon,
 		right: TextAlignEndIcon
+	};
+
+	const textAlignmentMapping: Record<TextAlignment, Component> = {
+		'text-left': TextAlignStartIcon,
+		'text-right': TextAlignEndIcon
 	};
 
 	let arrowBody = $state<ArrowBody>('-');
@@ -484,7 +491,7 @@
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
 						>
-							{@const Icon = aligmentMapping[alignment]}
+							{@const Icon = alignmentMapping[alignment]}
 							<Icon />
 							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
 						</ToggleGroup.Item>
@@ -650,13 +657,31 @@
 					variant="outline"
 					bind:value={styleConfig.current.mainBox.valueAlign}
 				>
+					{#each textAligmentOptions as alignment}
+						<ToggleGroup.Item
+							value={alignment}
+							aria-label="Toggle star"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = textAlignmentMapping[alignment]}
+							<Icon />
+							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.mainBox.valueAlign}
+				>
 					{#each aligmentOptions as alignment}
 						<ToggleGroup.Item
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
 						>
-							{@const Icon = aligmentMapping[alignment]}
+							{@const Icon = alignmentMapping[alignment]}
 							<Icon />
 							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
 						</ToggleGroup.Item>

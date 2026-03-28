@@ -57,6 +57,11 @@ export type Arrow = `${ArrowBody}${ArrowHead}`;
 export const aligmentOptions = ['left', 'center', 'right'] as const;
 export type Alignment = (typeof aligmentOptions)[number];
 
+export const textAligmentOptions = ['text-left', 'text-right'] as const;
+export type TextAlignment = (typeof textAligmentOptions)[number];
+
+export type ValueAligment = Alignment | TextAlignment;
+
 // -------------------------------------------------------------
 // Sub-objects of the configuration file
 // -------------------------------------------------------------
@@ -91,7 +96,7 @@ export interface DiagramConfig {
 export interface MainBoxConfig {
 	tint: Tint;
 	width: number | 'auto'; // mm or auto
-	valueAlign: Alignment;
+	valueAlign: ValueAligment;
 	valuePrefix: string;
 	valueSuffix: string;
 }

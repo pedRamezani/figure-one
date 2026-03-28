@@ -184,16 +184,32 @@
         }
 
         // Population box
+        let value-fmt = m.valuePrefix + str(it.value) + m.valueSuffix
         let population-col = mapped-col(col, max-cols: max-cols)
-        styled-node(
-          (population-col, row * 2),
+        let population-label = if m.valueAlign.starts-with("text") {
+          let sorted-spans = if m.valueAlign.ends-with("left") {
+            (value-fmt, it.label)
+          } else {
+            (it.label, value-fmt)
+          }
+          grid(
+            ..sorted-spans, 
+            inset: 0pt,
+            column-gutter: 0.4em,
+            columns: 2,
+          )
+        } else {
           it.label + pad(
             align(
-              m.valuePrefix + str(it.value) + m.valueSuffix,
+              value-fmt,
               alignment-mapping.at(m.valueAlign)
             ),
             top: -0.5em
-          ),
+          )
+        }
+        styled-node(
+          (population-col, row * 2),
+          population-label,
           tint: get-tint(m.tint),
           width: m.width * 1mm,
         )
@@ -228,7 +244,11 @@
                   align: (right, left),
                 ), 
                 left: 3 * 0.5em, 
-                top: -1.2em + 0.6em
+                top: if it.delta.substeps.len() == 0 {
+                  -1.2em
+                } else {
+                  -1.2em + 0.6em
+                }
               ),
             tint: get-tint(s.tint),
             width: s.width * 1mm,

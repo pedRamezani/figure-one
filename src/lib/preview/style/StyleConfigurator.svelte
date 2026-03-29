@@ -660,7 +660,7 @@
 				>
 					{#each aligmentOptions as alignment}
 						<ToggleGroup.Item
-							name="node-text-aligment"
+							name="mainbox-text-aligment"
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
@@ -674,7 +674,7 @@
 			</Field.Field>
 
 			<Field.Field class="max-w-fit">
-				<Field.Label for="node-value-aligment">Value Aligment</Field.Label>
+				<Field.Label for="mainbox-value-aligment">Value Aligment</Field.Label>
 				<ToggleGroup.Root
 					type="single"
 					variant="outline"
@@ -682,7 +682,7 @@
 				>
 					{#each textAligmentOptions as alignment}
 						<ToggleGroup.Item
-							name="node-value-aligment"
+							name="mainbox-value-aligment"
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
@@ -701,7 +701,7 @@
 				>
 					{#each aligmentOptions as alignment}
 						<ToggleGroup.Item
-							name="node-value-aligment"
+							name="mainbox-value-aligment"
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
@@ -743,6 +743,81 @@
 				title="Width (mm)"
 				name="stepbox-width"
 				bind:value={styleConfig.current.stepBox.width}
+				min={0}
+			/>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-delta-aligment">Delta Aligment</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.stepBox.deltaAlign}
+				>
+					{#each textAligmentOptions as alignment}
+						<ToggleGroup.Item
+							name="stepbox-delta-aligment"
+							value={alignment}
+							aria-label="Toggle star"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = textAlignmentMapping[alignment]}
+							<Icon />
+							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<SimpleField
+				title="Delta Prefix"
+				name="stepbox-delta-prefix"
+				bind:value={styleConfig.current.stepBox.deltaPrefix}
+			/>
+
+			<SimpleField
+				title="Delta Suffix"
+				name="stepbox-delta-suffix"
+				bind:value={styleConfig.current.stepBox.deltaSuffix}
+			/>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-subdelta-aligment">Sub-Delta Aligment</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.stepBox.subDeltaAlign}
+				>
+					{#each textAligmentOptions as alignment}
+						<ToggleGroup.Item
+							name="stepbox-subdelta-aligment"
+							value={alignment}
+							aria-label="Toggle star"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = textAlignmentMapping[alignment]}
+							<Icon />
+							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<SimpleField
+				title="Sub-Delta Prefix"
+				name="stepbox-subdelta-prefix"
+				bind:value={styleConfig.current.stepBox.subDeltaPrefix}
+			/>
+
+			<SimpleField
+				title="Sub-Delta Suffix"
+				name="stepbox-subdelta-suffix"
+				bind:value={styleConfig.current.stepBox.subDeltaSuffix}
+			/>
+
+			<SimpleField
+				title="Sub-Delta Indent (spaces)"
+				name="stepbox-subdelta-indent"
+				bind:value={styleConfig.current.stepBox.subDeltaIndent}
 				min={0}
 			/>
 		</Field.Group>

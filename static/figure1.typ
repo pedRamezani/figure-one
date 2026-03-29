@@ -245,20 +245,31 @@
             )
               + pad(
                 grid(
-                  ..for sub in it.delta.substeps {
+                  ..for (i, sub) in it.delta.substeps.enumerate() {
                     let sub-delta-fmt = s.subDeltaPrefix + str(sub.value) + s.subDeltaSuffix
                     let sorted-sub-delta-spans = if s.subDeltaAlign.ends-with("left") {
                       (sub-delta-fmt, sub.label)
                     } else {
+                      // "1 a A i I α Α *" enum(numbering: "1", enum.item(1, sub.label))
                       (sub.label, sub-delta-fmt)
                     }
-                    sorted-sub-delta-spans
+
+                    if s.subDeltaNumbering != none {
+                      let (first, second) = sorted-sub-delta-spans
+                      (enum(numbering: s.subDeltaNumbering, enum.item(i + 1, first)), second)
+                    } else {
+                      sorted-sub-delta-spans
+                    }
                   },
                   inset: 0pt,
                   column-gutter: 1em / 3,
                   row-gutter: 0.65em, // Default leading between lines of text
                   columns: 2,
-                  align: (right, left),
+                  align: if s.subDeltaAlign.ends-with("left") {
+                    (right, left)
+                  } else {
+                    (left, right)
+                  },
                 ),
                 left: s.subDeltaIndent * 1em / 3,
                 top: if it.delta.substeps.len() == 0 {

@@ -105,6 +105,13 @@ export interface MainBoxConfig {
 export interface StepBoxConfig {
 	tint: Tint;
 	width: number | 'auto'; // mm or auto
+	deltaAlign: TextAlignment;
+	deltaPrefix: string;
+	deltaSuffix: string;
+	subDeltaAlign: TextAlignment;
+	subDeltaPrefix: string;
+	subDeltaSuffix: string;
+	subDeltaIndent: number; // spaces
 }
 
 export interface GroupBoxConfig {
@@ -162,7 +169,14 @@ export const defaultConfig: TypstFlowchartConfig = {
 	},
 	stepBox: {
 		tint: 'white',
-		width: 80
+		width: 80,
+		deltaAlign: 'text-left',
+		deltaPrefix: '',
+		deltaSuffix: '',
+		subDeltaAlign: 'text-left',
+		subDeltaPrefix: '',
+		subDeltaSuffix: '',
+		subDeltaIndent: 3
 	},
 	groupBox: {
 		tint: 'green'

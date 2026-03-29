@@ -52,16 +52,16 @@
 #set document(
   title: style.page.title,
   description: "A CONSORT flowchart diagram",
-  keywords: ("flowchart", "figure1")
+  keywords: ("flowchart", "figure1"),
 )
 
 #show heading: set align(alignment-mapping.at(style.page.titleAlign))
 
 #set page(
-  width: auto, 
+  width: auto,
   height: auto,
   margin: style.page.margin * 1mm,
-  fill: get-tint(style.page.tint).lighten(80%)
+  fill: get-tint(style.page.tint).lighten(80%),
 )
 
 #set text(font: "New Computer Modern")
@@ -89,7 +89,7 @@
   edge(
     stroke: e.stroke * 1pt + tint,
     corner-radius: e.cornerRadius * 1pt,
-    ..args
+    ..args,
   )
 }
 
@@ -109,7 +109,7 @@
         groups.push((
           label: group,
           start: r-min,
-          end: r-max
+          end: r-max,
         ))
         r-min = next
         r-max = none
@@ -121,11 +121,11 @@
       groups.push((
         label: group,
         start: r-min,
-        end: r-max
+        end: r-max,
       ))
     }
   }
-  
+
   groups
 }
 
@@ -136,7 +136,7 @@
   if type(value) == array {
     value
   } else {
-    (value, )
+    (value,)
   }
 }
 
@@ -160,7 +160,7 @@
   }
 
   // Calculate min col - 1 for group box placement
-  let group-col = - 1
+  let group-col = -1
 
   let steps = (..data.steps.main, ..data.steps.splits)
 
@@ -178,7 +178,6 @@
       let max-cols = vals.len()
 
       for (col, it) in vals.enumerate() {
-
         if it == none {
           continue
         }
@@ -187,24 +186,27 @@
         let value-fmt = m.valuePrefix + str(it.value) + m.valueSuffix
         let population-col = mapped-col(col, max-cols: max-cols)
         let population-label = if m.valueAlign.starts-with("text") {
-          let sorted-spans = if m.valueAlign.ends-with("left") {
+          let sorted-population-spans = if m.valueAlign.ends-with("left") {
             (value-fmt, it.label)
           } else {
             (it.label, value-fmt)
           }
           grid(
-            ..sorted-spans, 
+            ..sorted-population-spans,
             inset: 0pt,
             column-gutter: 0.4em,
             columns: 2,
           )
         } else {
-          it.label + pad(
-            align(
-              value-fmt,
-              alignment-mapping.at(m.valueAlign)
-            ),
-            top: -0.5em
+          (
+            it.label
+              + pad(
+                align(
+                  value-fmt,
+                  alignment-mapping.at(m.valueAlign),
+                ),
+                top: -0.5em,
+              )
           )
         }
         styled-node(
@@ -223,32 +225,47 @@
             (population-col, (row - 1) * 2),
             (population-col, row * 2 - 1),
             (population-col + 1, row * 2 - 1),
-            a.arrow
+            a.arrow,
           )
 
           // Exclusion box
+          let delta-fmt = s.deltaPrefix + str(it.delta.value) + s.deltaSuffix
+          let sorted-delta-spans = if s.deltaAlign.ends-with("left") {
+            (delta-fmt, it.delta.label)
+          } else {
+            (it.delta.label, delta-fmt)
+          }
           styled-node(
             (population-col + 1, row * 2 - 1),
-            str(it.delta.value)
-              + " "
-              + it.delta.label
+            grid(
+              ..sorted-delta-spans,
+              inset: 0pt,
+              column-gutter: 1em / 3,
+              columns: 2,
+            )
               + pad(
                 grid(
-                  ..for s in it.delta.substeps {
-                    (str(s.value), s.label)
-                  }, 
+                  ..for sub in it.delta.substeps {
+                    let sub-delta-fmt = s.subDeltaPrefix + str(sub.value) + s.subDeltaSuffix
+                    let sorted-sub-delta-spans = if s.subDeltaAlign.ends-with("left") {
+                      (sub-delta-fmt, sub.label)
+                    } else {
+                      (sub.label, sub-delta-fmt)
+                    }
+                    sorted-sub-delta-spans
+                  },
                   inset: 0pt,
-                  column-gutter: 0.4em,
-                  row-gutter:  0.6em,
+                  column-gutter: 1em / 3,
+                  row-gutter: 0.65em, // Default leading between lines of text
                   columns: 2,
                   align: (right, left),
-                ), 
-                left: 3 * 0.5em, 
+                ),
+                left: s.subDeltaIndent * 1em / 3,
                 top: if it.delta.substeps.len() == 0 {
-                  -1.2em
+                  -1.2em // Default spacing between paragraphs (population label and delta label)
                 } else {
-                  -1.2em + 0.6em
-                }
+                  -1.2em + 0.65em
+                },
               ),
             tint: get-tint(s.tint),
             width: s.width * 1mm,
@@ -292,7 +309,7 @@
             (mapped-col(0), row * 2),
             (mapped-col(0), row * 2 + 1),
             (population-col, row * 2 + 1),
-            (population-col, (row + 1) * 2)
+            (population-col, (row + 1) * 2),
           ).dedup()
 
           styled-edge(
@@ -309,7 +326,7 @@
     let interpolate = 0.25,
     for gr in groups(data) {
       let at-start = gr.start == 0
-      let at-end = gr.end == steps.len() -1
+      let at-end = gr.end == steps.len() - 1
 
       let start-offset = if at-start {
         0
@@ -330,10 +347,10 @@
         width: auto,
         enclose: (
           (group-col, 2 * gr.start + start-offset - interpolate),
-          (group-col, 2 * gr.end + + end-offset + interpolate)
+          (group-col, 2 * gr.end + end-offset + interpolate),
         ),
       )
-    }
+    },
   )
 }
 

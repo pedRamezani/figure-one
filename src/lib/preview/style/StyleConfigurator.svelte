@@ -6,6 +6,8 @@
 		arrowHeads,
 		aligmentOptions,
 		textAligmentOptions,
+		numberingBodyOptions,
+		numberingFormattingOptions,
 		type ArrowBody,
 		type ArrowHead,
 		type Alignment,
@@ -65,6 +67,28 @@
 
 	function arrowUpdate() {
 		styleConfig.current.mark.arrow = `${arrowBody}${arrowHead}`;
+	}
+
+	let numberingBody = $state<NumberingBody>(null);
+	let numberingFormatting = $state<NumberingFormatting>(null);
+
+	function numberingUpdate() {
+		let prefix = '';
+		let suffix = '';
+		if (numberingFormatting) {
+			if (numberingFormatting.includes('parentheses')) {
+				prefix = numberingFormatting.includes('single') ? '' : '(';
+				suffix = ')';
+			} else if (numberingFormatting === 'dot') {
+				suffix = '.';
+			}
+		}
+
+		if (numberingBody) {
+			styleConfig.current.stepBox.subDeltaNumbering = `${prefix}${numberingBody}${suffix}`;
+		} else {
+			styleConfig.current.stepBox.subDeltaNumbering = null;
+		}
 	}
 
 	function restoreDefaults() {
@@ -820,6 +844,46 @@
 				bind:value={styleConfig.current.stepBox.subDeltaIndent}
 				min={0}
 			/>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-subdelta-numbering-body">Sub-Delta Numbering</Field.Label>
+				<Select.Root
+					name="stepbox-subdelta-formatting"
+					type="single"
+					bind:value={numberingBody}
+					onValueChange={numberingUpdate}
+				>
+					<Select.Trigger>{numberingBody || 'None'}</Select.Trigger>
+					<Select.Content>
+						{#each numberingBodyOptions as option}
+							<Select.Item value={option}>{option || 'None'}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-subdelta-numbering-formatting"
+					>Sub-Delta Numbering Formatting</Field.Label
+				>
+				<Select.Root
+					name="stepbox-subdelta-numbering-formatting"
+					type="single"
+					bind:value={numberingFormatting}
+					onValueChange={numberingUpdate}
+				>
+					<Select.Trigger>{numberingFormatting || 'None'}</Select.Trigger>
+					<Select.Content>
+						{#each numberingFormattingOptions as format}
+							<Select.Item value={format}
+								>{format
+									? format.substring(0, 1).toUpperCase() + format.substring(1)
+									: 'None'}</Select.Item
+							>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</Field.Field>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />

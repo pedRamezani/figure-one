@@ -63,6 +63,43 @@ export type TextAlignment = (typeof textAligmentOptions)[number];
 export type ValueAligment = Alignment | TextAlignment;
 
 // -------------------------------------------------------------
+// Numbering Mapping Keys (Typst alignment-mapping)
+// -------------------------------------------------------------
+export const numberingBodyOptions = [
+	null,
+	'1',
+	'a',
+	'A',
+	'i',
+	'I',
+	// 'α', // Works, but disable for now
+	// 'Α', // Works, but disable for now
+	// '一',
+	// '壹',
+	// 'あ',
+	// 'い',
+	// 'ア',
+	// 'イ',
+	// 'א',
+	// '가',
+	// 'ㄱ',
+	// '*',
+	// '١', // Works, but disable for now
+	// '۱', // Works, but disable for now
+	// '१', // Works, but disable for now
+	// '১',
+	// 'ক',
+	'①',
+	'⓵'
+] as const;
+export type NumberingBody = (typeof numberingBodyOptions)[number];
+
+export const numberingFormattingOptions = [null, 'dot', 'single parentheses', 'double parentheses'] as const;
+export type NumberingFormatting = (typeof numberingFormattingOptions)[number];
+
+export type Numbering = `${string}${NumberingBody extends null ? '1' : NumberingBody}${string}` | null;
+
+// -------------------------------------------------------------
 // Sub-objects of the configuration file
 // -------------------------------------------------------------
 export interface PageConfig {
@@ -112,6 +149,7 @@ export interface StepBoxConfig {
 	subDeltaPrefix: string;
 	subDeltaSuffix: string;
 	subDeltaIndent: number; // spaces
+	subDeltaNumbering: Numbering;
 }
 
 export interface GroupBoxConfig {
@@ -176,7 +214,8 @@ export const defaultConfig: TypstFlowchartConfig = {
 		subDeltaAlign: 'text-left',
 		subDeltaPrefix: '',
 		subDeltaSuffix: '',
-		subDeltaIndent: 3
+		subDeltaIndent: 3,
+		subDeltaNumbering: null
 	},
 	groupBox: {
 		tint: 'green'

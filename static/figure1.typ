@@ -73,8 +73,8 @@
   let n = style.node
 
   node(
-    pos,
-    align(left, text(label, fill: tint.darken(100%))),
+    pos: pos,
+    label: align(left, text(label, fill: tint.darken(100%))),
     width: width,
     fill: tint.lighten(60%),
     stroke: n.stroke * 1pt + tint.darken(20%),
@@ -186,6 +186,7 @@
         let value-fmt = m.valuePrefix + str(it.value) + m.valueSuffix
         let population-col = mapped-col(col, max-cols: max-cols)
         let population-label = if m.valueAlign.starts-with("text") {
+          // Align Ns next to label
           let sorted-population-spans = if m.valueAlign.ends-with("left") {
             (value-fmt, it.label)
           } else {
@@ -198,6 +199,7 @@
             columns: 2,
           )
         } else {
+          // Align Ns below label
           (
             it.label
               + pad(
@@ -243,6 +245,7 @@
               column-gutter: 1em / 3,
               columns: 2,
             )
+            // Subdeltas
               + pad(
                 grid(
                   ..for (i, sub) in it.delta.substeps.enumerate() {
@@ -368,6 +371,7 @@
       }
 
       styled-node(
+        // TODO: Fix this workaround
         (group-col, -1),
         rotate(gr.label, -90deg, reflow: true),
         tint: get-tint(g.tint),

@@ -75,6 +75,8 @@
   node(
     pos: pos,
     label: align(left, text(label, fill: tint.darken(100%))),
+    inset: n.inset * 1pt,
+    outset: n.outset * 1pt,
     width: width,
     fill: tint.lighten(60%),
     stroke: n.stroke * 1pt + tint.darken(20%),

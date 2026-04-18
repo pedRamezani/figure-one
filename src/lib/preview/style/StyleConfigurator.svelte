@@ -11,7 +11,9 @@
 		type ArrowBody,
 		type ArrowHead,
 		type Alignment,
-		type TextAlignment
+		type TextAlignment,
+		type NumberingBody,
+		type NumberingFormatting
 	} from './style-config.svelte';
 
 	import Button from '@/components/ui/button/button.svelte';
@@ -592,6 +594,20 @@
 				bind:value={styleConfig.current.node.cornerRadius}
 				min={0}
 			/>
+
+			<SimpleField
+				title="Inset (pt)"
+				name="node-inset"
+				bind:value={styleConfig.current.node.inset}
+				min={0}
+			/>
+
+			<SimpleField
+				title="Outset (pt)"
+				name="node-outset"
+				bind:value={styleConfig.current.node.outset}
+				min={0}
+			/>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -850,13 +866,16 @@
 				<Select.Root
 					name="stepbox-subdelta-formatting"
 					type="single"
-					bind:value={numberingBody}
-					onValueChange={numberingUpdate}
+					value={numberingBody || 'None'}
+					onValueChange={(value) => {
+						numberingBody = (value === 'None' ? null : value) as NumberingBody;
+						numberingUpdate();
+					}}
 				>
 					<Select.Trigger>{numberingBody || 'None'}</Select.Trigger>
 					<Select.Content>
 						{#each numberingBodyOptions as option}
-							<Select.Item value={option}>{option || 'None'}</Select.Item>
+							<Select.Item value={option || 'None'}>{option || 'None'}</Select.Item>
 						{/each}
 					</Select.Content>
 				</Select.Root>
@@ -869,13 +888,16 @@
 				<Select.Root
 					name="stepbox-subdelta-numbering-formatting"
 					type="single"
-					bind:value={numberingFormatting}
-					onValueChange={numberingUpdate}
+					value={numberingFormatting || 'None'}
+					onValueChange={(value) => {
+						numberingFormatting = (value === 'None' ? null : value) as NumberingFormatting;
+						numberingUpdate();
+					}}
 				>
 					<Select.Trigger>{numberingFormatting || 'None'}</Select.Trigger>
 					<Select.Content>
 						{#each numberingFormattingOptions as format}
-							<Select.Item value={format}
+							<Select.Item value={format || 'None'}
 								>{format
 									? format.substring(0, 1).toUpperCase() + format.substring(1)
 									: 'None'}</Select.Item

@@ -9,6 +9,8 @@
 	import Button from '@/components/ui/button/button.svelte';
 	import * as Code from '@/components/ui/code';
 
+	import SimpleField from '../style/SimpleField.svelte';
+
 	import { DownloadIcon } from '@lucide/svelte';
 	import { ImportIcon } from '@lucide/svelte';
 
@@ -16,6 +18,15 @@
 	import { getLayoutedElements } from '../flow/layout.ts';
 
 	const { toObject, fitView } = useSvelteFlow();
+
+	let fileName = $state<string>('');
+	const fullFileName = $derived.by<string>(() => {
+		if (!fileName) {
+			return 'flowchart.json';
+		}
+
+		return `${fileName}.json`;
+	});
 
 	// Import / Export JSON
 	const nodes = useNodes();
@@ -51,7 +62,7 @@
 	}
 
 	function exportJSON(): void {
-		downloadBlob(profileStringified, 'application/json', 'flowchart.json');
+		downloadBlob(profileStringified, 'application/json', fullFileName);
 	}
 
 	// JSON encode
@@ -61,9 +72,19 @@
 		const profile = createProfile(data, styleConfig.current);
 		return JSON.stringify(profile, null, 2);
 	});
+
+	// Keyboard shortcuts
+	function handleKeydown(event: KeyboardEvent): void {
+		if (event.key && event.key === 's' && (event.metaKey || event.ctrlKey)) {
+			event.preventDefault();
+			exportJSON();
+		}
+	}
 </script>
 
-<div class="flex flex-col h-full gap-2 py-4">
+<svelte:document onkeydown={handleKeydown} />
+
+<div class="@container flex flex-col h-full gap-2 py-4">
 	<div class="grow">
 		<Code.Overflow>
 			<Code.Root hideLines code={profileStringified}>
@@ -71,8 +92,16 @@
 			</Code.Root>
 		</Code.Overflow>
 	</div>
-	<ButtonGroup.Root class="self-end" title="Download options" aria-label="Download options">
-		<Button variant="outline" onclick={importJSON}><ImportIcon />Import</Button>
-		<Button variant="outline" onclick={exportJSON}><DownloadIcon />Export</Button>
-	</ButtonGroup.Root>
+	<div class="flex flex-col @sm:flex-row sm:flex-row justify-between gap-2">
+		<SimpleField
+			title="File name"
+			name="page-title"
+			bind:value={fileName}
+			placeholder="flowchart"
+		/>
+		<ButtonGroup.Root class="self-end" title="Download options" aria-label="Download options">
+			<Button variant="outline" onclick={importJSON}><ImportIcon />Import</Button>
+			<Button variant="outline" onclick={exportJSON}><DownloadIcon />Export</Button>
+		</ButtonGroup.Root>
+	</div>
 </div>

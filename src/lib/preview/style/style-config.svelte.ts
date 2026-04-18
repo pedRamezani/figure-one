@@ -112,6 +112,8 @@ export interface PageConfig {
 export interface NodeConfig {
 	cornerRadius: number; // pt
 	stroke: number; // pt
+	inset: number; // pt
+	outset: number; // pt
 }
 
 export interface EdgesConfig {
@@ -182,7 +184,9 @@ export const defaultConfig: TypstFlowchartConfig = {
 	},
 	node: {
 		cornerRadius: 5,
-		stroke: 1
+		stroke: 1,
+		inset: 6,
+		outset: 0
 	},
 	edge: {
 		stroke: 1,

@@ -250,13 +250,14 @@
                     let sorted-sub-delta-spans = if s.subDeltaAlign.ends-with("left") {
                       (sub-delta-fmt, sub.label)
                     } else {
-                      // "1 a A i I α Α *" enum(numbering: "1", enum.item(1, sub.label))
                       (sub.label, sub-delta-fmt)
                     }
 
                     if s.subDeltaNumbering != none {
-                      let (first, second) = sorted-sub-delta-spans
-                      (enum(numbering: s.subDeltaNumbering, enum.item(i + 1, first)), second)
+                      (
+                        enum(numbering: s.subDeltaNumbering, body-indent: 0mm, enum.item(i + 1, ""),),
+                        ..sorted-sub-delta-spans,
+                      )
                     } else {
                       sorted-sub-delta-spans
                     }
@@ -264,11 +265,26 @@
                   inset: 0pt,
                   column-gutter: 1em / 3,
                   row-gutter: 0.65em, // Default leading between lines of text
-                  columns: 2,
-                  align: if s.subDeltaAlign.ends-with("left") {
-                    (right, left)
+                  columns: if s.subDeltaNumbering != none {
+                    3
                   } else {
-                    (left, right)
+                    2
+                  },
+                  align: {
+                    let align = if s.subDeltaAlign.ends-with("left") {
+                      (right, left)
+                    } else {
+                      (left, right)
+                    }
+
+                    if s.subDeltaNumbering != none {
+                      (
+                        right,
+                        ..align,
+                      )
+                    } else {
+                      align
+                    }
                   },
                 ),
                 left: s.subDeltaIndent * 1em / 3,

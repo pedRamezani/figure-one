@@ -63,6 +63,43 @@ export type TextAlignment = (typeof textAligmentOptions)[number];
 export type ValueAligment = Alignment | TextAlignment;
 
 // -------------------------------------------------------------
+// Numbering Mapping Keys (Typst alignment-mapping)
+// -------------------------------------------------------------
+export const numberingBodyOptions = [
+	null,
+	'1',
+	'a',
+	'A',
+	'i',
+	'I',
+	// 'α', // Works, but disable for now
+	// 'Α', // Works, but disable for now
+	// '一',
+	// '壹',
+	// 'あ',
+	// 'い',
+	// 'ア',
+	// 'イ',
+	// 'א',
+	// '가',
+	// 'ㄱ',
+	// '*',
+	// '١', // Works, but disable for now
+	// '۱', // Works, but disable for now
+	// '१', // Works, but disable for now
+	// '১',
+	// 'ক',
+	'①',
+	'⓵'
+] as const;
+export type NumberingBody = (typeof numberingBodyOptions)[number];
+
+export const numberingFormattingOptions = [null, 'dot', 'single parentheses', 'double parentheses'] as const;
+export type NumberingFormatting = (typeof numberingFormattingOptions)[number];
+
+export type Numbering = `${string}${NumberingBody extends null ? '1' : NumberingBody}${string}` | null;
+
+// -------------------------------------------------------------
 // Sub-objects of the configuration file
 // -------------------------------------------------------------
 export interface PageConfig {
@@ -75,6 +112,8 @@ export interface PageConfig {
 export interface NodeConfig {
 	cornerRadius: number; // pt
 	stroke: number; // pt
+	inset: number; // pt
+	outset: number; // pt
 }
 
 export interface EdgesConfig {
@@ -96,6 +135,7 @@ export interface DiagramConfig {
 export interface MainBoxConfig {
 	tint: Tint;
 	width: number | 'auto'; // mm or auto
+	textAlign: Alignment;
 	valueAlign: ValueAligment;
 	valuePrefix: string;
 	valueSuffix: string;
@@ -104,6 +144,14 @@ export interface MainBoxConfig {
 export interface StepBoxConfig {
 	tint: Tint;
 	width: number | 'auto'; // mm or auto
+	deltaAlign: TextAlignment;
+	deltaPrefix: string;
+	deltaSuffix: string;
+	subDeltaAlign: TextAlignment;
+	subDeltaPrefix: string;
+	subDeltaSuffix: string;
+	subDeltaIndent: number; // spaces
+	subDeltaNumbering: Numbering;
 }
 
 export interface GroupBoxConfig {
@@ -136,7 +184,9 @@ export const defaultConfig: TypstFlowchartConfig = {
 	},
 	node: {
 		cornerRadius: 5,
-		stroke: 1
+		stroke: 1,
+		inset: 6,
+		outset: 0
 	},
 	edge: {
 		stroke: 1,
@@ -154,13 +204,22 @@ export const defaultConfig: TypstFlowchartConfig = {
 	mainBox: {
 		tint: 'white',
 		width: 80,
+		textAlign: 'left',
 		valueAlign: 'left',
 		valuePrefix: '',
 		valueSuffix: ''
 	},
 	stepBox: {
 		tint: 'white',
-		width: 80
+		width: 80,
+		deltaAlign: 'text-left',
+		deltaPrefix: '',
+		deltaSuffix: '',
+		subDeltaAlign: 'text-left',
+		subDeltaPrefix: '',
+		subDeltaSuffix: '',
+		subDeltaIndent: 3,
+		subDeltaNumbering: null
 	},
 	groupBox: {
 		tint: 'green'

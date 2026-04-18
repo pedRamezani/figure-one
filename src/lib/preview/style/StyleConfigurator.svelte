@@ -6,10 +6,14 @@
 		arrowHeads,
 		aligmentOptions,
 		textAligmentOptions,
+		numberingBodyOptions,
+		numberingFormattingOptions,
 		type ArrowBody,
 		type ArrowHead,
 		type Alignment,
-		type TextAlignment
+		type TextAlignment,
+		type NumberingBody,
+		type NumberingFormatting
 	} from './style-config.svelte';
 
 	import Button from '@/components/ui/button/button.svelte';
@@ -65,6 +69,28 @@
 
 	function arrowUpdate() {
 		styleConfig.current.mark.arrow = `${arrowBody}${arrowHead}`;
+	}
+
+	let numberingBody = $state<NumberingBody>(null);
+	let numberingFormatting = $state<NumberingFormatting>(null);
+
+	function numberingUpdate() {
+		let prefix = '';
+		let suffix = '';
+		if (numberingFormatting) {
+			if (numberingFormatting.includes('parentheses')) {
+				prefix = numberingFormatting.includes('single') ? '' : '(';
+				suffix = ')';
+			} else if (numberingFormatting === 'dot') {
+				suffix = '.';
+			}
+		}
+
+		if (numberingBody) {
+			styleConfig.current.stepBox.subDeltaNumbering = `${prefix}${numberingBody}${suffix}`;
+		} else {
+			styleConfig.current.stepBox.subDeltaNumbering = null;
+		}
 	}
 
 	function restoreDefaults() {
@@ -487,6 +513,7 @@
 				>
 					{#each aligmentOptions as alignment}
 						<ToggleGroup.Item
+							name="page-title-aligment"
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
@@ -565,6 +592,20 @@
 				title="Corner Radius (pt)"
 				name="node-corner-radius"
 				bind:value={styleConfig.current.node.cornerRadius}
+				min={0}
+			/>
+
+			<SimpleField
+				title="Inset (pt)"
+				name="node-inset"
+				bind:value={styleConfig.current.node.inset}
+				min={0}
+			/>
+
+			<SimpleField
+				title="Outset (pt)"
+				name="node-outset"
+				bind:value={styleConfig.current.node.outset}
 				min={0}
 			/>
 		</Field.Group>
@@ -651,7 +692,29 @@
 			/>
 
 			<Field.Field class="max-w-fit">
-				<Field.Label for="node-value-aligment">Value Aligment</Field.Label>
+				<Field.Label for="node-text-aligment">Text Aligment</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.mainBox.textAlign}
+				>
+					{#each aligmentOptions as alignment}
+						<ToggleGroup.Item
+							name="mainbox-text-aligment"
+							value={alignment}
+							aria-label="Toggle star"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = alignmentMapping[alignment]}
+							<Icon />
+							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="mainbox-value-aligment">Value Aligment</Field.Label>
 				<ToggleGroup.Root
 					type="single"
 					variant="outline"
@@ -659,6 +722,7 @@
 				>
 					{#each textAligmentOptions as alignment}
 						<ToggleGroup.Item
+							name="mainbox-value-aligment"
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
@@ -677,6 +741,7 @@
 				>
 					{#each aligmentOptions as alignment}
 						<ToggleGroup.Item
+							name="mainbox-value-aligment"
 							value={alignment}
 							aria-label="Toggle star"
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
@@ -720,6 +785,127 @@
 				bind:value={styleConfig.current.stepBox.width}
 				min={0}
 			/>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-delta-aligment">Delta Aligment</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.stepBox.deltaAlign}
+				>
+					{#each textAligmentOptions as alignment}
+						<ToggleGroup.Item
+							name="stepbox-delta-aligment"
+							value={alignment}
+							aria-label="Toggle star"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = textAlignmentMapping[alignment]}
+							<Icon />
+							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<SimpleField
+				title="Delta Prefix"
+				name="stepbox-delta-prefix"
+				bind:value={styleConfig.current.stepBox.deltaPrefix}
+			/>
+
+			<SimpleField
+				title="Delta Suffix"
+				name="stepbox-delta-suffix"
+				bind:value={styleConfig.current.stepBox.deltaSuffix}
+			/>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-subdelta-aligment">Sub-Delta Aligment</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.stepBox.subDeltaAlign}
+				>
+					{#each textAligmentOptions as alignment}
+						<ToggleGroup.Item
+							name="stepbox-subdelta-aligment"
+							value={alignment}
+							aria-label="Toggle star"
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = textAlignmentMapping[alignment]}
+							<Icon />
+							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<SimpleField
+				title="Sub-Delta Prefix"
+				name="stepbox-subdelta-prefix"
+				bind:value={styleConfig.current.stepBox.subDeltaPrefix}
+			/>
+
+			<SimpleField
+				title="Sub-Delta Suffix"
+				name="stepbox-subdelta-suffix"
+				bind:value={styleConfig.current.stepBox.subDeltaSuffix}
+			/>
+
+			<SimpleField
+				title="Sub-Delta Indent (spaces)"
+				name="stepbox-subdelta-indent"
+				bind:value={styleConfig.current.stepBox.subDeltaIndent}
+				min={0}
+			/>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-subdelta-numbering-body">Sub-Delta Numbering</Field.Label>
+				<Select.Root
+					name="stepbox-subdelta-formatting"
+					type="single"
+					value={numberingBody || 'None'}
+					onValueChange={(value) => {
+						numberingBody = (value === 'None' ? null : value) as NumberingBody;
+						numberingUpdate();
+					}}
+				>
+					<Select.Trigger>{numberingBody || 'None'}</Select.Trigger>
+					<Select.Content>
+						{#each numberingBodyOptions as option}
+							<Select.Item value={option || 'None'}>{option || 'None'}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-subdelta-numbering-formatting"
+					>Sub-Delta Numbering Formatting</Field.Label
+				>
+				<Select.Root
+					name="stepbox-subdelta-numbering-formatting"
+					type="single"
+					value={numberingFormatting || 'None'}
+					onValueChange={(value) => {
+						numberingFormatting = (value === 'None' ? null : value) as NumberingFormatting;
+						numberingUpdate();
+					}}
+				>
+					<Select.Trigger>{numberingFormatting || 'None'}</Select.Trigger>
+					<Select.Content>
+						{#each numberingFormattingOptions as format}
+							<Select.Item value={format || 'None'}
+								>{format
+									? format.substring(0, 1).toUpperCase() + format.substring(1)
+									: 'None'}</Select.Item
+							>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</Field.Field>
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />

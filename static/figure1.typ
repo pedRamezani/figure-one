@@ -52,16 +52,16 @@
 #set document(
   title: style.page.title,
   description: "A CONSORT flowchart diagram",
-  keywords: ("flowchart", "figure1")
+  keywords: ("flowchart", "figure1"),
 )
 
 #show heading: set align(alignment-mapping.at(style.page.titleAlign))
 
 #set page(
-  width: auto, 
+  width: auto,
   height: auto,
   margin: style.page.margin * 1mm,
-  fill: get-tint(style.page.tint).lighten(80%)
+  fill: get-tint(style.page.tint).lighten(80%),
 )
 
 #set text(font: "New Computer Modern")
@@ -73,8 +73,10 @@
   let n = style.node
 
   node(
-    pos,
-    align(left, text(label, fill: tint.darken(100%))),
+    pos: pos,
+    label: align(left, text(label, fill: tint.darken(100%))),
+    inset: n.inset * 1pt,
+    outset: n.outset * 1pt,
     width: width,
     fill: tint.lighten(60%),
     stroke: n.stroke * 1pt + tint.darken(20%),
@@ -89,7 +91,7 @@
   edge(
     stroke: e.stroke * 1pt + tint,
     corner-radius: e.cornerRadius * 1pt,
-    ..args
+    ..args,
   )
 }
 
@@ -109,7 +111,7 @@
         groups.push((
           label: group,
           start: r-min,
-          end: r-max
+          end: r-max,
         ))
         r-min = next
         r-max = none
@@ -121,11 +123,11 @@
       groups.push((
         label: group,
         start: r-min,
-        end: r-max
+        end: r-max,
       ))
     }
   }
-  
+
   groups
 }
 
@@ -136,7 +138,7 @@
   if type(value) == array {
     value
   } else {
-    (value, )
+    (value,)
   }
 }
 
@@ -160,7 +162,7 @@
   }
 
   // Calculate min col - 1 for group box placement
-  let group-col = - 1
+  let group-col = -1
 
   let steps = (..data.steps.main, ..data.steps.splits)
 
@@ -178,7 +180,6 @@
       let max-cols = vals.len()
 
       for (col, it) in vals.enumerate() {
-
         if it == none {
           continue
         }
@@ -187,29 +188,34 @@
         let value-fmt = m.valuePrefix + str(it.value) + m.valueSuffix
         let population-col = mapped-col(col, max-cols: max-cols)
         let population-label = if m.valueAlign.starts-with("text") {
-          let sorted-spans = if m.valueAlign.ends-with("left") {
+          // Align Ns next to label
+          let sorted-population-spans = if m.valueAlign.ends-with("left") {
             (value-fmt, it.label)
           } else {
             (it.label, value-fmt)
           }
           grid(
-            ..sorted-spans, 
+            ..sorted-population-spans,
             inset: 0pt,
             column-gutter: 0.4em,
             columns: 2,
           )
         } else {
-          it.label + pad(
-            align(
-              value-fmt,
-              alignment-mapping.at(m.valueAlign)
-            ),
-            top: -0.5em
+          // Align Ns below label
+          (
+            it.label
+              + pad(
+                align(
+                  value-fmt,
+                  alignment-mapping.at(m.valueAlign),
+                ),
+                top: -0.5em,
+              )
           )
         }
         styled-node(
           (population-col, row * 2),
-          population-label,
+          align(alignment-mapping.at(m.textAlign), population-label),
           tint: get-tint(m.tint),
           width: m.width * 1mm,
         )
@@ -223,32 +229,75 @@
             (population-col, (row - 1) * 2),
             (population-col, row * 2 - 1),
             (population-col + 1, row * 2 - 1),
-            a.arrow
+            a.arrow,
           )
 
           // Exclusion box
+          let delta-fmt = s.deltaPrefix + str(it.delta.value) + s.deltaSuffix
+          let sorted-delta-spans = if s.deltaAlign.ends-with("left") {
+            (delta-fmt, it.delta.label)
+          } else {
+            (it.delta.label, delta-fmt)
+          }
           styled-node(
             (population-col + 1, row * 2 - 1),
-            str(it.delta.value)
-              + " "
-              + it.delta.label
+            grid(
+              ..sorted-delta-spans,
+              inset: 0pt,
+              column-gutter: 1em / 3,
+              columns: 2,
+            )
+            // Subdeltas
               + pad(
                 grid(
-                  ..for s in it.delta.substeps {
-                    (str(s.value), s.label)
-                  }, 
+                  ..for (i, sub) in it.delta.substeps.enumerate() {
+                    let sub-delta-fmt = s.subDeltaPrefix + str(sub.value) + s.subDeltaSuffix
+                    let sorted-sub-delta-spans = if s.subDeltaAlign.ends-with("left") {
+                      (sub-delta-fmt, sub.label)
+                    } else {
+                      (sub.label, sub-delta-fmt)
+                    }
+
+                    if s.subDeltaNumbering != none {
+                      (
+                        enum(numbering: s.subDeltaNumbering, body-indent: 0mm, enum.item(i + 1, ""),),
+                        ..sorted-sub-delta-spans,
+                      )
+                    } else {
+                      sorted-sub-delta-spans
+                    }
+                  },
                   inset: 0pt,
-                  column-gutter: 0.4em,
-                  row-gutter:  0.6em,
-                  columns: 2,
-                  align: (right, left),
-                ), 
-                left: 3 * 0.5em, 
+                  column-gutter: 1em / 3,
+                  row-gutter: 0.65em, // Default leading between lines of text
+                  columns: if s.subDeltaNumbering != none {
+                    3
+                  } else {
+                    2
+                  },
+                  align: {
+                    let align = if s.subDeltaAlign.ends-with("left") {
+                      (right, left)
+                    } else {
+                      (left, right)
+                    }
+
+                    if s.subDeltaNumbering != none {
+                      (
+                        right,
+                        ..align,
+                      )
+                    } else {
+                      align
+                    }
+                  },
+                ),
+                left: s.subDeltaIndent * 1em / 3,
                 top: if it.delta.substeps.len() == 0 {
-                  -1.2em
+                  -1.2em // Default spacing between paragraphs (population label and delta label)
                 } else {
-                  -1.2em + 0.6em
-                }
+                  -1.2em + 0.65em
+                },
               ),
             tint: get-tint(s.tint),
             width: s.width * 1mm,
@@ -292,7 +341,7 @@
             (mapped-col(0), row * 2),
             (mapped-col(0), row * 2 + 1),
             (population-col, row * 2 + 1),
-            (population-col, (row + 1) * 2)
+            (population-col, (row + 1) * 2),
           ).dedup()
 
           styled-edge(
@@ -309,7 +358,7 @@
     let interpolate = 0.25,
     for gr in groups(data) {
       let at-start = gr.start == 0
-      let at-end = gr.end == steps.len() -1
+      let at-end = gr.end == steps.len() - 1
 
       let start-offset = if at-start {
         0
@@ -324,16 +373,17 @@
       }
 
       styled-node(
+        // TODO: Fix this workaround
         (group-col, -1),
         rotate(gr.label, -90deg, reflow: true),
         tint: get-tint(g.tint),
         width: auto,
         enclose: (
           (group-col, 2 * gr.start + start-offset - interpolate),
-          (group-col, 2 * gr.end + + end-offset + interpolate)
+          (group-col, 2 * gr.end + end-offset + interpolate),
         ),
       )
-    }
+    },
   )
 }
 

@@ -110,20 +110,20 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 	// helpers
 	const getGroup = (id: string): string => {
-		const g = parents[id]?.find((pid) => nodeById[pid]?.type === 'groups');
+		const g = parents[id]?.find((pid) => nodeById[pid].type === 'groups');
 		return g ? (nodeById[g].data.group as string) : '';
 	};
 
 	const getSubsteps = (stepId: string) =>
 		(children[stepId] ?? [])
 			.map((id) => nodeById[id])
-			.filter((n) => n?.type === 'substep')
+			.filter((n) => n.type === 'substep')
 			.map((n) => ({
 				label: n.data.label as string,
 				value: n.data.delta as number
 			}));
 
-	const start = raw.nodes.find((n) => n?.type === 'start');
+	const start = raw.nodes.find((n) => n.type === 'start');
 	if (!start) {
 		return { steps: { main: [], splits: [] }, groups: {} };
 	}
@@ -137,7 +137,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 			value: (node.data.value as number) ?? 0,
 
 			delta:
-				node?.type === 'step'
+				node.type === 'step'
 					? {
 							label: (node.data.droppedLabel as string) ?? '',
 							value: (node.data.delta as number) ?? 0,
@@ -189,10 +189,10 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		}
 
 		// STEP → next step or split
-		if (node?.type === 'step' || node?.type === 'start' || node?.type === 'splitstart') {
-			const nextStep = (children[id] ?? []).find((cid) => nodeById[cid]?.type === 'step');
+		if (node.type === 'step' || node.type === 'start' || node.type === 'splitstart') {
+			const nextStep = (children[id] ?? []).find((cid) => nodeById[cid].type === 'step');
 
-			const nextSplit = (children[id] ?? []).find((cid) => nodeById[cid]?.type === 'split');
+			const nextSplit = (children[id] ?? []).find((cid) => nodeById[cid].type === 'split');
 
 			if (nextStep) {
 				colByNode.set(nextStep, colByNode.get(id)!);
@@ -202,7 +202,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 			if (nextSplit) {
 				const splitStarts = (children[nextSplit] ?? []).filter(
-					(cid) => nodeById[cid]?.type === 'splitstart'
+					(cid) => nodeById[cid].type === 'splitstart'
 				);
 
 				for (const ss of splitStarts) {

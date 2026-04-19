@@ -98,9 +98,7 @@
 		type Node,
 		type Edge,
 		type OnConnectEnd,
-		Position,
-		isNode,
-		isEdge
+		Position
 	} from '@xyflow/svelte';
 
 	import { type RegisteredNodeType, nodeTypes, getNodeDataDefaults } from '@/nodes/types';
@@ -121,8 +119,6 @@
 	import DragPanel from './DragPanel.svelte';
 
 	import { handleDragCreate, nodeHandles } from '@/nodes/types';
-
-	import { onMount } from 'svelte';
 
 	const minZoom = 0.1;
 	const maxZoom = 2.5;
@@ -240,7 +236,6 @@
 			)
 	);
 
-	// Delete empty row effect
 	$effect(() => {
 		Object.entries(rowNodes).forEach(([row, nodes]) => {
 			if (Number(row) === -1) {
@@ -292,187 +287,7 @@
 			}
 		});
 	});
-
-	// Local storage
-	function isNodeList(nodes: unknown): nodes is Node[] {
-		if (!Array.isArray(nodes)) {
-			return false;
-		}
-
-		return nodes.every(isNode);
-	}
-
-	function isEdgeList(edges: unknown): edges is Edge[] {
-		if (!Array.isArray(edges)) {
-			return false;
-		}
-
-		return edges.every(isEdge);
-	}
-
-	function getStorageTimestamp(): number {
-		const timestamp = localStorage.getItem('storage-timestamp');
-		return timestamp ? parseInt(timestamp) : -1;
-	}
-
-	// Local storage timestamp used for detecting changes in other tabs
-	let localTimestamp = -1; // Set to Date.now() when local storage is updated
-
-	function updateStorageTimestamp() {
-		const timestamp = Date.now();
-		localStorage.setItem('storage-timestamp', timestamp.toString());
-		localTimestamp = timestamp;
-	}
-
-	function getStorageNodes(): Node[] | null {
-		const localStoreNodes = localStorage.getItem('nodes');
-		if (localStoreNodes) {
-			const nodes = JSON.parse(localStoreNodes);
-			if (isNodeList(nodes)) {
-				return nodes;
-			}
-		}
-
-		return null;
-	}
-
-	function getStorageEdges(): Edge[] | null {
-		const localStoreEdges = localStorage.getItem('edges');
-		if (localStoreEdges) {
-			const edges = JSON.parse(localStoreEdges);
-			if (isEdgeList(edges)) {
-				return edges;
-			}
-		}
-
-		return null;
-	}
-
-	// function getInitialNodes(): Node[] {
-	// 	return getStorageNodes() ?? initialNodes;
-	// }
-
-	// function getInitialEdges(): Edge[] {
-	// 	return getStorageEdges() ?? initialEdges;
-	// }
-
-	function adjustCurrentIdToNodesAndEdges(): void {
-		const highestNodeId = Math.max(
-			...nodes.map((n) => {
-				const parsed = Number(n.id);
-				return isNaN(parsed) ? 0 : parsed;
-			})
-		);
-		const highestEdgeId = Math.max(
-			...edges.map((e) => {
-				const [source, target] = e.id.split('--');
-				const sourceId = Number(source);
-				const targetId = Number(target);
-				return Math.max(isNaN(sourceId) ? 0 : sourceId, isNaN(targetId) ? 0 : targetId);
-			})
-		);
-		id = Math.max(highestNodeId, highestEdgeId) + 1;
-	}
-
-	function syncWithLocalStorage(): void {
-		const storageTimestamp = getStorageTimestamp();
-		if (storageTimestamp > localTimestamp) {
-			const storageNodes = getStorageNodes();
-			const storageEdges = getStorageEdges();
-			if (storageNodes) {
-				nodes = storageNodes;
-			}
-			if (storageEdges) {
-				edges = storageEdges;
-			}
-			if (storageNodes || storageEdges) {
-				adjustCurrentIdToNodesAndEdges();
-			}
-		}
-	}
-
-	// Localstorage read effect
-	onMount(() => {
-		syncWithLocalStorage();
-		fitView();
-	});
-
-	function debounce(func: Function, delay: number) {
-		let timeoutId: NodeJS.Timeout;
-
-		return function (...args: any[]) {
-			clearTimeout(timeoutId);
-			timeoutId = setTimeout(() => func(...args), delay);
-		};
-	}
-
-	// Nodes localstorage save effect (debounced)
-	const saveNode = (n: Node[], timestamp: number) => {
-		if (timestamp < getStorageTimestamp()) {
-			return;
-		}
-		console.log('Saving nodes to local storage...');
-		localStorage.setItem('nodes', JSON.stringify(n));
-		updateStorageTimestamp();
-	};
-	const debouncedSaveNode = debounce(saveNode, 200);
-	$effect(() => {
-		debouncedSaveNode(nodes, Date.now());
-	});
-
-	$inspect(nodes);
-
-	// Edges localstorage save effect (debounced)
-	const saveEdge = (e: Edge[], timestamp: number) => {
-		if (timestamp < getStorageTimestamp()) {
-			return;
-		}
-		console.log('Saving edges to local storage...');
-		localStorage.setItem('edges', JSON.stringify(e));
-		updateStorageTimestamp();
-	};
-	const debouncedSaveEdge = debounce(saveEdge, 200);
-	$effect(() => {
-		debouncedSaveEdge(edges, Date.now());
-	});
-
-	// TODO: Forced localstorage save effect on window unload or blur
-	function saveNodesAndEdges() {
-		const timestamp = Date.now();
-		saveNode(nodes, timestamp);
-		saveEdge(edges, timestamp);
-	}
-
-	function onblur(event: FocusEvent) {
-		if (event.type === 'blur') {
-			saveNodesAndEdges();
-		}
-
-		if (event.type === 'focus' || event.type === 'visibilitychange') {
-			syncWithLocalStorage();
-		}
-	}
-
-	function onstorage(event: StorageEvent) {
-		if (event.key === 'nodes') {
-			const parsed = JSON.parse(event.newValue ?? 'null');
-			if (isNodeList(parsed) && getStorageTimestamp() > localTimestamp) {
-				nodes = parsed;
-				adjustCurrentIdToNodesAndEdges();
-				console.log('Nodes:', parsed);
-			}
-		} else if (event.key === 'edges') {
-			const parsed = JSON.parse(event.newValue ?? 'null');
-			if (isEdgeList(parsed) && getStorageTimestamp() > localTimestamp) {
-				edges = parsed;
-				adjustCurrentIdToNodesAndEdges();
-				console.log('Edges:', edges);
-			}
-		}
-	}
 </script>
-
-<svelte:window {onstorage} onunload={saveNodesAndEdges} {onblur} />
 
 <ConfirmDeleteDialog />
 

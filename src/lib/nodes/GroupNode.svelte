@@ -8,10 +8,21 @@
 
 	import { groupSource } from './types';
 
+	// --- SETUP ---
 	const { id, data, type }: NodeProps = $props();
-
 	const { updateNodeData, deleteElements } = useSvelteFlow();
 
+	// --- BINDING OBJECTS ---
+	const groupBinding = {
+		get value() {
+			return data.group as string;
+		},
+		set value(next: string) {
+			updateNodeData(id, { group: next });
+		}
+	};
+
+	// --- DISCONNECT LOGIC ---
 	const connectionsSource = useNodeConnections({
 		handleId: groupSource.handleId,
 		handleType: groupSource.handleType
@@ -30,7 +41,7 @@
 			return;
 		}
 
-		// There should only be one connection anyway
+		// There should only be one connection
 		const connection = sourceData.current[0];
 		if (!('row' in connection.data)) {
 			return;
@@ -50,16 +61,7 @@
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="group">Label</Label>
-			<Input
-				name="group"
-				value={data.group}
-				type="text"
-				oninput={(evt) => {
-					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-					updateNodeData(id, { group: raw });
-				}}
-				class="nodrag"
-			/>
+			<Input name="group" bind:value={groupBinding.value} type="text" class="nodrag" />
 		</div>
 	{/snippet}
 </NodeWrapper>

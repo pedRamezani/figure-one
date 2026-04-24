@@ -25,12 +25,14 @@
 
 	import HandleWrapper from '@/handles/HandleWrapper.svelte';
 
+	// --- SETUP ---
 	const { id, type, positionAbsoluteX, positionAbsoluteY, width, height }: NodeProps = $props();
-
 	const { deleteElements } = useSvelteFlow();
 
+	// Handles
 	const handles = $derived(nodeHandles[type as RegisteredNodeType]);
 
+	// --- EXPANSION AND DELETION ---
 	function pad(rect: Rect, padding: number = 20): Rect {
 		return {
 			x: rect.x - padding,

@@ -15,8 +15,8 @@
 
 	import { slide } from 'svelte/transition';
 
+	// --- SETUP ---
 	const { id, data, type }: NodeProps = $props();
-
 	const { updateNodeData } = useSvelteFlow();
 
 	const connectionsTargetInput = useNodeConnections({
@@ -30,83 +30,70 @@
 
 	const noConnection = $derived<boolean>(targetData.current.length === 0);
 
-	// Delta effect
-	let delta = $state(data.delta as number);
-	$effect(() => {
-		// delta is actually number | null
-		// null if no value → Number.isFinite(null) == false → parsedDelta = 0
-		const parsedDelta = Number.isFinite(delta) ? delta : 0;
-		if (data.delta !== parsedDelta) {
-			const prev = noConnection
-				? NaN
-				: ((targetData.current[0].data.value as number | null) ?? NaN);
+	// Helper to get parent value
+	const getPrevValue = () => {
+		if (noConnection) return NaN;
+		return (targetData.current[0]?.data?.value as number | null) ?? NaN;
+	};
 
+	// --- BINDING OBJECTS ---
+	const deltaBinding = {
+		get value() {
+			return (data.delta as number | null) ?? 0;
+		},
+		set value(next: number | undefined) {
+			const parsedDelta = Number.isFinite(next) ? next! : 0;
+			const prev = getPrevValue();
 			const newAfter = isNaN(prev) ? null : prev - parsedDelta;
+
 			updateNodeData(id, { delta: parsedDelta, value: newAfter });
-			after = newAfter;
 		}
-	});
+	};
 
-	// After effect
-	let after = $state(data.value as number | null);
+	const afterBinding = {
+		get value() {
+			// Return NaN if no connection to hide the input via the UI check
+			return noConnection ? NaN : ((data.value as number | null) ?? NaN);
+		},
+		set value(next: number | undefined) {
+			const parsedAfter = Number.isFinite(next) ? next! : 0;
+			const prev = getPrevValue();
+
+			if (!isNaN(prev)) {
+				const newDelta = prev - parsedAfter;
+				updateNodeData(id, { value: parsedAfter, delta: newDelta });
+			}
+		}
+	};
+
+	// --- PARENT COUPLING ---
 	$effect(() => {
-		// parsedAfter is actually number | null
-		// null if no value → Number.isFinite(null) == false → parsedAfter = NaN
-		const parsedAfter = Number.isFinite(after) && after !== null ? after : NaN;
-		if (!isNaN(parsedAfter) && data.value !== parsedAfter) {
-			const prev = noConnection
-				? NaN
-				: ((targetData.current[0]?.data?.value as number | null) ?? NaN);
+		if (noConnection) return;
 
-			// isNaN(prev) should be impossible => noConnection will hide the input
-			const newDelta = isNaN(prev) ? 0 : prev - parsedAfter;
-			updateNodeData(id, { value: parsedAfter, delta: newDelta });
-			delta = newDelta;
+		// There should only be one connection
+		const parentValue = targetData.current[0]?.data.value as number | null;
+		if (parentValue === null) return;
+
+		const calculatedAfter = parentValue - (data.delta as number);
+		if (data.value !== calculatedAfter) {
+			// IMPORTANT: Removing the check will cause an infinite loop.
+			// Use untrack or a simple check to avoid loops in edge cases
+			updateNodeData(id, { value: calculatedAfter });
 		}
 	});
 
-	// Value coupling effect
+	// --- ROW INCREMENT EFFECT ---
 	$effect(function () {
 		if (noConnection) {
-			if (after !== null) {
-				after = null;
-				updateNodeData(id, { value: null });
-			}
+			if (data.row !== null) updateNodeData(id, { row: null });
 			return;
 		}
 
-		// There should only be one connection anyway
 		const connection = targetData.current[0];
-
-		const value = connection.data.value as number | null;
-		const newAfter = value === null ? null : value - (data.delta as number);
-
-		// IMPORTANT: Removing this will cause an infinite loop.
-		if (newAfter && after !== newAfter) {
-			after = newAfter;
-			updateNodeData(id, { value: newAfter });
-		}
-	});
-
-	// Row increment effect
-	$effect(function () {
-		if (noConnection) {
-			if (data.row !== null) {
-				updateNodeData(id, { row: null });
-			}
-			return;
-		}
-
-		// There should only be one connection anyway
-		const connection = targetData.current[0];
-
 		const row = ('row' in connection.data ? connection.data?.row : null) as number | null;
 
-		// IMPORTANT: Removing this will cause an infinite loop.
 		if (row === null) {
-			if (data.row !== null) {
-				updateNodeData(id, { row: null });
-			}
+			if (data.row !== null) updateNodeData(id, { row: null });
 		} else if (data.row !== row + 1) {
 			updateNodeData(id, { row: row + 1 });
 		}
@@ -127,10 +114,7 @@
 				name="step-label"
 				value={data.stepLabel}
 				type="text"
-				oninput={(evt) => {
-					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-					updateNodeData(id, { stepLabel: raw });
-				}}
+				oninput={(evt) => updateNodeData(id, { stepLabel: evt.currentTarget.value })}
 				class="nodrag"
 			/>
 
@@ -141,16 +125,17 @@
 						class={buttonVariants({ variant: 'ghost', size: 'sm', class: 'w-9 p-0' })}
 					>
 						<ChevronsUpDownIcon />
-						<span class="sr-only">Toggle</span>
 					</Collapsible.Trigger>
 				</div>
-				<NumberField.Root bind:value={delta}>
+
+				<NumberField.Root bind:value={deltaBinding.value}>
 					<NumberField.Group class="nodrag bg-background dark:bg-input/30 border dark:border-input">
 						<NumberField.Decrement />
 						<NumberField.Input class="w-[10ch]" name="delta" />
 						<NumberField.Increment />
 					</NumberField.Group>
 				</NumberField.Root>
+
 				<Collapsible.Content class="mt-2 space-y-2" forceMount>
 					{#snippet child({ props, open })}
 						{#if open}
@@ -159,11 +144,7 @@
 								<Input
 									name="dropped-Label"
 									value={data.droppedLabel}
-									type="text"
-									oninput={(evt) => {
-										const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-										updateNodeData(id, { droppedLabel: raw });
-									}}
+									oninput={(evt) => updateNodeData(id, { droppedLabel: evt.currentTarget.value })}
 									class="nodrag"
 								/>
 							</div>
@@ -171,10 +152,11 @@
 					{/snippet}
 				</Collapsible.Content>
 			</Collapsible.Root>
-			{#if after}
+
+			{#if !Number.isNaN(afterBinding.value)}
 				<div transition:slide class="flex flex-col gap-2">
 					<Label for="after">After</Label>
-					<NumberField.Root min={0} bind:value={after}>
+					<NumberField.Root min={0} bind:value={afterBinding.value}>
 						<NumberField.Group
 							class="nodrag bg-background dark:bg-input/30 border dark:border-input"
 						>

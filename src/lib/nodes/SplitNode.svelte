@@ -16,6 +16,7 @@
 
 	import { slide } from 'svelte/transition';
 
+	// --- SETUP ---
 	const { id, type }: NodeProps = $props();
 
 	const connectionsSourcesOutput = useNodeConnections({
@@ -39,10 +40,11 @@
 		targetValues.length > 0 ? targetValues.reduce((sum, value) => sum + value, 0) : null
 	);
 
+	// --- SPLIT GENERATOR ---
 	// Generate Nodes based on specified splits
-	let rawSplits = $state<number>(2);
+	let rawSplits = $state<number | undefined>(2);
 	// rawSplits is actually number | null, but null < 2 is true
-	const splits = $derived<number>(rawSplits < 2 ? 2 : rawSplits);
+	const splits = $derived<number>(Math.max(rawSplits ?? 2, 2));
 	const { getNodesBounds } = useSvelteFlow();
 	function generateSplits() {
 		if (targetSummedValue === null) return;

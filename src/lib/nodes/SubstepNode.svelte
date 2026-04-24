@@ -9,8 +9,8 @@
 
 	import { substepTarget } from './types';
 
+	// --- SETUP ---
 	const { id, data, type }: NodeProps = $props();
-
 	const { updateNodeData } = useSvelteFlow();
 
 	const connectionsTarget = useNodeConnections({
@@ -24,7 +24,7 @@
 
 	const noConnection = $derived<boolean>(targetData.current.length === 0);
 
-	// Row inheritance effect
+	// --- ROW INHERITANCE ---
 	$effect(function () {
 		if (noConnection) {
 			if (data.row !== null) {
@@ -48,35 +48,34 @@
 		}
 	});
 
-	// Delta effect
-	let delta = $state(data.delta as number);
-	$effect(() => {
-		// delta is actually number | null
-		// null if no value → Number.isFinite(null) == false → parsedDelta = 0
-		const parsedDelta = Number.isFinite(delta) ? delta : 0;
-		if (data.delta !== parsedDelta) {
-			updateNodeData(id, { delta: parsedDelta });
+	// --- BINDING OBJECTS ---
+	const labelBinding = {
+		get value() {
+			return data.label as string;
+		},
+		set value(next: string) {
+			updateNodeData(id, { label: next });
 		}
-	});
+	};
+
+	const deltaBinding = {
+		get value() {
+			return (data.delta as number | null) ?? 0;
+		},
+		set value(next: number | undefined) {
+			updateNodeData(id, { delta: next ?? 0 });
+		}
+	};
 </script>
 
 <NodeWrapper title="Substep" description="Inclusion or Exclusion" nodeId={id} nodeType={type}>
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="label">Label</Label>
-			<Input
-				name="label"
-				value={data.label}
-				type="text"
-				oninput={(evt) => {
-					const raw = (evt.target as HTMLInputElement | null)?.value ?? '';
-					updateNodeData(id, { label: raw });
-				}}
-				class="nodrag"
-			/>
+			<Input name="label" bind:value={labelBinding.value} type="text" class="nodrag" />
 
 			<Label for="delta">Dropped</Label>
-			<NumberField.Root min={0} bind:value={delta}>
+			<NumberField.Root min={0} bind:value={deltaBinding.value}>
 				<NumberField.Group class="nodrag bg-background dark:bg-input/30 border dark:border-input">
 					<NumberField.Decrement />
 					<NumberField.Input class="w-[10ch]" name="delta" />

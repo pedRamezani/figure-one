@@ -78,9 +78,9 @@
 			position: { x: 0, y: 0 },
 			deletable: false
 		}
-	];
+	] as const;
 
-	const initialEdges: Edge[] = [];
+	const initialEdges: Edge[] = [] as const;
 
 	let nodes = $state.raw<Node[]>(initialNodes);
 	let edges = $state.raw<Edge[]>(initialEdges);
@@ -212,15 +212,8 @@
 	}
 
 	async function clearNodes() {
-		nodes = [...nodes.filter((node) => node.deletable === false)];
-		edges = [
-			...edges.filter(
-				(edge) =>
-					nodes.findIndex((node) => node.id == edge.source) !== -1 &&
-					nodes.findIndex((node) => node.id == edge.target) !== -1
-			)
-		];
-
+		nodes = initialNodes;
+		edges = initialEdges;
 		fitView();
 	}
 
@@ -320,8 +313,8 @@
 
 	function updateStorageTimestamp() {
 		const timestamp = Date.now();
-		localStorage.setItem('storage-timestamp', timestamp.toString());
 		localTimestamp = timestamp;
+		localStorage.setItem('storage-timestamp', timestamp.toString());
 	}
 
 	function getStorageNodes(): Node[] | null {
@@ -347,14 +340,6 @@
 
 		return null;
 	}
-
-	// function getInitialNodes(): Node[] {
-	// 	return getStorageNodes() ?? initialNodes;
-	// }
-
-	// function getInitialEdges(): Edge[] {
-	// 	return getStorageEdges() ?? initialEdges;
-	// }
 
 	function adjustCurrentIdToNodesAndEdges(): void {
 		const highestNodeId = Math.max(
@@ -407,40 +392,39 @@
 	}
 
 	// Nodes localstorage save effect (debounced)
-	const saveNode = (n: Node[], timestamp: number) => {
-		if (timestamp < getStorageTimestamp()) {
+	const saveNode = (n: Node[]) => {
+		const stringifiedNodes = JSON.stringify(n);
+		if (localStorage.getItem('nodes') === stringifiedNodes) {
 			return;
 		}
-		console.log('Saving nodes to local storage...');
-		localStorage.setItem('nodes', JSON.stringify(n));
+		// console.log('Saving nodes to local storage...');
+		localStorage.setItem('nodes', stringifiedNodes);
 		updateStorageTimestamp();
 	};
 	const debouncedSaveNode = debounce(saveNode, 200);
 	$effect(() => {
-		debouncedSaveNode(nodes, Date.now());
+		debouncedSaveNode(nodes);
 	});
 
-	$inspect(nodes);
-
 	// Edges localstorage save effect (debounced)
-	const saveEdge = (e: Edge[], timestamp: number) => {
-		if (timestamp < getStorageTimestamp()) {
+	const saveEdge = (e: Edge[]) => {
+		const stringifiedEdges = JSON.stringify(e);
+		if (localStorage.getItem('edges') === stringifiedEdges) {
 			return;
 		}
-		console.log('Saving edges to local storage...');
-		localStorage.setItem('edges', JSON.stringify(e));
+		// console.log('Saving edges to local storage...');
+		localStorage.setItem('edges', stringifiedEdges);
 		updateStorageTimestamp();
 	};
 	const debouncedSaveEdge = debounce(saveEdge, 200);
 	$effect(() => {
-		debouncedSaveEdge(edges, Date.now());
+		debouncedSaveEdge(edges);
 	});
 
-	// TODO: Forced localstorage save effect on window unload or blur
+	// Forced localstorage save effect on window unload or blur
 	function saveNodesAndEdges() {
-		const timestamp = Date.now();
-		saveNode(nodes, timestamp);
-		saveEdge(edges, timestamp);
+		saveNode(nodes);
+		saveEdge(edges);
 	}
 
 	function onblur(event: FocusEvent) {
@@ -459,14 +443,12 @@
 			if (isNodeList(parsed) && getStorageTimestamp() > localTimestamp) {
 				nodes = parsed;
 				adjustCurrentIdToNodesAndEdges();
-				console.log('Nodes:', parsed);
 			}
 		} else if (event.key === 'edges') {
 			const parsed = JSON.parse(event.newValue ?? 'null');
 			if (isEdgeList(parsed) && getStorageTimestamp() > localTimestamp) {
 				edges = parsed;
 				adjustCurrentIdToNodesAndEdges();
-				console.log('Edges:', edges);
 			}
 		}
 	}

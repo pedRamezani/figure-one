@@ -1,3 +1,5 @@
+import { Debounced, PersistedState } from 'runed';
+
 // -------------------------------------------------------------
 // Tint Mapping Keys (Typst tint-mapping)
 // -------------------------------------------------------------
@@ -94,10 +96,17 @@ export const numberingBodyOptions = [
 ] as const;
 export type NumberingBody = (typeof numberingBodyOptions)[number];
 
-export const numberingFormattingOptions = [null, 'dot', 'single parentheses', 'double parentheses'] as const;
+export const numberingFormattingOptions = [
+	null,
+	'dot',
+	'single parentheses',
+	'double parentheses'
+] as const;
 export type NumberingFormatting = (typeof numberingFormattingOptions)[number];
 
-export type Numbering = `${string}${NumberingBody extends null ? '1' : NumberingBody}${string}` | null;
+export type Numbering =
+	| `${string}${NumberingBody extends null ? '1' : NumberingBody}${string}`
+	| null;
 
 // -------------------------------------------------------------
 // Sub-objects of the configuration file
@@ -226,16 +235,16 @@ export const defaultConfig: TypstFlowchartConfig = {
 	}
 };
 
-let config: TypstFlowchartConfig = $state({ ...defaultConfig });
+let config = new PersistedState('project-config', { ...defaultConfig });
 
 export const styleConfig = {
 	get current() {
-		return config;
+		return config.current;
 	},
 	set current(value) {
-		config = value;
+		config.current = value;
 	},
 	reset() {
-		config = defaultConfig;
+		config.current = defaultConfig;
 	}
 };

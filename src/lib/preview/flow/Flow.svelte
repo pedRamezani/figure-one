@@ -123,6 +123,7 @@
 	import { handleDragCreate, nodeHandles } from '@/nodes/types';
 
 	import { onMount } from 'svelte';
+	import { Debounced } from 'runed';
 
 	const minZoom = 0.1;
 	const maxZoom = 2.5;
@@ -382,15 +383,6 @@
 		fitView();
 	});
 
-	function debounce(func: Function, delay: number) {
-		let timeoutId: NodeJS.Timeout;
-
-		return function (...args: any[]) {
-			clearTimeout(timeoutId);
-			timeoutId = setTimeout(() => func(...args), delay);
-		};
-	}
-
 	// Nodes localstorage save effect (debounced)
 	const saveNode = (n: Node[]) => {
 		const stringifiedNodes = JSON.stringify(n);
@@ -401,9 +393,9 @@
 		localStorage.setItem('nodes', stringifiedNodes);
 		updateStorageTimestamp();
 	};
-	const debouncedSaveNode = debounce(saveNode, 200);
+	const debouncedNodes = new Debounced(() => nodes, 200);
 	$effect(() => {
-		debouncedSaveNode(nodes);
+		saveNode(debouncedNodes.current);
 	});
 
 	// Edges localstorage save effect (debounced)
@@ -416,9 +408,9 @@
 		localStorage.setItem('edges', stringifiedEdges);
 		updateStorageTimestamp();
 	};
-	const debouncedSaveEdge = debounce(saveEdge, 200);
+	const debouncedEdges = new Debounced(() => edges, 200);
 	$effect(() => {
-		debouncedSaveEdge(edges);
+		saveEdge(debouncedEdges.current);
 	});
 
 	// Forced localstorage save effect on window unload or blur

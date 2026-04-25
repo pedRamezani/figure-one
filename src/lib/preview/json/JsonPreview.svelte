@@ -19,13 +19,24 @@
 
 	const { toObject, fitView } = useSvelteFlow();
 
-	let fileName = $state<string>('');
+	import { PersistedState } from 'runed';
+
+	let fileName = new PersistedState<string>('project-name', '', {
+		serializer: {
+			serialize: (value) => value,
+			deserialize: (value) => value
+		}
+	});
 	const fullFileName = $derived.by<string>(() => {
-		if (!fileName) {
+		if (!fileName.current) {
 			return 'flowchart.json';
 		}
 
-		return `${fileName}.json`;
+		if (fileName.current.endsWith('.json')) {
+			return fileName.current;
+		}
+
+		return `${fileName.current}.json`;
 	});
 
 	// Import / Export JSON
@@ -96,7 +107,7 @@
 		<SimpleField
 			title="File name"
 			name="page-title"
-			bind:value={fileName}
+			bind:value={fileName.current}
 			placeholder="flowchart"
 		/>
 		<ButtonGroup.Root class="self-end" title="Download options" aria-label="Download options">

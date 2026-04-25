@@ -1,5 +1,4 @@
 import {
-	parseTypstFlowchartJSON,
 	type TypstFlowchartData,
 	type TypstSteps,
 	type TypstStep,
@@ -7,10 +6,8 @@ import {
 } from './preview/json/convert';
 import { isTypstFlowchartData, isTypstFlowchartDataV1 } from './preview/json/validate';
 
-import { styleConfig, type TypstFlowchartConfig } from './preview/style/style-config.svelte';
+import { type TypstFlowchartConfig } from './preview/style/style-config.svelte';
 import { isPartialFlowchartConfig, mergePartialFlowchartConfig } from './preview/style/validate';
-
-import { setEdges, setNodes } from './preview/flow/Flow.svelte';
 
 import { isNumber, isObject } from './utils.ts';
 
@@ -27,17 +24,6 @@ export function createProfile(data: TypstFlowchartData, config: TypstFlowchartCo
 		config: config
 	};
 }
-
-// export function isProfile(value: unknown): value is Profile {
-// 	if (!isObject(value)) return false;
-
-// 	const v = value as any;
-// 	if (!isNumber(v.$version)) return false;
-// 	if (!isFlowchartData(v.data)) return false;
-// 	if (!isFlowchartConfig(v.config)) return false;
-
-// 	return true;
-// }
 
 export function parseProfileJSON(value: unknown): Profile | null {
 	if (!isObject(value)) return null;
@@ -98,13 +84,6 @@ export function parseProfileJSON(value: unknown): Profile | null {
 		data: flowchartData,
 		config: mergePartialFlowchartConfig(value.config)
 	};
-}
-
-export function setProfile(value: Profile): void {
-	styleConfig.current = value.config;
-	const parsed = parseTypstFlowchartJSON(value.data);
-	setNodes(parsed.nodes);
-	setEdges(parsed.edges);
 }
 
 export function downloadBlob(data: BlobPart, mimeType: string, fileName: string): void {

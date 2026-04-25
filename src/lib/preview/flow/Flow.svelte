@@ -319,7 +319,7 @@
 	}
 
 	function getStorageNodes(): Node[] | null {
-		const localStoreNodes = localStorage.getItem('nodes');
+		const localStoreNodes = localStorage.getItem('storage-nodes');
 		if (localStoreNodes) {
 			const nodes = JSON.parse(localStoreNodes);
 			if (isNodeList(nodes)) {
@@ -331,7 +331,7 @@
 	}
 
 	function getStorageEdges(): Edge[] | null {
-		const localStoreEdges = localStorage.getItem('edges');
+		const localStoreEdges = localStorage.getItem('storage-edges');
 		if (localStoreEdges) {
 			const edges = JSON.parse(localStoreEdges);
 			if (isEdgeList(edges)) {
@@ -386,11 +386,11 @@
 	// Nodes localstorage save effect (debounced)
 	const saveNode = (n: Node[]) => {
 		const stringifiedNodes = JSON.stringify(n);
-		if (localStorage.getItem('nodes') === stringifiedNodes) {
+		if (localStorage.getItem('storage-nodes') === stringifiedNodes) {
 			return;
 		}
 		// console.log('Saving nodes to local storage...');
-		localStorage.setItem('nodes', stringifiedNodes);
+		localStorage.setItem('storage-nodes', stringifiedNodes);
 		updateStorageTimestamp();
 	};
 	const debouncedNodes = new Debounced(() => nodes, 200);
@@ -401,11 +401,11 @@
 	// Edges localstorage save effect (debounced)
 	const saveEdge = (e: Edge[]) => {
 		const stringifiedEdges = JSON.stringify(e);
-		if (localStorage.getItem('edges') === stringifiedEdges) {
+		if (localStorage.getItem('storage-edges') === stringifiedEdges) {
 			return;
 		}
 		// console.log('Saving edges to local storage...');
-		localStorage.setItem('edges', stringifiedEdges);
+		localStorage.setItem('storage-edges', stringifiedEdges);
 		updateStorageTimestamp();
 	};
 	const debouncedEdges = new Debounced(() => edges, 200);
@@ -430,13 +430,13 @@
 	}
 
 	function onstorage(event: StorageEvent) {
-		if (event.key === 'nodes') {
+		if (event.key === 'storage-nodes') {
 			const parsed = JSON.parse(event.newValue ?? 'null');
 			if (isNodeList(parsed) && getStorageTimestamp() > localTimestamp) {
 				nodes = parsed;
 				adjustCurrentIdToNodesAndEdges();
 			}
-		} else if (event.key === 'edges') {
+		} else if (event.key === 'storage-edges') {
 			const parsed = JSON.parse(event.newValue ?? 'null');
 			if (isEdgeList(parsed) && getStorageTimestamp() > localTimestamp) {
 				edges = parsed;

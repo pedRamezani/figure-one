@@ -1,4 +1,4 @@
-import { Debounced, PersistedState } from 'runed';
+import { PersistedState } from 'runed';
 
 // -------------------------------------------------------------
 // Tint Mapping Keys (Typst tint-mapping)

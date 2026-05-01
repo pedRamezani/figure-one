@@ -12,6 +12,12 @@
   },
   "workers_dev": true,
   "preview_urls": true,
+  "routes": [
+    {
+      "pattern": "figureone.app",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true
   }

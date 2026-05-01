@@ -32,7 +32,7 @@
 </script>
 
 <NodeWrapper
-	title="CONSORT Start"
+	title="Start"
 	description="The flowchart will start from here."
 	nodeId={id}
 	nodeType={type}

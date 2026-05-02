@@ -1,65 +1,77 @@
 <script lang="ts">
-	import { SvelteFlowProvider } from '@xyflow/svelte';
+	import { onMount } from 'svelte';
 
-	import * as Resizable from '@/components/ui/resizable/index.js';
-	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
-	import * as Tabs from '@/components/ui/tabs/index.js';
+	import type { PageProps } from './$types';
 
-	import Flow from '@/preview/flow/Flow.svelte';
-	import JsonPreview from '@/preview/json/JsonPreview.svelte';
-	import StyleConfigurator from '@/preview/style/StyleConfigurator.svelte';
-	import TypstPreview from '@/preview/typst/TypstPreview.svelte';
+	import App from '@/App.svelte';
+	import type { Profile } from '@/index';
 
-	import SettingsIcon from '@lucide/svelte/icons/settings';
+	let { data }: PageProps = $props();
+
+	let appData: Profile | null = $state(null);
+	let isDecrypting = $state(false);
+	let error: string | null = $state(null);
+
+	async function decryptState(combinedPayload: string, b64Key: string): Promise<Profile> {
+		const [ivB64, cipherB64] = combinedPayload.split('.');
+
+		// Convert Base64 strings to Uint8Arrays
+		const iv = Uint8Array.from(atob(ivB64), (c) => c.charCodeAt(0));
+		const ciphertext = Uint8Array.from(atob(cipherB64), (c) => c.charCodeAt(0));
+		const keyBuffer = Uint8Array.from(atob(b64Key), (c) => c.charCodeAt(0));
+
+		const key = await crypto.subtle.importKey('raw', keyBuffer, 'AES-GCM', false, ['decrypt']);
+
+		const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
+
+		return JSON.parse(new TextDecoder().decode(decrypted)) as Profile;
+	}
+
+	onMount(async () => {
+		if (data.sharedState) {
+			isDecrypting = true;
+
+			// 1. Grab key from fragment (#...)
+			const urlKey = window.location.hash.substring(1);
+
+			if (!urlKey) {
+				error = 'Link is missing the decryption key (after the #).';
+				isDecrypting = false;
+				return;
+			}
+
+			try {
+				// 2. Decrypt the data
+				// (Assuming you have your decryptState function imported)
+				appData = await decryptState(data.sharedState, urlKey);
+
+				// 3. TODO: Initialize your app with appData
+				console.log('State Restored:', appData);
+			} catch (e) {
+				console.error(e);
+				error = 'Decryption failed. The key might be wrong.';
+			} finally {
+				isDecrypting = false;
+			}
+		}
+	});
 
 	let height = $state<number | null>(null);
 	let width = $state<number | null>(null);
-
-	let direction = $derived<'horizontal' | 'vertical'>(
-		width === null || height === null || width >= height ? 'horizontal' : 'vertical'
-	);
 </script>
 
 <main class="flex w-auto h-dvh" bind:clientHeight={height} bind:clientWidth={width}>
-	<!-- fitView -->
-	<!-- You need the SvelteFlowProvider so you can useSvelteFlow  -->
-	<SvelteFlowProvider>
-		<Resizable.PaneGroup {direction}>
-			<Resizable.Pane defaultSize={65}>
-				<ScrollArea class="h-full">
-					<Tabs.Root value="flow" class="h-full">
-						<Tabs.List class="absolute top-4 left-4 md:top-8 md:left-8 z-10">
-							<Tabs.Trigger value="flow">Flow</Tabs.Trigger>
-							<Tabs.Trigger value="style" title="Config" aria-label="Config"
-								><SettingsIcon /></Tabs.Trigger
-							>
-						</Tabs.List>
-						<Tabs.Content value="flow">
-							<Flow />
-						</Tabs.Content>
-						<Tabs.Content value="style" class="p-4 md:p-8 pt-16 md:pt-20">
-							<StyleConfigurator />
-						</Tabs.Content>
-					</Tabs.Root>
-				</ScrollArea>
-			</Resizable.Pane>
-			<Resizable.Handle />
-			<Resizable.Pane defaultSize={35} class="border-l-2 border-card">
-				<ScrollArea class="h-full">
-					<Tabs.Root value="typst" class="h-full p-4 md:p-8">
-						<Tabs.List>
-							<Tabs.Trigger value="typst">Preview</Tabs.Trigger>
-							<Tabs.Trigger value="json">Profile</Tabs.Trigger>
-						</Tabs.List>
-						<Tabs.Content value="typst">
-							<TypstPreview />
-						</Tabs.Content>
-						<Tabs.Content value="json">
-							<JsonPreview />
-						</Tabs.Content>
-					</Tabs.Root>
-				</ScrollArea>
-			</Resizable.Pane>
-		</Resizable.PaneGroup>
-	</SvelteFlowProvider>
+	{#if data.sharedState}
+		{#if isDecrypting}
+			<p>Unlocking your data...</p>
+		{:else if error}
+			<p style="color: red;">{error}</p>
+		{:else}
+			<!-- Your main app UI here -->
+			<App {height} {width} />
+		{/if}
+	{:else}
+		<!-- Standard App Entry (No ID in URL) -->
+		<App {height} {width} />
+	{/if}
 </main>

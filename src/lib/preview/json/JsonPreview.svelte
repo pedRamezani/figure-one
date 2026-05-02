@@ -2,17 +2,21 @@
 	import { useSvelteFlow, useNodes, useEdges } from '@xyflow/svelte';
 	import { convertFlowchartToTypstFlowchartData, parseTypstFlowchartJSON } from './convert.ts';
 
-	import { createProfile, parseProfileJSON } from '../../index.ts';
+	import { createProfile, parseProfileJSON, type Profile } from '../../index.ts';
 	import { styleConfig } from '../style/style-config.svelte.ts';
 
 	import * as ButtonGroup from '@/components/ui/button-group/index.js';
 	import Button from '@/components/ui/button/button.svelte';
 	import * as Code from '@/components/ui/code';
+	import * as InputGroup from '$lib/components/ui/input-group/index.js';
+
+	import { UseClipboard } from '$lib/hooks/use-clipboard.svelte';
 
 	import SimpleField from '../style/SimpleField.svelte';
 
-	import { DownloadIcon } from '@lucide/svelte';
+	import { CheckIcon, CopyIcon, DownloadIcon } from '@lucide/svelte';
 	import { ImportIcon } from '@lucide/svelte';
+	import { ShareIcon } from '@lucide/svelte';
 
 	import { downloadBlob } from '../../index.ts';
 	import { getLayoutedElements } from '../flow/layout.ts';
@@ -76,13 +80,57 @@
 		downloadBlob(profileStringified, 'application/json', fullFileName);
 	}
 
+	// Simplified logic for encryption
+	async function encryptProfile(profile: Profile) {
+		const key = await window.crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+			'encrypt',
+			'decrypt'
+		]);
+
+		const iv = window.crypto.getRandomValues(new Uint8Array(12));
+		const encoded = new TextEncoder().encode(JSON.stringify(profile));
+
+		const ciphertext = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+
+		// Export key to shareable format (base64/hex)
+		const exportedKey = await window.crypto.subtle.exportKey('raw', key);
+
+		// Return the data to send to server + the key for the URL
+		return {
+			uploadPayload:
+				btoa(String.fromCharCode(...new Uint8Array(iv))) +
+				'.' +
+				btoa(String.fromCharCode(...new Uint8Array(ciphertext))),
+			urlKey: btoa(String.fromCharCode(...new Uint8Array(exportedKey)))
+		};
+	}
+
+	const clipboard = new UseClipboard();
+	let shareableUrl = $state<string>('');
+
+	async function shareJSON() {
+		const { uploadPayload, urlKey } = await encryptProfile(profile);
+
+		const response = await fetch('/api/share', {
+			method: 'POST',
+			body: JSON.stringify({ payload: uploadPayload })
+		});
+
+		if (response.ok) {
+			const { id } = (await response.json()) as { id: string };
+			shareableUrl = `${window.location.origin}/?id=${id}#${urlKey}`;
+			// shareableUrl = `${window.location.origin}/share/${id}#${urlKey}`;
+		}
+	}
+
 	// JSON encode
-	const profileStringified = $derived.by<string>(() => {
+	const profile = $derived.by<Profile>(() => {
 		const raw = toObject();
 		const data = convertFlowchartToTypstFlowchartData(raw);
 		const profile = createProfile(data, styleConfig.current);
-		return JSON.stringify(profile, null, 2);
+		return profile;
 	});
+	const profileStringified = $derived(JSON.stringify(profile, null, 2));
 
 	// Keyboard shortcuts
 	function handleKeydown(event: KeyboardEvent): void {
@@ -103,16 +151,41 @@
 			</Code.Root>
 		</Code.Overflow>
 	</div>
-	<div class="flex flex-col @sm:flex-row sm:flex-row justify-between gap-2">
+	<div class="flex flex-col max-lg:flex-row @lg:flex-row justify-between gap-2">
 		<SimpleField
 			title="File name"
 			name="page-title"
 			bind:value={fileName.current}
 			placeholder="flowchart"
 		/>
-		<ButtonGroup.Root class="self-end" title="Download options" aria-label="Download options">
-			<Button variant="outline" onclick={importJSON}><ImportIcon />Import</Button>
-			<Button variant="outline" onclick={exportJSON}><DownloadIcon />Export</Button>
-		</ButtonGroup.Root>
+
+		<div class="flex flex-col gap-2 items-end self-end">
+			{#if shareableUrl}
+				<InputGroup.Root>
+					<InputGroup.Input placeholder={shareableUrl} readonly />
+					<InputGroup.Addon align="inline-end">
+						<InputGroup.Button
+							aria-label="Copy"
+							title="Copy"
+							size="icon-xs"
+							onclick={() => clipboard.copy(shareableUrl)}
+						>
+							{#if clipboard.copied}
+								<CheckIcon />
+							{:else}
+								<CopyIcon />
+							{/if}
+						</InputGroup.Button>
+					</InputGroup.Addon>
+				</InputGroup.Root>
+			{/if}
+			<div class="flex gap-2 items-end">
+				<Button variant="outline" onclick={shareJSON}><ShareIcon />Share</Button>
+				<ButtonGroup.Root title="Download options" aria-label="Download options">
+					<Button variant="outline" onclick={importJSON}><ImportIcon />Import</Button>
+					<Button variant="outline" onclick={exportJSON}><DownloadIcon />Export</Button>
+				</ButtonGroup.Root>
+			</div>
+		</div>
 	</div>
 </div>

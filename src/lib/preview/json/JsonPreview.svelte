@@ -151,7 +151,7 @@
 			</Code.Root>
 		</Code.Overflow>
 	</div>
-	<div class="flex flex-col max-lg:flex-row @lg:flex-row justify-between gap-2">
+	<div class="flex flex-col max-lg:flex-row @lg:flex-row justify-between items-end gap-2">
 		<SimpleField
 			title="File name"
 			name="page-title"
@@ -162,7 +162,7 @@
 		<div class="flex flex-col gap-2 items-end self-end">
 			{#if shareableUrl}
 				<InputGroup.Root>
-					<InputGroup.Input placeholder={shareableUrl} readonly />
+					<InputGroup.Input value={shareableUrl} readonly />
 					<InputGroup.Addon align="inline-end">
 						<InputGroup.Button
 							aria-label="Copy"

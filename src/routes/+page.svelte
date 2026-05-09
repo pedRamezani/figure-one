@@ -6,11 +6,13 @@
 	import App from '@/App.svelte';
 	import type { Profile } from '@/index';
 
+	import { Spinner } from '$lib/components/ui/spinner/index.js';
+	import { toast } from 'svelte-sonner';
+
 	let { data }: PageProps = $props();
 
 	let appData: Profile | null = $state(null);
 	let isDecrypting = $state(false);
-	let error: string | null = $state(null);
 
 	async function decryptState(combinedPayload: string, b64Key: string): Promise<Profile> {
 		const [ivB64, cipherB64] = combinedPayload.split('.');
@@ -35,7 +37,7 @@
 			const urlKey = window.location.hash.substring(1);
 
 			if (!urlKey) {
-				error = 'Link is missing the decryption key (after the #).';
+				toast.error('Link is missing the decryption key (after the #).');
 				isDecrypting = false;
 				return;
 			}
@@ -49,7 +51,7 @@
 				console.log('State Restored:', appData);
 			} catch (e) {
 				console.error(e);
-				error = 'Decryption failed. The key might be wrong.';
+				toast.error('Decryption failed. The key might be wrong.');
 			} finally {
 				isDecrypting = false;
 			}
@@ -63,9 +65,10 @@
 <main class="flex w-auto h-dvh" bind:clientHeight={height} bind:clientWidth={width}>
 	{#if data.sharedState}
 		{#if isDecrypting}
-			<p>Unlocking your data...</p>
-		{:else if error}
-			<p style="color: red;">{error}</p>
+			<div class="flex flex-col gap-4 w-full justify-center items-center">
+				<p class="text-3xl font-semibold tracking-tight">Unlocking your data...</p>
+				<Spinner class="size-8" />
+			</div>
 		{:else}
 			<!-- Your main app UI here -->
 			<App {height} {width} />

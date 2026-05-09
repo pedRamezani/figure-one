@@ -46,9 +46,6 @@
 				// 2. Decrypt the data
 				// (Assuming you have your decryptState function imported)
 				appData = await decryptState(data.sharedState, urlKey);
-
-				// 3. TODO: Initialize your app with appData
-				console.log('State Restored:', appData);
 			} catch (e) {
 				console.error(e);
 				toast.error('Decryption failed. The key might be wrong.');
@@ -63,16 +60,11 @@
 </script>
 
 <main class="flex w-auto h-dvh" bind:clientHeight={height} bind:clientWidth={width}>
-	{#if data.sharedState}
-		{#if isDecrypting}
-			<div class="flex flex-col gap-4 w-full justify-center items-center">
-				<p class="text-3xl font-semibold tracking-tight">Unlocking your data...</p>
-				<Spinner class="size-8" />
-			</div>
-		{:else}
-			<!-- Your main app UI here -->
-			<App {height} {width} />
-		{/if}
+	{#if data.sharedState && isDecrypting}
+		<div class="flex flex-col gap-4 w-full justify-center items-center">
+			<p class="text-3xl font-semibold tracking-tight">Unlocking your data...</p>
+			<Spinner class="size-8" />
+		</div>
 	{:else}
 		<!-- Standard App Entry (No ID in URL) -->
 		<App {height} {width} />

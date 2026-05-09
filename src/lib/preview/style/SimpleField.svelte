@@ -22,11 +22,21 @@
 		name,
 		value = $bindable(),
 		class: className,
+		min,
 		...restProps
 	}: SimpleFieldProps = $props();
+
+	const isNum = $derived(typeof value !== 'string');
 </script>
 
-<Field.Field class={cn(typeof value == 'number' ? 'max-w-48' : 'max-w-2xs', className)}>
+<Field.Field class={cn(isNum ? 'max-w-48' : 'max-w-2xs', className)}>
 	<Field.Label for={name}>{title}</Field.Label>
-	<Input {name} type={typeof value == 'number' ? 'number' : 'text'} bind:value {...restProps} />
+	<Input
+		{name}
+		type={isNum ? 'number' : 'text'}
+		bind:value={() => value, (v) => (value = isNum ? v || min || 0 : v)}
+		}
+		{min}
+		{...restProps}
+	/>
 </Field.Field>

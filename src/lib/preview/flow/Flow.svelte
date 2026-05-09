@@ -124,6 +124,7 @@
 
 	import { onMount } from 'svelte';
 	import { Debounced } from 'runed';
+	import { page } from '$app/state';
 
 	const minZoom = 0.1;
 	const maxZoom = 2.5;
@@ -379,7 +380,9 @@
 
 	// Localstorage read effect
 	onMount(() => {
-		syncWithLocalStorage();
+		if ((page.data.sharedState as string | null) === null) {
+			syncWithLocalStorage();
+		}
 		fitView();
 	});
 

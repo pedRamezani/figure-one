@@ -11,8 +11,14 @@
 	import TypstPreview from '@/preview/typst/TypstPreview.svelte';
 
 	import SettingsIcon from '@lucide/svelte/icons/settings';
+	import type { Profile } from '.';
+	import ProfileRestorer from './ProfileRestorer.svelte';
 
-	let { height, width }: { height: number | null; width: number | null } = $props();
+	let {
+		profile,
+		height,
+		width
+	}: { profile: Profile | null; height: number | null; width: number | null } = $props();
 
 	let direction = $derived<'horizontal' | 'vertical'>(
 		width === null || height === null || width >= height ? 'horizontal' : 'vertical'
@@ -22,6 +28,7 @@
 <!-- fitView -->
 <!-- You need the SvelteFlowProvider so you can useSvelteFlow  -->
 <SvelteFlowProvider>
+	<ProfileRestorer {profile} />
 	<Resizable.PaneGroup {direction}>
 		<Resizable.Pane defaultSize={65}>
 			<ScrollArea class="h-full">

@@ -119,7 +119,6 @@
 		if (response.ok) {
 			const { id } = (await response.json()) as { id: string };
 			shareableUrl = `${window.location.origin}/?id=${id}#${urlKey}`;
-			// shareableUrl = `${window.location.origin}/share/${id}#${urlKey}`;
 		}
 	}
 

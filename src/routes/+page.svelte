@@ -11,10 +11,10 @@
 
 	let { data }: PageProps = $props();
 
-	let appData: Profile | null = $state(null);
+	let profile: Profile | null = $state(null);
 	let isDecrypting = $state(false);
 
-	async function decryptState(combinedPayload: string, b64Key: string): Promise<Profile> {
+	async function decryptState(combinedPayload: string, b64Key: string): Promise<Profile | null> {
 		const [ivB64, cipherB64] = combinedPayload.split('.');
 
 		// Convert Base64 strings to Uint8Arrays
@@ -26,7 +26,7 @@
 
 		const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext);
 
-		return JSON.parse(new TextDecoder().decode(decrypted)) as Profile;
+		return (JSON.parse(new TextDecoder().decode(decrypted)) as Profile | undefined) || null;
 	}
 
 	onMount(async () => {
@@ -45,13 +45,17 @@
 			try {
 				// 2. Decrypt the data
 				// (Assuming you have your decryptState function imported)
-				appData = await decryptState(data.sharedState, urlKey);
+				profile = await decryptState(data.sharedState, urlKey);
 			} catch (e) {
 				console.error(e);
 				toast.error('Decryption failed. The key might be wrong.');
 			} finally {
 				isDecrypting = false;
 			}
+		}
+
+		if (data.error) {
+			toast.error(data.error);
 		}
 	});
 
@@ -67,6 +71,6 @@
 		</div>
 	{:else}
 		<!-- Standard App Entry (No ID in URL) -->
-		<App {height} {width} />
+		<App {profile} {height} {width} />
 	{/if}
 </main>

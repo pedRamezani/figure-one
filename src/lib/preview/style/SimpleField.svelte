@@ -35,7 +35,6 @@
 		{name}
 		type={isNum ? 'number' : 'text'}
 		bind:value={() => value, (v) => (value = isNum ? v || min || 0 : v)}
-		}
 		{min}
 		{...restProps}
 	/>

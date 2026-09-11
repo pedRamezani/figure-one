@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { useSvelteFlow, useNodeConnections, type NodeProps } from '@xyflow/svelte';
+	import { useSvelteFlow, type NodeProps } from '@xyflow/svelte';
 
 	import Input from '@/components/ui/input/input.svelte';
 	import Label from '@/components/ui/label/label.svelte';
@@ -7,33 +7,9 @@
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
-	import { splitstartTargetInput } from './types';
-
 	// --- SETUP ---
 	const { id, data, type }: NodeProps = $props();
 	const { updateNodeData } = useSvelteFlow();
-
-	const connectionsTargetInput = useNodeConnections({
-		handleId: splitstartTargetInput.handleId,
-		handleType: splitstartTargetInput.handleType
-	});
-
-	const noConnection = $derived<boolean>(connectionsTargetInput.current.length === 0);
-
-	// --- ROW INITIATION ---
-	$effect(function () {
-		if (noConnection) {
-			if (data.row !== null) {
-				updateNodeData(id, { row: null });
-			}
-			return;
-		}
-
-		// IMPORTANT: Removing this will cause an infinite loop.
-		if (data.row !== 0) {
-			updateNodeData(id, { row: 0 });
-		}
-	});
 
 	// --- BINDING OBJECTS ---
 	const labelBinding = {

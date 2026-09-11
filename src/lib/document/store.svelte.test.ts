@@ -177,8 +177,7 @@ describe('adopting the old storage layout', () => {
 						stepLabel: 'Enrolled',
 						droppedLabel: 'Excluded',
 						value: 420,
-						delta: 80,
-						row: null
+						delta: 80
 					}
 				}
 			])
@@ -320,7 +319,7 @@ describe('replacing the document', () => {
 						id: '3',
 						type: 'start',
 						position: { x: 0, y: 0 },
-						data: { label: 'A', value: 1, row: null }
+						data: { label: 'A', value: 1 }
 					}
 				],
 				edges: []
@@ -343,7 +342,7 @@ describe('replacing the document', () => {
 						id: '42',
 						type: 'start',
 						position: { x: 0, y: 0 },
-						data: { label: 'A', value: 1, row: null }
+						data: { label: 'A', value: 1 }
 					}
 				],
 				edges: []

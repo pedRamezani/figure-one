@@ -8,6 +8,8 @@
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
+	import { flowchartDocument } from '@/document/store.svelte';
+
 	import { stepTargetInput, stepTargetGroup } from './types.ts';
 
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
@@ -81,23 +83,6 @@
 			updateNodeData(id, { value: calculatedAfter });
 		}
 	});
-
-	// --- ROW INCREMENT EFFECT ---
-	$effect(function () {
-		if (noConnection) {
-			if (data.row !== null) updateNodeData(id, { row: null });
-			return;
-		}
-
-		const connection = targetData.current[0];
-		const row = ('row' in connection.data ? connection.data?.row : null) as number | null;
-
-		if (row === null) {
-			if (data.row !== null) updateNodeData(id, { row: null });
-		} else if (data.row !== row + 1) {
-			updateNodeData(id, { row: row + 1 });
-		}
-	});
 </script>
 
 <NodeWrapper
@@ -105,7 +90,7 @@
 	description="Inclusion or Exclusion"
 	nodeId={id}
 	nodeType={type}
-	excludedHandles={data.row === null ? [] : [stepTargetGroup.handleId]}
+	excludedHandles={flowchartDocument.rowOf(id) === null ? [] : [stepTargetGroup.handleId]}
 >
 	{#snippet content()}
 		<div class="flex flex-col gap-2">

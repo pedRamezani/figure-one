@@ -5,8 +5,8 @@ import { createIdAllocator, type IdAllocator } from '@/nodes/ids';
 import { readPartialConfig } from './config-schema.ts';
 import { describeIssues, readDataDocument } from './data.ts';
 import { dehydrateGraph } from './graph-schema.ts';
-import { DATA_KIND, PROJECT_KIND } from './kinds.ts';
-import { migrateProject, projectDocumentV1Schema, type ProjectDocument } from './project.ts';
+import { CURRENT_PROJECT_VERSION, DATA_KIND, PROJECT_KIND } from './kinds.ts';
+import { migrateProject, projectDocumentSchema, type ProjectDocument } from './project.ts';
 
 // One entry point for every source of a document: localStorage, an imported
 // file, and later a shared link. Each of them hands raw parsed JSON to
@@ -69,6 +69,13 @@ export function readDocument(
 }
 
 function readProject(raw: Record<string, unknown>, version: number): ReadResult {
+	if (version > CURRENT_PROJECT_VERSION) {
+		return {
+			ok: false,
+			error: `This file was written by a newer version of the app (project version ${version}, this build understands up to ${CURRENT_PROJECT_VERSION}).`
+		};
+	}
+
 	let migrated: unknown;
 	try {
 		migrated = migrateProject(raw, version);
@@ -76,7 +83,7 @@ function readProject(raw: Record<string, unknown>, version: number): ReadResult 
 		return { ok: false, error: error instanceof Error ? error.message : String(error) };
 	}
 
-	const parsed = projectDocumentV1Schema.safeParse(migrated);
+	const parsed = projectDocumentSchema.safeParse(migrated);
 	if (!parsed.success) {
 		return { ok: false, error: describeIssues('this project file', parsed.error) };
 	}

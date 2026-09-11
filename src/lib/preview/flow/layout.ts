@@ -8,6 +8,7 @@ import {
 	type RegisteredNodeType,
 	stepTargetInput
 } from '@/nodes/types';
+import { computeRows } from '@/nodes/rows';
 
 export function getLayoutedElements(
 	nodes: Node[],
@@ -16,6 +17,10 @@ export function getLayoutedElements(
 	nodes: Node[];
 	edges: Edge[];
 } {
+	// Rows are derived from the graph rather than read off the nodes, so this
+	// agrees with the canvas and with the Typst conversion by construction.
+	const rows = computeRows(nodes, edges);
+
 	// Config
 	const rowPadding = 20;
 	const gap = 50;
@@ -99,7 +104,7 @@ export function getLayoutedElements(
 			}
 
 			let anchorNode = tbNodes.find((node) => node.id === source);
-			if ('row' in ssNode.data && ssNode.data.row !== null) {
+			if (rows.get(ssNode.id) !== null) {
 				const stepNodes = tbNodes
 					.filter((n) => n.parentId === ssNode.parentId && n.type === stepTargetInput.nodeType)
 					.sort((n1, n2) => n2.position.x - n1.position.x);

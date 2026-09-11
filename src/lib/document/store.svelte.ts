@@ -2,6 +2,7 @@ import type { Edge, Node } from '@xyflow/svelte';
 
 import { getNodeDataDefaults, type RegisteredNodeType } from '@/nodes/handles';
 import { edgeId, nextIdAfter } from '@/nodes/ids';
+import { computeRows } from '@/nodes/rows';
 import { defaultConfig, type TypstFlowchartConfig } from '@/preview/style/config';
 
 import { dehydrateGraph, hydrateGraph } from './graph-schema.ts';
@@ -102,6 +103,14 @@ export class FlowchartDocumentStore {
 	/** Set when a load produced a graph with no positions worth keeping. */
 	needsLayout = $state(false);
 
+	/**
+	 * Which split row each node sits in, derived from the graph.
+	 *
+	 * Not stored on the nodes. It used to be, maintained by four effects that
+	 * each needed a guard to stop them looping.
+	 */
+	rows = $derived(computeRows(this.nodes, this.edges));
+
 	/** The last read or write, used to tell a real remote change from our own echo. */
 	#lastSeen: string | null = null;
 	#storage: DocumentStorage | null = null;
@@ -122,6 +131,11 @@ export class FlowchartDocumentStore {
 	 * `parseTypstFlowchartJSON` as an allocator.
 	 */
 	allocateId = (): string => `${this.#nextId++}`;
+
+	/** The split row a node sits in, or null when it is on the main spine. */
+	rowOf(id: string): number | null {
+		return this.rows.get(id) ?? null;
+	}
 
 	// ---------------------------------------------------------------
 	// Reading and writing the document

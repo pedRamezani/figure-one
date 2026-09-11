@@ -128,8 +128,7 @@ describe('project documents', () => {
 				stepLabel: 'Enrolled',
 				droppedLabel: 'Excluded',
 				value: 420,
-				delta: 80,
-				row: null
+				delta: 80
 			}
 		});
 
@@ -150,8 +149,7 @@ describe('project documents', () => {
 				stepLabel: 'Dragged but not wired up yet',
 				droppedLabel: '',
 				value: null,
-				delta: 0,
-				row: null
+				delta: 0
 			}
 		});
 

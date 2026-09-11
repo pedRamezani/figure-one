@@ -13,16 +13,16 @@ import { CURRENT_PROJECT_VERSION, PROJECT_KIND } from './kinds.ts';
 // writes for a project file. There is exactly one of them, so there is exactly
 // one migration chain and one decoder.
 
-export const projectDocumentV1Schema = z.object({
+export const projectDocumentSchema = z.object({
 	$kind: z.literal(PROJECT_KIND),
-	$version: z.literal(1),
+	$version: z.literal(CURRENT_PROJECT_VERSION),
 	/** Bare base name, no extension. Empty means "use the fallback". */
 	name: z.string().default(''),
 	config: partialFlowchartConfigSchema.prefault({}),
 	graph: persistedGraphSchema
 });
 
-export type ProjectDocumentV1 = z.infer<typeof projectDocumentV1Schema>;
+export type ProjectDocumentFile = z.infer<typeof projectDocumentSchema>;
 
 /** The in-memory form: config is always complete, gaps already filled. */
 export interface ProjectDocument {
@@ -51,7 +51,7 @@ export function emptyProjectDocument(): ProjectDocument {
 					id: '0',
 					type: 'start',
 					position: { x: 0, y: 0 },
-					data: { label: 'Start population', value: 1000, row: null }
+					data: { label: 'Start population', value: 1000 }
 				}
 			],
 			edges: []
@@ -59,14 +59,45 @@ export function emptyProjectDocument(): ProjectDocument {
 	};
 }
 
+// -------------------------------------------------------------
+// Migration chain
+// -------------------------------------------------------------
+
 /**
- * Migration chain for the project kind.
- *
- * There is only one version so far, so this is a single pass-through. It exists
- * as a chain rather than a direct parse so that version two has somewhere
- * obvious to go, and so the corpus test has something to run.
+ * Version one stored a `row` on every node's data, kept in sync by effects.
+ * Rows are now derived from the graph, so the stored copy is dropped. Nothing
+ * is lost: the same value falls back out of `computeRows`, and a stale one
+ * cannot survive to disagree with the topology.
  */
-export const projectMigrations: Record<number, (value: unknown) => unknown> = {};
+function migrateV1ToV2(value: unknown): unknown {
+	const document = (value ?? {}) as Record<string, unknown>;
+	const graph = (document.graph ?? {}) as Record<string, unknown>;
+	const nodes = Array.isArray(graph.nodes) ? graph.nodes : [];
+
+	return {
+		...document,
+		$version: 2,
+		graph: {
+			...graph,
+			nodes: nodes.map((candidate) => {
+				if (typeof candidate !== 'object' || candidate === null) return candidate;
+
+				const node = candidate as Record<string, unknown>;
+				const data = node.data;
+				if (typeof data !== 'object' || data === null || !('row' in data)) return node;
+
+				const rest = { ...(data as Record<string, unknown>) };
+				delete rest.row;
+				return { ...node, data: rest };
+			})
+		}
+	};
+}
+
+/** One entry per version, taking a document from that version to the next. */
+export const projectMigrations: Record<number, (value: unknown) => unknown> = {
+	1: migrateV1ToV2
+};
 
 export function migrateProject(value: unknown, fromVersion: number): unknown {
 	let current = value;

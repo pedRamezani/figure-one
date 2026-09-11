@@ -1,6 +1,7 @@
 import type { Node, Edge } from '@xyflow/svelte';
 
 import { createIdAllocator, edgeId, type IdAllocator } from '@/nodes/ids';
+import { computeRows } from '@/nodes/rows';
 
 import {
 	groupSource,
@@ -97,6 +98,9 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 }): TypstFlowchartData {
 	const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
 
+	// row and column are both properties of the topology.
+	const rows = computeRows(raw.nodes, raw.edges);
+
 	// adjacency
 	const children: Record<string, string[]> = {};
 	const parents: Record<string, string[]> = {};
@@ -182,9 +186,11 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		const node = nodeById[id];
 		const step = createStep(node);
 
-		if ('row' in node.data && node.data.row !== null) {
+		const nodeRow = rows.get(id) ?? null;
+
+		if (nodeRow !== null) {
 			// Steps
-			const row = node.data.row as number;
+			const row = nodeRow;
 			const col = colByNode.get(id) ?? 0;
 			splitSteps.set(`${row}:${col}`, step);
 
@@ -275,7 +281,7 @@ export function parseTypstFlowchartJSON(
 			nodes.push({
 				id,
 				type: startSourceOutput.nodeType,
-				data: { label: step.label, value: step.value, row: null },
+				data: { label: step.label, value: step.value },
 				position: { x: 0, y: 0 },
 				deletable: false
 			});
@@ -287,8 +293,7 @@ export function parseTypstFlowchartJSON(
 					stepLabel: step.label,
 					value: step.value,
 					delta: step.delta?.value ?? 0,
-					droppedLabel: step.delta?.label ?? '',
-					row: null
+					droppedLabel: step.delta?.label ?? ''
 				},
 				position: { x: 0, y: 0 }
 			});
@@ -312,7 +317,7 @@ export function parseTypstFlowchartJSON(
 			nodes.push({
 				id: subId,
 				type: substepTarget.nodeType,
-				data: { label: sub.label, delta: sub.value, row: null },
+				data: { label: sub.label, delta: sub.value },
 				position: { x: 0, y: 0 }
 			});
 
@@ -348,6 +353,9 @@ export function parseTypstFlowchartJSON(
 		});
 
 		const columnMap: string[][] = [];
+		// The last row each column actually has a cell in. A gap between that and
+		// the current row is a skipped stage, carried on the edge that spans it.
+		const lastRowInColumn: number[] = [];
 
 		splits.forEach((row, rowIndex) => {
 			const rowId = nextId();
@@ -374,8 +382,7 @@ export function parseTypstFlowchartJSON(
 						parentId: rowId,
 						data: {
 							label: cell.label,
-							value: cell.value,
-							row: rowIndex
+							value: cell.value
 						},
 						position: { x: 0, y: 0 }
 					});
@@ -388,8 +395,7 @@ export function parseTypstFlowchartJSON(
 							stepLabel: cell.label,
 							value: cell.value,
 							delta: cell.delta?.value ?? 0,
-							droppedLabel: cell.delta?.label ?? '',
-							row: rowIndex
+							droppedLabel: cell.delta?.label ?? ''
 						},
 						position: { x: 0, y: 0 }
 					});
@@ -408,16 +414,24 @@ export function parseTypstFlowchartJSON(
 					});
 				}
 
-				if (rowIndex > 0 && columnMap[colIndex][rowIndex - 1]) {
+				const previousRow = lastRowInColumn[colIndex];
+				if (rowIndex > 0 && previousRow !== undefined) {
+					const previousId = columnMap[colIndex][previousRow];
+					const span = rowIndex - previousRow;
+
 					edges.push({
-						id: edgeId(columnMap[colIndex][rowIndex - 1], id),
-						source: columnMap[colIndex][rowIndex - 1],
+						id: edgeId(previousId, id),
+						source: previousId,
 						target: id,
 						sourceHandle:
-							rowIndex == 1 ? splitstartSourceOutput.handleId : stepSourceOutput.handleId,
-						targetHandle: stepTargetInput.handleId
+							previousRow === 0 ? splitstartSourceOutput.handleId : stepSourceOutput.handleId,
+						targetHandle: stepTargetInput.handleId,
+						// One stage is the default, so it is not worth writing down.
+						...(span > 1 ? { data: { rowSpan: span } } : {})
 					});
 				}
+
+				lastRowInColumn[colIndex] = rowIndex;
 
 				cell.delta?.substeps?.forEach((sub) => {
 					const subId = nextId();
@@ -426,7 +440,7 @@ export function parseTypstFlowchartJSON(
 						id: subId,
 						type: substepTarget.nodeType,
 						parentId: rowId,
-						data: { label: sub.label, delta: sub.value, row: rowIndex },
+						data: { label: sub.label, delta: sub.value },
 						position: { x: 0, y: 0 }
 					});
 

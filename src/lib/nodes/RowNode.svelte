@@ -13,7 +13,6 @@
 <script lang="ts">
 	import {
 		useNodes,
-		useSvelteFlow,
 		type XYPosition,
 		type Dimensions,
 		type NodeProps,
@@ -27,7 +26,6 @@
 
 	// --- SETUP ---
 	const { id, type, positionAbsoluteX, positionAbsoluteY, width, height }: NodeProps = $props();
-	const { deleteElements } = useSvelteFlow();
 
 	// Handles
 	const handles = $derived(nodeHandles[type as RegisteredNodeType]);
@@ -84,7 +82,6 @@
 	const nodes = useNodes();
 	const childNodes = $derived(nodes.current.filter((node) => node.parentId == id));
 	const childBounds = $derived(getNodesBoundsCustom(childNodes));
-	const noChildren = $derived(childNodes.length === 0);
 
 	function resolveExpansion(childBounds: Rect, padding: number = 20): Expansion {
 		const paddedChildBounds = pad(childBounds, padding);
@@ -155,12 +152,8 @@
 		}
 	});
 
-	// Deletion effect
-	$effect(() => {
-		if (noChildren) {
-			deleteElements({ nodes: [{ id: id }] });
-		}
-	});
+	// Removing an empty container is the reconcile pass's job in Flow.svelte, so
+	// that creating a container and filling it cannot race with deleting it.
 </script>
 
 <div

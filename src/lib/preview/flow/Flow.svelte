@@ -7,7 +7,6 @@
 		Controls,
 		ControlButton,
 		Panel,
-		type Node,
 		type OnConnectEnd,
 		Position
 	} from '@xyflow/svelte';
@@ -32,13 +31,14 @@
 	import { handleDragCreate, nodeHandles } from '@/nodes/types';
 
 	import { flowchartDocument } from '@/document/store.svelte';
+	import { reconcileRowContainers } from '@/nodes/rows';
 
 	import { onMount } from 'svelte';
 
 	const minZoom = 0.1;
 	const maxZoom = 2.5;
 
-	const { screenToFlowPosition, fitView, updateNode, getNode } = useSvelteFlow();
+	const { screenToFlowPosition, fitView } = useSvelteFlow();
 
 	// DocumentSync loads the stored document in its own onMount, which runs
 	// first because it is rendered earlier in the page. Fit to whatever it
@@ -147,73 +147,20 @@
 		}, 0);
 	});
 
-	const rowNodes = $derived(
-		flowchartDocument.nodes
-			.filter((n) => 'row' in n.data)
-			.reduce(
-				(acc, node) => {
-					const row = node.data?.row as number | null;
-					if (!acc[row ?? -1]) {
-						acc[row ?? -1] = [];
-					}
-					acc[row ?? -1].push(node);
-					return acc;
-				},
-				{} as { [key: number]: Node[] }
-			)
-	);
-
-	// Delete empty row effect
+	// Row containers are entirely derived: they exist because nodes have rows,
+	// and they are sized by their children. This keeps them matching the derived
+	// rows in one idempotent pass, so the canvas is never seen half reconciled.
 	$effect(() => {
-		Object.entries(rowNodes).forEach(([row, nodes]) => {
-			if (Number(row) === -1) {
-				// Number(row) === -1 => row === null => no row node parent => remove parents
-				const nodesWithParent = nodes.filter((n) => n.parentId !== undefined);
-				nodesWithParent.forEach((node) => {
-					const parentNode = getNode(node.parentId as string);
-					updateNode(node.id, {
-						parentId: undefined,
-						position: {
-							x: (parentNode?.position.x ?? 0) + node.position.x,
-							y: (parentNode?.position.y ?? 0) + node.position.y
-						}
-					});
-				});
-			} else {
-				// Number(row)  !== -1 => row !== null => node has row parent => add parent
-				const nodesWithoutParent = nodes.filter((n) => n.parentId === undefined);
-				if (nodesWithoutParent) {
-					const nodeWithParentId = nodes.find((n) => n.parentId !== undefined)?.parentId;
-					let existingParent =
-						nodeWithParentId === undefined ? undefined : getNode(nodeWithParentId as string);
-					nodesWithoutParent.forEach((node) => {
-						const parentNode =
-							existingParent ??
-							flowchartDocument.addNode(
-								'row',
-								{ x: node.position.x - 20, y: node.position.y - 20 },
-								[0, 0],
-								{},
-								undefined,
-								true
-							);
+		const reconciled = reconcileRowContainers(
+			flowchartDocument.nodes,
+			flowchartDocument.rows,
+			flowchartDocument.allocateId
+		);
 
-						// Needed for updating multiple nodes at once
-						if (existingParent === undefined) {
-							existingParent = parentNode;
-						}
-
-						updateNode(node.id, {
-							parentId: parentNode.id,
-							position: {
-								x: node.position.x - parentNode.position.x,
-								y: node.position.y - parentNode.position.y
-							}
-						});
-					});
-				}
-			}
-		});
+		// Null means nothing needed changing, which is how this settles.
+		if (reconciled) {
+			flowchartDocument.nodes = reconciled;
+		}
 	});
 </script>
 

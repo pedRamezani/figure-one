@@ -6,6 +6,8 @@
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
+	import { flowchartDocument } from '@/document/store.svelte';
+
 	import { groupSource } from './types';
 
 	// --- SETUP ---
@@ -43,12 +45,10 @@
 
 		// There should only be one connection
 		const connection = sourceData.current[0];
-		if (!('row' in connection.data)) {
-			return;
-		}
 
-		const row = connection.data?.row as number | null;
-		if (row === null) {
+		// A node inside a split row is grouped through its row container, not
+		// directly, so a direct group edge to one is dropped.
+		if (flowchartDocument.rowOf(connection.id) === null) {
 			return;
 		}
 

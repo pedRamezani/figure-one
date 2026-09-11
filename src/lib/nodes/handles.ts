@@ -34,22 +34,18 @@ export const getNodeDataDefaults = (type: RegisteredNodeType): Record<string, un
 		case 'groups':
 			return { group: '' };
 		case 'splitstart':
-			return { label: 'Split start population', value: 0, row: null };
+			return { label: 'Split start population', value: 0 };
 		case 'step':
 			return {
 				value: null,
 				delta: 0,
 				stepLabel: 'Step',
-				droppedLabel: 'excluded',
-				row: null
+				droppedLabel: 'excluded'
 			};
 		case 'substep':
-			return { delta: 0, label: 'Substep', row: null };
+			return { delta: 0, label: 'Substep' };
 		case 'start':
-			// `row` is always null for a start node, but it is present so that a
-			// dragged start and an imported start have the same shape. They used
-			// to differ, which sent them down different branches of `convert`.
-			return { label: 'Start population', value: 1000, row: null };
+			return { label: 'Start population', value: 1000 };
 		default:
 			// split, row
 			return {};

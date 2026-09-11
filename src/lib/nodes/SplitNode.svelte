@@ -56,36 +56,30 @@
 			splitValues.push(baseValue + (i < rest ? 1 : 0));
 		}
 
+		// Absolute positions, and no container. Connecting each split start to
+		// this split is what puts it on row zero, and the reconcile pass in
+		// Flow.svelte then builds the container around them.
 		const bound = getNodesBounds([id]);
-		const rowNode = flowchartDocument.addNode(
-			'row',
-			{
-				x: bound.x - (300 * (splits - 1)) / 2,
-				y: bound.y + bound.height + 50
-			},
-			[0, 0], // VERY IMPORTANT!
-			{},
-			undefined,
-			true // VERY IMPORTANT!
-		);
+		const originX = bound.x - (300 * (splits - 1)) / 2;
+		const originY = bound.y + bound.height + 50;
 
-		const parentId = rowNode.id;
 		for (const [index, splitVal] of splitValues.entries()) {
 			const newNode = flowchartDocument.addNode(
 				'splitstart',
 				{
-					x: index * 300,
-					y: 50
+					x: originX + index * 300,
+					y: originY
 				},
 				[0, 0],
-				{
-					value: splitVal,
-					row: 0
-				},
-				parentId
+				{ value: splitVal }
 			);
 
-			flowchartDocument.addEdge(id, newNode.id, splitSourceOutput.handleId, splitstartTargetInput.handleId);
+			flowchartDocument.addEdge(
+				id,
+				newNode.id,
+				splitSourceOutput.handleId,
+				splitstartTargetInput.handleId
+			);
 		}
 	}
 </script>

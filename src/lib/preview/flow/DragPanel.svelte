@@ -24,22 +24,37 @@
 	import { scale } from 'svelte/transition';
 
 	const nodes = useNodes();
-	const { fitView } = useSvelteFlow();
-	const offset: [number, number] = [0.3, 0.3];
+	const { screenToFlowPosition } = useSvelteFlow();
+
+	// Click-add places the node where you are already looking and leaves the
+	// camera alone, so it behaves like dropping one onto the canvas. It used to
+	// position relative to whichever node happened to be last in the array and
+	// then call fitView to bring it into view, which re-centred and re-zoomed
+	// the whole canvas on every click.
+	const CASCADE_STEP = 32;
+	let cascade = 0;
+
+	/** Flow coordinates of the middle of the visible canvas. */
+	function viewportCentre(): { x: number; y: number } {
+		const pane = document.querySelector('.svelte-flow__pane');
+		const rect = pane?.getBoundingClientRect();
+
+		if (!rect) return { x: 0, y: 0 };
+
+		return screenToFlowPosition({
+			x: rect.left + rect.width / 2,
+			y: rect.top + rect.height / 2
+		});
+	}
+
 	const onClick = (nodeType: RegisteredNodeType) => {
-		const position = nodes.current.at(-1)?.position ?? { x: 0, y: 0 };
-		const width = nodes.current.at(-1)?.measured?.width ?? 0;
-		const height = nodes.current.at(-1)?.measured?.height ?? 0;
-		const origin = nodes.current.at(-1)?.origin ?? [0, 0];
-		flowchartDocument.addNode(
-			nodeType,
-			{
-				x: position.x + (0.5 - origin[0] + offset[0]) * width,
-				y: position.y + (0.5 - origin[1] + offset[1]) * height
-			},
-			[0.5, 0.5]
-		);
-		fitView();
+		const centre = viewportCentre();
+
+		// Successive clicks step diagonally so they do not stack on each other.
+		const shift = cascade * CASCADE_STEP;
+		cascade = (cascade + 1) % 8;
+
+		flowchartDocument.addNode(nodeType, { x: centre.x + shift, y: centre.y + shift }, [0.5, 0.5]);
 	};
 
 	const onDragStart = (event: DragEvent, nodeType: RegisteredNodeType) => {

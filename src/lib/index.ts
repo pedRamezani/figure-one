@@ -7,7 +7,11 @@
 // a profile by hand any more.
 
 export { readDocument, type ReadResult } from './document/read.ts';
-export { createProjectDocument, emptyProjectDocument, type ProjectDocument } from './document/project.ts';
+export {
+	createProjectDocument,
+	emptyProjectDocument,
+	type ProjectDocument
+} from './document/project.ts';
 export { createDataDocument } from './document/data.ts';
 export { projectJSON, dataJSON } from './document/artifacts.ts';
 export { downloadBlob } from './document/download.ts';

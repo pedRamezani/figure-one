@@ -26,12 +26,12 @@
 	const nodes = useNodes();
 	const { screenToFlowPosition } = useSvelteFlow();
 
-	// Click-add places the node where you are already looking and leaves the
-	// camera alone, so it behaves like dropping one onto the canvas. It used to
-	// position relative to whichever node happened to be last in the array and
-	// then call fitView to bring it into view, which re-centred and re-zoomed
-	// the whole canvas on every click.
+	// Click-add places the node where you are already looking.
+	// It cascades the nodes to avoid stacking them.
+	// Drag-add places the node where you are already looking,
+	// but also allows you to move it before you release.
 	const CASCADE_STEP = 32;
+	const CASCADE_REPEAT = 8;
 	let cascade = 0;
 
 	/** Flow coordinates of the middle of the visible canvas. */
@@ -52,7 +52,7 @@
 
 		// Successive clicks step diagonally so they do not stack on each other.
 		const shift = cascade * CASCADE_STEP;
-		cascade = (cascade + 1) % 8;
+		cascade = (cascade + 1) % CASCADE_REPEAT;
 
 		flowchartDocument.addNode(nodeType, { x: centre.x + shift, y: centre.y + shift }, [0.5, 0.5]);
 	};

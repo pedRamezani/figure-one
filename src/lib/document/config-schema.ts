@@ -31,7 +31,7 @@ const arrowSchema = z.custom<Arrow>((value) => typeof value === 'string' && arro
 	message: 'Expected an arrow such as -|> built from a known body and head'
 });
 
-const widthSchema = z.union([z.number().finite(), z.literal('auto')]);
+const widthSchema = z.union([z.number(), z.literal('auto')]);
 
 // `Numbering` is a template literal type, so a plain string schema does not
 // satisfy it. The runtime check is the same; only the inferred type differs.
@@ -51,34 +51,34 @@ export const partialFlowchartConfigSchema = z
 				title: z.string(),
 				titleAlign: alignmentSchema,
 				tint: tintSchema,
-				margin: z.number().finite()
+				margin: z.number()
 			})
 			.partial(),
 		node: z
 			.object({
-				cornerRadius: z.number().finite(),
-				stroke: z.number().finite(),
-				inset: z.number().finite(),
-				outset: z.number().finite()
+				cornerRadius: z.number(),
+				stroke: z.number(),
+				inset: z.number(),
+				outset: z.number()
 			})
 			.partial(),
 		edge: z
 			.object({
-				stroke: z.number().finite(),
-				cornerRadius: z.number().finite()
+				stroke: z.number(),
+				cornerRadius: z.number()
 			})
 			.partial(),
 		mark: z
 			.object({
 				arrow: arrowSchema,
-				markScale: z.number().finite().min(0).max(100)
+				markScale: z.number().min(0).max(100)
 			})
 			.partial(),
 		diagram: z
 			.object({
-				spacing: z.number().finite(),
-				cellWidth: z.number().finite(),
-				cellHeight: z.number().finite()
+				spacing: z.number(),
+				cellWidth: z.number(),
+				cellHeight: z.number()
 			})
 			.partial(),
 		mainBox: z
@@ -101,7 +101,7 @@ export const partialFlowchartConfigSchema = z
 				subDeltaAlign: textAlignmentSchema,
 				subDeltaPrefix: z.string(),
 				subDeltaSuffix: z.string(),
-				subDeltaIndent: z.number().finite(),
+				subDeltaIndent: z.number(),
 				subDeltaNumbering: numberingSchema
 			})
 			.partial(),

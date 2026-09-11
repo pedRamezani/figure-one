@@ -21,8 +21,8 @@
 	import * as Select from '@/components/ui/select';
 	import * as ToggleGroup from '$lib/components/ui/toggle-group/index.js';
 
-	import ColorPicker from '@/components/ui/color-picker/color-picker.svelte';
-	import SimpleField from './SimpleField.svelte';
+	import { ColorPicker } from '@/components/composed/color-picker';
+	import { SimpleField } from '@/components/composed/simple-field';
 
 	import TextAlignStartIcon from '@lucide/svelte/icons/text-align-start';
 	import TextAlignCenterIcon from '@lucide/svelte/icons/text-align-center';

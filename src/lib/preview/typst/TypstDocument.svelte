@@ -19,7 +19,7 @@
 
 	import { cn } from '@/utils';
 	import './typst.css';
-	import SvgPanZoom from './SvgPanZoom.svelte';
+	import { SvgPanZoom } from '@/components/composed/svg-pan-zoom';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 
 	/* ---------------- props ---------------- */

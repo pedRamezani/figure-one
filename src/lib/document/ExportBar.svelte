@@ -5,7 +5,7 @@
 	import { Button } from '@/components/ui/button/index.js';
 	import { buttonVariants } from '@/components/ui/button/button.svelte';
 
-	import SimpleField from '@/preview/style/SimpleField.svelte';
+	import { SimpleField } from '@/components/composed/simple-field';
 
 	import DownloadIcon from '@lucide/svelte/icons/download';
 	import ImportIcon from '@lucide/svelte/icons/import';

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Attachment } from 'svelte/attachments';
 
-	import Input from '../input/input.svelte';
+	import Input from '@/components/ui/input/input.svelte';
 
 	import ColorPicker from './colorpicker.min.js';
 	import './colorpicker.css';

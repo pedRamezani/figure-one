@@ -1,4 +1,4 @@
-import type { RegisteredNodeType } from "@/nodes/types";
+import type { RegisteredNodeType } from '@/nodes/types';
 
 let dndType = $state<RegisteredNodeType | null>(null);
 

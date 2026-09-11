@@ -1,4 +1,4 @@
-<script module>
+<script lang="ts" module>
 	export type SimpleFieldProps = WithElementRef<
 		Omit<HTMLInputAttributes, 'type' | 'name' | 'files'> & {
 			title: string;

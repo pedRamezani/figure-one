@@ -1,6 +1,6 @@
-import type { Node, Edge, Viewport } from '@xyflow/svelte';
+import type { Node, Edge } from '@xyflow/svelte';
 
-import { getId } from '../flow/Flow.svelte';
+import { createIdAllocator, edgeId, type IdAllocator } from '@/nodes/ids';
 
 import {
 	groupSource,
@@ -16,7 +16,7 @@ import {
 	splitTargetInput,
 	splitstartSourceOutput,
 	splitstartTargetInput
-} from '@/nodes/types';
+} from '@/nodes/handles';
 
 export type TypstFlowchartDataLegacyV1 = {
 	stepLabel: string;
@@ -56,11 +56,25 @@ export type TypstFlowchartData = {
 	groups: TypstGroups;
 };
 
-function mapToRectangular2DArray<T>(map: Map<[number, number], T>): (T | null)[][] {
+/**
+ * Group membership is expressed as indices into a single flat sequence:
+ * every main step in order, followed by every split row in row order.
+ *
+ * Both directions of the conversion must agree on that sequence. They did not
+ * before: `convert` emitted one entry per split row while `parse` consumed one
+ * per split cell, so group assignment drifted as soon as a row had more than
+ * one column.
+ */
+function splitRowIndex(mainStepCount: number, rowIndex: number): number {
+	return mainStepCount + rowIndex;
+}
+
+function mapToRectangular2DArray<T>(map: Map<string, T>): (T | null)[][] {
 	let maxRow = -1;
 	let maxCol = -1;
 
-	for (const [[row, col]] of map) {
+	for (const key of map.keys()) {
+		const [row, col] = key.split(':').map(Number);
 		maxRow = Math.max(maxRow, row);
 		maxCol = Math.max(maxCol, col);
 	}
@@ -69,7 +83,8 @@ function mapToRectangular2DArray<T>(map: Map<[number, number], T>): (T | null)[]
 		Array(maxCol + 1).fill(null)
 	);
 
-	for (const [[row, col], value] of map) {
+	for (const [key, value] of map) {
+		const [row, col] = key.split(':').map(Number);
 		result[row][col] = value;
 	}
 
@@ -79,7 +94,6 @@ function mapToRectangular2DArray<T>(map: Map<[number, number], T>): (T | null)[]
 export function convertFlowchartToTypstFlowchartData(raw: {
 	nodes: Node[];
 	edges: Edge[];
-	viewport: Viewport;
 }): TypstFlowchartData {
 	const nodeById = Object.fromEntries(raw.nodes.map((n) => [n.id, n]));
 
@@ -151,7 +165,7 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 
 	// steps
 	const mainSteps: TypstStep[] = [];
-	const splitSteps: Map<[number, number], TypstStep> = new Map();
+	const splitSteps: Map<string, TypstStep> = new Map();
 
 	// groups
 	const mainGroups: string[] = [];
@@ -172,9 +186,9 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 			// Steps
 			const row = node.data.row as number;
 			const col = colByNode.get(id) ?? 0;
-			splitSteps.set([row, col], step);
+			splitSteps.set(`${row}:${col}`, step);
 
-			// Groups
+			// Groups. The first column reached for a row names the whole row.
 			const group = getGroup(node.id);
 			if (!splitGroups.has(row)) {
 				splitGroups.set(row, group);
@@ -218,29 +232,24 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		splits: mapToRectangular2DArray(splitSteps)
 	};
 
-	const typeGroups: TypstGroups = [
-		...mainGroups,
-		...splitGroups
-			.entries()
-			.toArray()
-			.sort(([row1, name1], [row2, name2]) => row1 - row2)
-			.map(([row, name]) => name)
-	]
-		.entries()
-		.reduce(
-			(acc, [row, name]) => {
-				if (name.length > 0) {
-					(acc[name] ??= []).push(row);
-				}
-				return acc;
-			},
-			{} as { [key: string]: number[] }
-		);
+	const orderedRowGroups = [...splitGroups.entries()]
+		.sort(([rowA], [rowB]) => rowA - rowB)
+		.map(([, name]) => name);
+
+	const typeGroups: TypstGroups = {};
+	[...mainGroups, ...orderedRowGroups].forEach((name, index) => {
+		if (name.length > 0) {
+			(typeGroups[name] ??= []).push(index);
+		}
+	});
 
 	return { steps: typeSteps, groups: typeGroups };
 }
 
-export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
+export function parseTypstFlowchartJSON(
+	json: TypstFlowchartData,
+	nextId: IdAllocator = createIdAllocator()
+): {
 	nodes: Node[];
 	edges: Edge[];
 } {
@@ -250,8 +259,8 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 	const nodes: Node[] = [];
 	const edges: Edge[] = [];
 
-	const logicalMap: Map<number, [string, string]> = new Map(); // index → nodeId
-	let logicalIndex = 0;
+	// Flat group index → the node a group edge should attach to.
+	const logicalMap: Map<number, ['START' | 'STEP' | 'ROW', string]> = new Map();
 
 	const mainNodeIds: string[] = [];
 
@@ -260,7 +269,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 	// ========================
 
 	main.forEach((step, i) => {
-		const id = getId();
+		const id = nextId();
 
 		if (i === 0) {
 			nodes.push({
@@ -285,7 +294,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			});
 
 			edges.push({
-				id: `${mainNodeIds[i - 1]}-${id}`,
+				id: edgeId(mainNodeIds[i - 1], id),
 				source: mainNodeIds[i - 1],
 				target: id,
 				sourceHandle: i == 1 ? startSourceOutput.handleId : stepSourceOutput.handleId,
@@ -294,11 +303,11 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		}
 
 		mainNodeIds.push(id);
-		logicalMap.set(logicalIndex++, [i == 0 ? 'START' : 'STEP', id]);
+		logicalMap.set(i, [i == 0 ? 'START' : 'STEP', id]);
 
 		// substeps
 		step.delta?.substeps?.forEach((sub) => {
-			const subId = getId();
+			const subId = nextId();
 
 			nodes.push({
 				id: subId,
@@ -308,7 +317,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 			});
 
 			edges.push({
-				id: `${id}-${subId}`,
+				id: edgeId(id, subId),
 				source: id,
 				target: subId,
 				sourceHandle: stepSourceSubsteps.handleId,
@@ -321,7 +330,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 	// 2. SPLIT
 	// ========================
 	if (splits?.length) {
-		let splitId = getId();
+		const splitId = nextId();
 
 		nodes.push({
 			id: splitId,
@@ -331,7 +340,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		});
 
 		edges.push({
-			id: `${mainNodeIds.at(-1) ?? ''}-${splitId}`,
+			id: edgeId(mainNodeIds.at(-1) ?? '', splitId),
 			source: mainNodeIds.at(-1) ?? '',
 			target: splitId,
 			sourceHandle: stepSourceOutput.handleId,
@@ -341,7 +350,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		const columnMap: string[][] = [];
 
 		splits.forEach((row, rowIndex) => {
-			const rowId = getId();
+			const rowId = nextId();
 
 			nodes.push({
 				id: rowId,
@@ -350,13 +359,13 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				position: { x: 0, y: 0 }
 			});
 
-			row.forEach((cell, colIndex) => {
-				if (!cell) {
-					logicalIndex++;
-					return;
-				}
+			// One group index per row, matching what `convert` emits.
+			logicalMap.set(splitRowIndex(main.length, rowIndex), ['ROW', rowId]);
 
-				const id = getId();
+			row.forEach((cell, colIndex) => {
+				if (!cell) return;
+
+				const id = nextId();
 
 				if (rowIndex === 0) {
 					nodes.push({
@@ -386,14 +395,12 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 					});
 				}
 
-				logicalMap.set(logicalIndex++, ['ROW', rowId]);
-
 				if (!columnMap[colIndex]) columnMap[colIndex] = [];
 				columnMap[colIndex][rowIndex] = id;
 
 				if (rowIndex === 0) {
 					edges.push({
-						id: `${splitId}-${id}`,
+						id: edgeId(splitId, id),
 						source: splitId,
 						target: id,
 						sourceHandle: splitSourceOutput.handleId,
@@ -403,7 +410,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 
 				if (rowIndex > 0 && columnMap[colIndex][rowIndex - 1]) {
 					edges.push({
-						id: `${columnMap[colIndex][rowIndex - 1]}-${id}`,
+						id: edgeId(columnMap[colIndex][rowIndex - 1], id),
 						source: columnMap[colIndex][rowIndex - 1],
 						target: id,
 						sourceHandle:
@@ -413,7 +420,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 				}
 
 				cell.delta?.substeps?.forEach((sub) => {
-					const subId = getId();
+					const subId = nextId();
 
 					nodes.push({
 						id: subId,
@@ -424,7 +431,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 					});
 
 					edges.push({
-						id: `${id}-${subId}`,
+						id: edgeId(id, subId),
 						source: id,
 						target: subId,
 						sourceHandle: stepSourceSubsteps.handleId,
@@ -440,7 +447,7 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 	// ========================
 
 	Object.entries(groups).forEach(([groupName, indices]) => {
-		const groupId = getId();
+		const groupId = nextId();
 
 		nodes.push({
 			id: groupId,
@@ -450,11 +457,14 @@ export function parseTypstFlowchartJSON(json: TypstFlowchartData): {
 		});
 
 		indices.forEach((index) => {
-			const [nodeType, targetId] = logicalMap.get(index) ?? ['STEP', ''];
+			const entry = logicalMap.get(index);
+			if (!entry) return;
+
+			const [nodeType, targetId] = entry;
 			if (!targetId) return;
 
 			edges.push({
-				id: `${groupId}-${targetId}`,
+				id: edgeId(groupId, targetId),
 				source: groupId,
 				target: targetId,
 				sourceHandle: groupSource.handleId,

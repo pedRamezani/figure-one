@@ -12,7 +12,7 @@
 
 	import { splitSourceOutput, splitTargetInput, splitstartTargetInput } from './types';
 
-	import { addNode, addEdge } from '@/preview/flow/Flow.svelte';
+	import { flowchartDocument } from '@/document/store.svelte';
 
 	import { slide } from 'svelte/transition';
 
@@ -57,7 +57,7 @@
 		}
 
 		const bound = getNodesBounds([id]);
-		const rowNode = addNode(
+		const rowNode = flowchartDocument.addNode(
 			'row',
 			{
 				x: bound.x - (300 * (splits - 1)) / 2,
@@ -71,7 +71,7 @@
 
 		const parentId = rowNode.id;
 		for (const [index, splitVal] of splitValues.entries()) {
-			const newNode = addNode(
+			const newNode = flowchartDocument.addNode(
 				'splitstart',
 				{
 					x: index * 300,
@@ -85,7 +85,7 @@
 				parentId
 			);
 
-			addEdge(id, newNode.id, splitSourceOutput.handleId, splitstartTargetInput.handleId);
+			flowchartDocument.addEdge(id, newNode.id, splitSourceOutput.handleId, splitstartTargetInput.handleId);
 		}
 	}
 </script>

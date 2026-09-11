@@ -5,6 +5,7 @@
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import * as Tabs from '@/components/ui/tabs/index.js';
 
+	import DocumentSync from '@/document/DocumentSync.svelte';
 	import Flow from '@/preview/flow/Flow.svelte';
 	import JsonPreview from '@/preview/json/JsonPreview.svelte';
 	import StyleConfigurator from '@/preview/style/StyleConfigurator.svelte';
@@ -19,6 +20,8 @@
 		width === null || height === null || width >= height ? 'horizontal' : 'vertical'
 	);
 </script>
+
+<DocumentSync />
 
 <main class="flex w-auto h-dvh" bind:clientHeight={height} bind:clientWidth={width}>
 	<!-- fitView -->
@@ -49,7 +52,7 @@
 					<Tabs.Root value="typst" class="h-full p-4 md:p-8">
 						<Tabs.List>
 							<Tabs.Trigger value="typst">Preview</Tabs.Trigger>
-							<Tabs.Trigger value="json">Profile</Tabs.Trigger>
+							<Tabs.Trigger value="json">Data</Tabs.Trigger>
 						</Tabs.List>
 						<Tabs.Content value="typst">
 							<TypstPreview />

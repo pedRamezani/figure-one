@@ -17,7 +17,7 @@
 
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
 	import { type RegisteredNodeType, dragPanelNodes } from '@/nodes/types';
-	import { addNode } from './Flow.svelte';
+	import { flowchartDocument } from '@/document/store.svelte';
 
 	import { useNodes, useSvelteFlow } from '@xyflow/svelte';
 
@@ -31,7 +31,7 @@
 		const width = nodes.current.at(-1)?.measured?.width ?? 0;
 		const height = nodes.current.at(-1)?.measured?.height ?? 0;
 		const origin = nodes.current.at(-1)?.origin ?? [0, 0];
-		addNode(
+		flowchartDocument.addNode(
 			nodeType,
 			{
 				x: position.x + (0.5 - origin[0] + offset[0]) * width,

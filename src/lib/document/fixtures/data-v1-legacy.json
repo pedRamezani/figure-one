@@ -1,0 +1,32 @@
+{
+  "$version": 1,
+  "data": [
+    {
+      "stepLabel": "Assessed for eligibility",
+      "droppedLabel": "",
+      "group": "Enrolment",
+      "value": 500,
+      "delta": 0,
+      "substepDeltas": []
+    },
+    {
+      "stepLabel": "Enrolled",
+      "droppedLabel": "Excluded",
+      "group": "Enrolment",
+      "value": 420,
+      "delta": 80,
+      "substepDeltas": [{ "label": "Declined to participate", "delta": 80 }]
+    },
+    {
+      "stepLabel": "Completed follow-up",
+      "droppedLabel": "Lost to follow-up",
+      "group": "Follow-Up",
+      "value": 400,
+      "delta": 20,
+      "substepDeltas": []
+    }
+  ],
+  "config": {
+    "page": { "title": "Figure 1", "titleAlign": "left", "tint": "white", "margin": 5 }
+  }
+}

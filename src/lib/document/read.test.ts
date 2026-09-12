@@ -6,7 +6,7 @@ import { createDataDocument } from './data.ts';
 import { convertFlowchartToTypstFlowchartData } from '@/preview/json/convert';
 import { hydrateGraph } from './graph-schema.ts';
 import { defaultConfig } from '@/preview/style/config';
-import { createIdAllocator } from '@/nodes/ids';
+import { createIdAllocator } from '@/flow/ids';
 
 import dataV1 from './fixtures/data-v1-legacy.json' with { type: 'json' };
 import dataV2Linear from './fixtures/data-v2-linear.json' with { type: 'json' };

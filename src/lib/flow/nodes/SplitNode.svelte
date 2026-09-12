@@ -10,7 +10,12 @@
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
-	import { splitSourceOutput, splitTargetInput, splitstartTargetInput } from './types';
+	import {
+		splitSourceOutput,
+		splitTargetInput,
+		splitstartTargetInput
+	} from '../handles/handle-types.ts';
+	import { NODE_GAP, SPLIT_COLUMN_GAP } from '../geometry.ts';
 
 	import { flowchartDocument } from '@/document/store.svelte';
 
@@ -60,14 +65,14 @@
 		// this split is what puts it on row zero, and the reconcile pass in
 		// Flow.svelte then builds the container around them.
 		const bound = getNodesBounds([id]);
-		const originX = bound.x - (300 * (splits - 1)) / 2;
-		const originY = bound.y + bound.height + 50;
+		const originX = bound.x - (SPLIT_COLUMN_GAP * (splits - 1)) / 2;
+		const originY = bound.y + bound.height + NODE_GAP;
 
 		for (const [index, splitVal] of splitValues.entries()) {
 			const newNode = flowchartDocument.addNode(
 				'splitstart',
 				{
-					x: originX + index * 300,
+					x: originX + index * SPLIT_COLUMN_GAP,
 					y: originY
 				},
 				[0, 0],

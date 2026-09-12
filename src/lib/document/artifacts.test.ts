@@ -4,7 +4,7 @@ import { dataJSON, projectJSON } from './artifacts.ts';
 import { readDocument } from './read.ts';
 import { emptyProjectDocument, type ProjectDocument } from './project.ts';
 import { defaultConfig } from '@/preview/style/config';
-import { createIdAllocator } from '@/nodes/ids';
+import { createIdAllocator } from '@/flow/ids';
 
 import dataV2Splits from './fixtures/data-v2-splits.json' with { type: 'json' };
 

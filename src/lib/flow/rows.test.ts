@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Edge, Node } from '@xyflow/svelte';
 
-import { computeRows, reconcileRowContainers, rowSpanOf } from './rows.ts';
+import { computeRows, reconcileRowContainers } from './rows.ts';
 import { createIdAllocator, edgeId } from './ids.ts';
 import {
 	splitSourceOutput,
@@ -12,7 +12,7 @@ import {
 	stepTargetInput,
 	substepTarget,
 	startSourceOutput
-} from './handles.ts';
+} from './handles/handle-types.ts';
 
 function node(id: string, type: string, extra: Partial<Node> = {}): Node {
 	return { id, type, position: { x: 0, y: 0 }, data: {}, ...extra } as Node;
@@ -51,25 +51,6 @@ function splitGraph() {
 
 	return { nodes, edges };
 }
-
-describe('rowSpanOf', () => {
-	it('defaults to one', () => {
-		expect(rowSpanOf({})).toBe(1);
-		expect(rowSpanOf({ data: undefined })).toBe(1);
-		expect(rowSpanOf({ data: {} })).toBe(1);
-	});
-
-	it('reads a whole number of stages', () => {
-		expect(rowSpanOf({ data: { rowSpan: 3 } })).toBe(3);
-	});
-
-	it('ignores nonsense rather than propagating it', () => {
-		expect(rowSpanOf({ data: { rowSpan: 0 } })).toBe(1);
-		expect(rowSpanOf({ data: { rowSpan: -2 } })).toBe(1);
-		expect(rowSpanOf({ data: { rowSpan: 1.5 } })).toBe(1);
-		expect(rowSpanOf({ data: { rowSpan: 'two' } })).toBe(1);
-	});
-});
 
 describe('computeRows', () => {
 	it('leaves the main spine without a row', () => {

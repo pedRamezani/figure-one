@@ -1,7 +1,7 @@
 import type { Node, Edge } from '@xyflow/svelte';
 
-import { createIdAllocator, edgeId, type IdAllocator } from '@/nodes/ids';
-import { computeRows } from '@/nodes/rows';
+import { createIdAllocator, edgeId, type IdAllocator } from '@/flow/ids';
+import { computeRows } from '@/flow/rows';
 
 import {
 	groupSource,
@@ -17,7 +17,7 @@ import {
 	splitTargetInput,
 	splitstartSourceOutput,
 	splitstartTargetInput
-} from '@/nodes/handles';
+} from '@/flow/handles/handle-types';
 
 export type TypstFlowchartDataLegacyV1 = {
 	stepLabel: string;

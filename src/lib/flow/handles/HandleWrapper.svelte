@@ -4,7 +4,7 @@
 
 	import WideHandle from './WideHandle.svelte';
 
-	import { type Handle, handleGraph, handleConnectionLimits } from '@/nodes/types';
+	import { type Handle, handleGraph, handleConnectionLimits } from './handle-types.ts';
 
 	let {
 		nodeId,

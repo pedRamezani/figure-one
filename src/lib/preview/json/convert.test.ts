@@ -5,7 +5,7 @@ import {
 	parseTypstFlowchartJSON,
 	type TypstFlowchartData
 } from './convert.ts';
-import { createIdAllocator } from '@/nodes/ids';
+import { createIdAllocator } from '@/flow/ids';
 
 import linear from '@/document/fixtures/data-v2-linear.json' with { type: 'json' };
 import splits from '@/document/fixtures/data-v2-splits.json' with { type: 'json' };

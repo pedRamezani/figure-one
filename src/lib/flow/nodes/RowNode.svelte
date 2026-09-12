@@ -20,9 +20,11 @@
 		type Node
 	} from '@xyflow/svelte';
 
-	import { nodeHandles, type RegisteredNodeType } from '@/nodes/types';
+	import type { RegisteredNodeType } from './node-types.ts';
+	import { nodeHandles } from '../handles/handle-types.ts';
+	import { ROW_PADDING } from '../geometry.ts';
 
-	import HandleWrapper from '@/handles/HandleWrapper.svelte';
+	import HandleWrapper from '../handles/HandleWrapper.svelte';
 
 	// --- SETUP ---
 	const { id, type, positionAbsoluteX, positionAbsoluteY, width, height }: NodeProps = $props();
@@ -31,7 +33,7 @@
 	const handles = $derived(nodeHandles[type as RegisteredNodeType]);
 
 	// --- EXPANSION AND DELETION ---
-	function pad(rect: Rect, padding: number = 20): Rect {
+	function pad(rect: Rect, padding: number = ROW_PADDING): Rect {
 		return {
 			x: rect.x - padding,
 			y: rect.y - padding,
@@ -83,7 +85,7 @@
 	const childNodes = $derived(nodes.current.filter((node) => node.parentId == id));
 	const childBounds = $derived(getNodesBoundsCustom(childNodes));
 
-	function resolveExpansion(childBounds: Rect, padding: number = 20): Expansion {
+	function resolveExpansion(childBounds: Rect, padding: number = ROW_PADDING): Expansion {
 		const paddedChildBounds = pad(childBounds, padding);
 
 		const dimension = {

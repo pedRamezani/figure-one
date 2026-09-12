@@ -1,6 +1,8 @@
 import type { Edge, Node } from '@xyflow/svelte';
 
-import { splitstartTargetInput, stepTargetInput, substepTarget } from './handles.ts';
+import { rowSpanOf } from './edges/edge-types.ts';
+import { ROW_PADDING } from './geometry.ts';
+import { splitstartTargetInput, stepTargetInput, substepTarget } from './handles/handle-types.ts';
 
 /**
  * Which split row each node sits in.
@@ -14,30 +16,6 @@ import { splitstartTargetInput, stepTargetInput, substepTarget } from './handles
  * This used to be stored on each node and maintained by four separate effects,
  * every one of them guarded by a hand-written equality check to stop it looping.
  */
-
-/** An edge spans one stage unless it says otherwise. */
-export const DEFAULT_ROW_SPAN = 1;
-
-interface EdgeWithSpan {
-	data?: Record<string, unknown> | undefined;
-}
-
-/**
- * How many stages an edge crosses.
- *
- * A span greater than one is how an arm says it has nothing at a stage. The
- * gap lives on the connection that spans it, so deleting a node and rewiring
- * resets it rather than stranding the number on a neighbour.
- */
-export function rowSpanOf(edge: EdgeWithSpan): number {
-	const span = edge.data?.rowSpan;
-
-	if (typeof span !== 'number' || !Number.isInteger(span) || span < 1) {
-		return DEFAULT_ROW_SPAN;
-	}
-
-	return span;
-}
 
 export type RowMap = ReadonlyMap<string, number | null>;
 
@@ -188,7 +166,7 @@ export function reconcileRowContainers(
 				type: 'row',
 				data: {},
 				origin: [0, 0],
-				position: { x: absolute.x - 20, y: absolute.y - 20 }
+				position: { x: absolute.x - ROW_PADDING, y: absolute.y - ROW_PADDING }
 			} satisfies Node;
 
 			containerForRow.set(row, container);

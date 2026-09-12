@@ -1,6 +1,6 @@
 import { mergeFlowchartConfig } from '@/preview/style/config';
 import { parseTypstFlowchartJSON } from '@/preview/json/convert';
-import { createIdAllocator, type IdAllocator } from '@/nodes/ids';
+import { createIdAllocator, type IdAllocator } from '@/flow/ids';
 
 import { readPartialConfig } from './config-schema.ts';
 import { describeIssues, readDataDocument } from './data.ts';

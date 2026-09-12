@@ -16,7 +16,8 @@
 	const panelDescription = 'Click or drag to add nodes.';
 
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
-	import { type RegisteredNodeType, dragPanelNodes } from '@/nodes/types';
+	import type { RegisteredNodeType } from '@/flow/nodes/node-types';
+	import { dragPanelNodes } from './drag-panel-nodes.ts';
 	import { flowchartDocument } from '@/document/store.svelte';
 
 	import { useSvelteFlow } from '@xyflow/svelte';

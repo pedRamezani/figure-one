@@ -5,10 +5,11 @@ import {
 	substepTarget,
 	groupSource,
 	rowTargetGroup,
-	type RegisteredNodeType,
 	stepTargetInput
-} from '@/nodes/types';
-import { computeRows } from '@/nodes/rows';
+} from './handles/handle-types.ts';
+import type { RegisteredNodeType } from './nodes/node-types.ts';
+import { computeRows } from './rows.ts';
+import { NODE_GAP, ROW_PADDING } from './geometry.ts';
 
 export function getLayoutedElements(
 	nodes: Node[],
@@ -22,8 +23,8 @@ export function getLayoutedElements(
 	const rows = computeRows(nodes, edges);
 
 	// Config
-	const rowPadding = 20;
-	const gap = 50;
+	const rowPadding = ROW_PADDING;
+	const gap = NODE_GAP;
 	const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 	g.setGraph({ rankdir: 'TB', nodesep: gap, ranksep: gap });
 

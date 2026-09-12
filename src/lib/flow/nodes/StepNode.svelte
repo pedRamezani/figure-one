@@ -10,7 +10,7 @@
 
 	import { flowchartDocument } from '@/document/store.svelte';
 
-	import { stepTargetInput, stepTargetGroup } from './types.ts';
+	import { stepTargetInput, stepTargetGroup } from '../handles/handle-types.ts';
 
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import { buttonVariants } from '@/components/ui/button/index.js';

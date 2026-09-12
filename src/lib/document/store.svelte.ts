@@ -1,8 +1,8 @@
 import type { Edge, Node } from '@xyflow/svelte';
 
-import { getNodeDataDefaults, nodeLimits, type RegisteredNodeType } from '@/nodes/handles';
-import { edgeId, nextIdAfter } from '@/nodes/ids';
-import { computeRows } from '@/nodes/rows';
+import { getNodeDataDefaults, nodeLimits, type RegisteredNodeType } from '@/flow/nodes/node-types';
+import { edgeId, nextIdAfter } from '@/flow/ids';
+import { computeRows } from '@/flow/rows';
 import { defaultConfig, type TypstFlowchartConfig } from '@/preview/style/config';
 
 import { dehydrateGraph, hydrateGraph } from './graph-schema.ts';

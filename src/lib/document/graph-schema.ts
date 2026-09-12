@@ -26,7 +26,7 @@ const baseNodeFields = {
 };
 
 // A node's split row is not stored. It is derived from the graph by
-// `computeRows` in `@/nodes/rows`, because it is a pure function of topology and
+// `computeRows` in `@/flow/rows`, because it is a pure function of topology and
 // storing it meant four effects kept it in sync and could disagree.
 
 const groupsNode = z.object({

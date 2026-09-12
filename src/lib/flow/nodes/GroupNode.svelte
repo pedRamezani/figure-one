@@ -8,7 +8,7 @@
 
 	import { flowchartDocument } from '@/document/store.svelte';
 
-	import { groupSource } from './types';
+	import { groupSource } from '../handles/handle-types.ts';
 
 	// --- SETUP ---
 	const { id, data, type }: NodeProps = $props();

@@ -1,9 +1,10 @@
 <script lang="ts">
 	import * as Card from '@/components/ui/card/index.js';
 	import type { Snippet } from 'svelte';
-	import { type RegisteredNodeType, nodeHandles } from '@/nodes/types';
+	import type { RegisteredNodeType } from './node-types.ts';
+	import { nodeHandles } from '../handles/handle-types.ts';
 
-	import HandleWrapper from '@/handles/HandleWrapper.svelte';
+	import HandleWrapper from '../handles/HandleWrapper.svelte';
 
 	let {
 		nodeId,

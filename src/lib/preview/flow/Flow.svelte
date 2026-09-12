@@ -11,7 +11,8 @@
 		Position
 	} from '@xyflow/svelte';
 
-	import { type RegisteredNodeType, nodeTypes } from '@/nodes/types';
+	import type { RegisteredNodeType } from '@/flow/nodes/node-types';
+	import { nodeTypes } from '@/flow/nodes/node-components';
 
 	import * as ButtonGroup from '@/components/ui/button-group/index.js';
 	import { buttonGroupVariants } from '@/components/ui/button-group/button-group.svelte';
@@ -23,15 +24,16 @@
 	import LayoutIcon from '@lucide/svelte/icons/circle-pile';
 	import ClearIcon from '@lucide/svelte/icons/trash';
 
-	import { getLayoutedElements } from './layout.ts';
+	import { getLayoutedElements } from '@/flow/layout';
 
 	import { dragAndDropNodeType } from './drag-and-drop-node.svelte';
 	import DragPanel from './DragPanel.svelte';
 
-	import { handleDragCreate, nodeHandles } from '@/nodes/types';
+	import { handleDragCreate, nodeHandles } from '@/flow/handles/handle-types';
 
 	import { flowchartDocument } from '@/document/store.svelte';
-	import { reconcileRowContainers } from '@/nodes/rows';
+	import { reconcileRowContainers } from '@/flow/rows';
+	import { SNAP_GRID } from '@/flow/geometry';
 
 	import { onMount } from 'svelte';
 
@@ -186,7 +188,7 @@
 	onconnectend={handleConnectEnd}
 	ondragover={handleDragOver}
 	ondrop={handleDrop}
-	snapGrid={[20, 20]}
+	snapGrid={SNAP_GRID}
 	proOptions={{
 		hideAttribution: true
 	}}

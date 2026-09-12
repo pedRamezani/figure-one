@@ -4,8 +4,8 @@ import { readDocument } from './read.ts';
 import { createProjectDocument } from './project.ts';
 import { CURRENT_PROJECT_VERSION } from './kinds.ts';
 import { hydrateGraph } from './graph-schema.ts';
-import { computeRows } from '@/nodes/rows';
-import { createIdAllocator } from '@/nodes/ids';
+import { computeRows } from '@/flow/rows';
+import { createIdAllocator } from '@/flow/ids';
 
 import captured from './fixtures/project-v1-captured.json' with { type: 'json' };
 import dataV2Splits from './fixtures/data-v2-splits.json' with { type: 'json' };

@@ -1,60 +1,19 @@
 import { type HandleProps, Position } from '@xyflow/svelte';
 
-// The node vocabulary: which node types exist, what data they carry, and which
-// handles they expose. Deliberately free of Svelte components.
-//
-// The component map lives in `./types.ts`, which re-exports everything here.
-// Keeping the two apart breaks the import cycle that otherwise runs
-// types.ts → SplitNode.svelte → Flow.svelte → types.ts, and lets pure data code
-// such as `convert.ts` be imported without dragging in the whole UI.
-
-// Node Types and Defaults
-// Use 'groups' instead of 'group' to avoid css name conflicts
-export type RegisteredNodeType =
-	| 'groups'
-	| 'row'
-	| 'split'
-	| 'splitstart'
-	| 'start'
-	| 'step'
-	| 'substep';
+import type { RegisteredNodeType } from '../nodes/node-types.ts';
 
 /**
- * How many of a node type one chart may contain. Absent means unlimited.
+ * The handle vocabulary: every connection point a node exposes, which handles
+ * may connect to which, and how many connections each will accept.
  *
- * A CONSORT diagram has one start and at most one split. More than one split
- * is not supported: rows are numbered per split, so two of them would fold
- * their stages together.
+ * Handles reference node types, never the other way round. `nodeHandles` maps
+ * a node type to its handles and lives here for that reason: it is built from
+ * the handle constants, and a `Handle` already knows the node it belongs to.
+ *
+ * No components. Keeping this free of Svelte is what lets pure data code such
+ * as `convert.ts` and `rows.ts` import it.
  */
-export const nodeLimits: Partial<Record<RegisteredNodeType, number>> = {
-	start: 1,
-	split: 1
-};
 
-export const getNodeDataDefaults = (type: RegisteredNodeType): Record<string, unknown> => {
-	switch (type) {
-		case 'groups':
-			return { group: '' };
-		case 'splitstart':
-			return { label: 'Split start population', value: 0 };
-		case 'step':
-			return {
-				value: null,
-				delta: 0,
-				stepLabel: 'Step',
-				droppedLabel: 'excluded'
-			};
-		case 'substep':
-			return { delta: 0, label: 'Substep' };
-		case 'start':
-			return { label: 'Start population', value: 1000 };
-		default:
-			// split, row
-			return {};
-	}
-};
-
-// Handle Types and Definitions
 export type HandleType = HandleProps['type'];
 
 export type Handle = {
@@ -194,6 +153,7 @@ class Graph<T> {
 	}
 }
 
+/** Which handles are allowed to connect to which. */
 export const handleGraph = (): Graph<Handle> => {
 	const graph = new Graph<Handle>();
 	graph.addEdge(splitSourceOutput, splitstartTargetInput);
@@ -209,6 +169,7 @@ export const handleGraph = (): Graph<Handle> => {
 	return graph;
 };
 
+/** How many connections each handle accepts. */
 export const handleConnectionLimits: Map<Handle, number> = new Map([
 	[groupSource, Infinity],
 	[rowTargetGroup, 1],
@@ -226,6 +187,7 @@ export const handleConnectionLimits: Map<Handle, number> = new Map([
 	[substepTarget, 1]
 ]);
 
+/** Dragging from a handle into empty space creates the handle it maps to. */
 export const handleDragCreate: Map<Handle, Handle> = new Map([
 	[rowTargetGroup, groupSource],
 	[splitSourceOutput, splitstartTargetInput],
@@ -238,11 +200,11 @@ export const handleDragCreate: Map<Handle, Handle> = new Map([
 	[stepSourceSubsteps, substepTarget]
 ]);
 
-// Mixed Types
 export type NodeHandleMap = {
 	[key in RegisteredNodeType]: Handle[];
 };
 
+/** Which handles each node type exposes. */
 export const nodeHandles: NodeHandleMap = {
 	groups: [groupSource],
 	row: [rowTargetGroup],

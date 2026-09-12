@@ -1,90 +1,90 @@
 {
-  "$version": 2,
-  "data": {
-    "steps": {
-      "main": [
-        { "label": "Assessed for eligibility", "value": 1200, "delta": null },
-        {
-          "label": "Randomised",
-          "value": 900,
-          "delta": {
-            "label": "Excluded",
-            "value": 300,
-            "substeps": [
-              { "label": "Did not meet inclusion criteria", "value": 210 },
-              { "label": "Declined to participate", "value": 90 }
-            ]
-          }
-        }
-      ],
-      "splits": [
-        [
-          { "label": "Allocated to intervention", "value": 450, "delta": null },
-          { "label": "Allocated to control", "value": 450, "delta": null }
-        ],
-        [
-          {
-            "label": "Received allocation",
-            "value": 430,
-            "delta": {
-              "label": "Did not receive allocation",
-              "value": 20,
-              "substeps": [{ "label": "Withdrew consent", "value": 20 }]
-            }
-          },
-          {
-            "label": "Received allocation",
-            "value": 445,
-            "delta": { "label": "Did not receive allocation", "value": 5, "substeps": [] }
-          }
-        ],
-        [
-          {
-            "label": "Analysed",
-            "value": 420,
-            "delta": { "label": "Excluded from analysis", "value": 10, "substeps": [] }
-          },
-          {
-            "label": "Analysed",
-            "value": 440,
-            "delta": { "label": "Excluded from analysis", "value": 5, "substeps": [] }
-          }
-        ]
-      ]
-    },
-    "groups": {
-      "Enrolment": [0, 1],
-      "Allocation": [2],
-      "Follow-Up": [3],
-      "Analysis": [4]
-    }
-  },
-  "config": {
-    "page": { "title": "Figure 1", "titleAlign": "left", "tint": "white", "margin": 5 },
-    "node": { "cornerRadius": 5, "stroke": 1, "inset": 6, "outset": 0 },
-    "edge": { "stroke": 1, "cornerRadius": 5 },
-    "mark": { "arrow": "-|>", "markScale": 70 },
-    "diagram": { "spacing": 8, "cellWidth": 8, "cellHeight": 8 },
-    "mainBox": {
-      "tint": "white",
-      "width": 80,
-      "textAlign": "left",
-      "valueAlign": "left",
-      "valuePrefix": "",
-      "valueSuffix": ""
-    },
-    "stepBox": {
-      "tint": "white",
-      "width": 80,
-      "deltaAlign": "text-left",
-      "deltaPrefix": "",
-      "deltaSuffix": "",
-      "subDeltaAlign": "text-left",
-      "subDeltaPrefix": "",
-      "subDeltaSuffix": "",
-      "subDeltaIndent": 3,
-      "subDeltaNumbering": null
-    },
-    "groupBox": { "tint": "green" }
-  }
+	"$version": 2,
+	"data": {
+		"steps": {
+			"main": [
+				{ "label": "Assessed for eligibility", "value": 1200, "delta": null },
+				{
+					"label": "Randomised",
+					"value": 900,
+					"delta": {
+						"label": "Excluded",
+						"value": 300,
+						"substeps": [
+							{ "label": "Did not meet inclusion criteria", "value": 210 },
+							{ "label": "Declined to participate", "value": 90 }
+						]
+					}
+				}
+			],
+			"splits": [
+				[
+					{ "label": "Allocated to intervention", "value": 450, "delta": null },
+					{ "label": "Allocated to control", "value": 450, "delta": null }
+				],
+				[
+					{
+						"label": "Received allocation",
+						"value": 430,
+						"delta": {
+							"label": "Did not receive allocation",
+							"value": 20,
+							"substeps": [{ "label": "Withdrew consent", "value": 20 }]
+						}
+					},
+					{
+						"label": "Received allocation",
+						"value": 445,
+						"delta": { "label": "Did not receive allocation", "value": 5, "substeps": [] }
+					}
+				],
+				[
+					{
+						"label": "Analysed",
+						"value": 420,
+						"delta": { "label": "Excluded from analysis", "value": 10, "substeps": [] }
+					},
+					{
+						"label": "Analysed",
+						"value": 440,
+						"delta": { "label": "Excluded from analysis", "value": 5, "substeps": [] }
+					}
+				]
+			]
+		},
+		"groups": {
+			"Enrolment": [0, 1],
+			"Allocation": [2],
+			"Follow-Up": [3],
+			"Analysis": [4]
+		}
+	},
+	"config": {
+		"page": { "title": "Figure 1", "titleAlign": "left", "tint": "white", "margin": 5 },
+		"node": { "cornerRadius": 5, "stroke": 1, "inset": 6, "outset": 0 },
+		"edge": { "stroke": 1, "cornerRadius": 5 },
+		"mark": { "arrow": "-|>", "markScale": 70 },
+		"diagram": { "spacing": 8, "cellWidth": 8, "cellHeight": 8 },
+		"mainBox": {
+			"tint": "white",
+			"width": 80,
+			"textAlign": "left",
+			"valueAlign": "left",
+			"valuePrefix": "",
+			"valueSuffix": ""
+		},
+		"stepBox": {
+			"tint": "white",
+			"width": 80,
+			"deltaAlign": "text-left",
+			"deltaPrefix": "",
+			"deltaSuffix": "",
+			"subDeltaAlign": "text-left",
+			"subDeltaPrefix": "",
+			"subDeltaSuffix": "",
+			"subDeltaIndent": 3,
+			"subDeltaNumbering": null
+		},
+		"groupBox": { "tint": "green" }
+	}
 }

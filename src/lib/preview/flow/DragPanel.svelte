@@ -74,7 +74,7 @@
 </script>
 
 {#snippet panelContent()}
-	{#each dragPanelNodes as [nodeType, config]}
+	{#each dragPanelNodes as [nodeType, config] (nodeType)}
 		{#if config !== null && flowchartDocument.canAddNode(nodeType)}
 			<nav
 				ondragstart={(event) => onDragStart(event, nodeType)}

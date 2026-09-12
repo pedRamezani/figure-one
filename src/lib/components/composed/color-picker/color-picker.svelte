@@ -83,7 +83,7 @@
 				(element as HTMLInputElement).value = convertedValue;
 			}
 
-			// @ts-ignore
+			// @ts-expect-error the picker's event map is not described by its types
 			picker.on('pick', (color) => (value = hexToSwatch(color.string('hex'))));
 
 			// return picker.destroy;

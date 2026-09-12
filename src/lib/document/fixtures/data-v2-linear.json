@@ -1,57 +1,57 @@
 {
-  "$version": 2,
-  "data": {
-    "steps": {
-      "main": [
-        { "label": "Assessed for eligibility", "value": 500, "delta": null },
-        {
-          "label": "Enrolled",
-          "value": 420,
-          "delta": {
-            "label": "Excluded",
-            "value": 80,
-            "substeps": [{ "label": "Declined to participate", "value": 80 }]
-          }
-        },
-        {
-          "label": "Completed follow-up",
-          "value": 400,
-          "delta": { "label": "Lost to follow-up", "value": 20, "substeps": [] }
-        }
-      ],
-      "splits": []
-    },
-    "groups": {
-      "Enrolment": [0, 1],
-      "Follow-Up": [2]
-    }
-  },
-  "config": {
-    "page": { "title": "Figure 1", "titleAlign": "left", "tint": "white", "margin": 5 },
-    "node": { "cornerRadius": 5, "stroke": 1, "inset": 6, "outset": 0 },
-    "edge": { "stroke": 1, "cornerRadius": 5 },
-    "mark": { "arrow": "-|>", "markScale": 70 },
-    "diagram": { "spacing": 8, "cellWidth": 8, "cellHeight": 8 },
-    "mainBox": {
-      "tint": "white",
-      "width": 80,
-      "textAlign": "left",
-      "valueAlign": "left",
-      "valuePrefix": "",
-      "valueSuffix": ""
-    },
-    "stepBox": {
-      "tint": "white",
-      "width": 80,
-      "deltaAlign": "text-left",
-      "deltaPrefix": "",
-      "deltaSuffix": "",
-      "subDeltaAlign": "text-left",
-      "subDeltaPrefix": "",
-      "subDeltaSuffix": "",
-      "subDeltaIndent": 3,
-      "subDeltaNumbering": null
-    },
-    "groupBox": { "tint": "green" }
-  }
+	"$version": 2,
+	"data": {
+		"steps": {
+			"main": [
+				{ "label": "Assessed for eligibility", "value": 500, "delta": null },
+				{
+					"label": "Enrolled",
+					"value": 420,
+					"delta": {
+						"label": "Excluded",
+						"value": 80,
+						"substeps": [{ "label": "Declined to participate", "value": 80 }]
+					}
+				},
+				{
+					"label": "Completed follow-up",
+					"value": 400,
+					"delta": { "label": "Lost to follow-up", "value": 20, "substeps": [] }
+				}
+			],
+			"splits": []
+		},
+		"groups": {
+			"Enrolment": [0, 1],
+			"Follow-Up": [2]
+		}
+	},
+	"config": {
+		"page": { "title": "Figure 1", "titleAlign": "left", "tint": "white", "margin": 5 },
+		"node": { "cornerRadius": 5, "stroke": 1, "inset": 6, "outset": 0 },
+		"edge": { "stroke": 1, "cornerRadius": 5 },
+		"mark": { "arrow": "-|>", "markScale": 70 },
+		"diagram": { "spacing": 8, "cellWidth": 8, "cellHeight": 8 },
+		"mainBox": {
+			"tint": "white",
+			"width": 80,
+			"textAlign": "left",
+			"valueAlign": "left",
+			"valuePrefix": "",
+			"valueSuffix": ""
+		},
+		"stepBox": {
+			"tint": "white",
+			"width": 80,
+			"deltaAlign": "text-left",
+			"deltaPrefix": "",
+			"deltaSuffix": "",
+			"subDeltaAlign": "text-left",
+			"subDeltaPrefix": "",
+			"subDeltaSuffix": "",
+			"subDeltaIndent": 3,
+			"subDeltaNumbering": null
+		},
+		"groupBox": { "tint": "green" }
+	}
 }

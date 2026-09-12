@@ -511,7 +511,7 @@
 					variant="outline"
 					bind:value={styleConfig.current.page.titleAlign}
 				>
-					{#each aligmentOptions as alignment}
+					{#each aligmentOptions as alignment (alignment)}
 						<ToggleGroup.Item
 							name="page-title-aligment"
 							value={alignment}
@@ -531,7 +531,7 @@
 				<Select.Root name="page-tint" type="single" bind:value={styleConfig.current.page.tint}>
 					<Select.Trigger>{styleConfig.current.page.tint}</Select.Trigger>
 					<Select.Content>
-						{#each tintOptions as t}
+						{#each tintOptions as t (t)}
 							<Select.Item value={t}>{t}</Select.Item>
 						{/each}
 					</Select.Content>
@@ -644,7 +644,7 @@
 				<Select.Root type="single" bind:value={arrowBody} onValueChange={arrowUpdate}>
 					<Select.Trigger>{@render arrayBodySvg(arrowBody)}</Select.Trigger>
 					<Select.Content>
-						{#each arrowBodies as body}
+						{#each arrowBodies as body (body)}
 							<Select.Item value={body}>{@render arrayBodySvg(body)}</Select.Item>
 						{/each}
 					</Select.Content>
@@ -656,7 +656,7 @@
 				<Select.Root type="single" bind:value={arrowHead} onValueChange={arrowUpdate}>
 					<Select.Trigger>{@render arrayHeadSvg(arrowHead)}</Select.Trigger>
 					<Select.Content>
-						{#each arrowHeads as head}
+						{#each arrowHeads as head (head)}
 							<Select.Item value={head}>{@render arrayHeadSvg(head)}</Select.Item>
 						{/each}
 					</Select.Content>
@@ -698,7 +698,7 @@
 					variant="outline"
 					bind:value={styleConfig.current.mainBox.textAlign}
 				>
-					{#each aligmentOptions as alignment}
+					{#each aligmentOptions as alignment (alignment)}
 						<ToggleGroup.Item
 							name="mainbox-text-aligment"
 							value={alignment}
@@ -720,7 +720,7 @@
 					variant="outline"
 					bind:value={styleConfig.current.mainBox.valueAlign}
 				>
-					{#each textAligmentOptions as alignment}
+					{#each textAligmentOptions as alignment (alignment)}
 						<ToggleGroup.Item
 							name="mainbox-value-aligment"
 							value={alignment}
@@ -739,7 +739,7 @@
 					variant="outline"
 					bind:value={styleConfig.current.mainBox.valueAlign}
 				>
-					{#each aligmentOptions as alignment}
+					{#each aligmentOptions as alignment (alignment)}
 						<ToggleGroup.Item
 							name="mainbox-value-aligment"
 							value={alignment}
@@ -793,7 +793,7 @@
 					variant="outline"
 					bind:value={styleConfig.current.stepBox.deltaAlign}
 				>
-					{#each textAligmentOptions as alignment}
+					{#each textAligmentOptions as alignment (alignment)}
 						<ToggleGroup.Item
 							name="stepbox-delta-aligment"
 							value={alignment}
@@ -827,7 +827,7 @@
 					variant="outline"
 					bind:value={styleConfig.current.stepBox.subDeltaAlign}
 				>
-					{#each textAligmentOptions as alignment}
+					{#each textAligmentOptions as alignment (alignment)}
 						<ToggleGroup.Item
 							name="stepbox-subdelta-aligment"
 							value={alignment}
@@ -874,7 +874,7 @@
 				>
 					<Select.Trigger>{numberingBody || 'None'}</Select.Trigger>
 					<Select.Content>
-						{#each numberingBodyOptions as option}
+						{#each numberingBodyOptions as option (option)}
 							<Select.Item value={option || 'None'}>{option || 'None'}</Select.Item>
 						{/each}
 					</Select.Content>
@@ -896,7 +896,7 @@
 				>
 					<Select.Trigger>{numberingFormatting || 'None'}</Select.Trigger>
 					<Select.Content>
-						{#each numberingFormattingOptions as format}
+						{#each numberingFormattingOptions as format (format)}
 							<Select.Item value={format || 'None'}
 								>{format
 									? format.substring(0, 1).toUpperCase() + format.substring(1)

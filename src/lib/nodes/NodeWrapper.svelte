@@ -39,7 +39,7 @@
 		{@render content()}
 
 		<!-- Handles -->
-		{#each handles as handle}
+		{#each handles as handle (handle.handleId)}
 			<HandleWrapper {nodeId} {handle} />
 		{/each}
 	</Card.Content>

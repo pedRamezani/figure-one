@@ -162,7 +162,7 @@
 	style:height={height === 0 ? undefined : `${height}px`}
 >
 	<!-- Handles -->
-	{#each handles as handle}
+	{#each handles as handle (handle.handleId)}
 		<HandleWrapper nodeId={id} {handle} />
 	{/each}
 </div>

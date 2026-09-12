@@ -20,7 +20,10 @@ import type { RegisteredNodeType } from './handles.ts';
 // Only the two component maps below belong here.
 export * from './handles.ts';
 
-export const nodeTypes: Record<RegisteredNodeType, Component<NodeProps, {}, ''>> = {
+export const nodeTypes: Record<
+	RegisteredNodeType,
+	Component<NodeProps, Record<string, never>, ''>
+> = {
 	groups: GroupNode,
 	row: RowNode,
 	split: SplitNode,

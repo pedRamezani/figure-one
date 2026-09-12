@@ -19,6 +19,9 @@
 	let transform = $derived<string>(`translate(${tx}px, ${ty}px) scale(${scale})`);
 
 	// Pointer/pinch tracking
+	// Deliberately a plain Map. Pointer tracking drives the transform directly
+	// and nothing renders from it, so reactivity would cost updates for nothing.
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	const pointers = new Map<number, PointerEvent>();
 	let lastPan = { x: 0, y: 0 };
 	let initialPinch = { dist: 0, scale: 1, center: { x: 0, y: 0 } };
@@ -119,7 +122,9 @@
 		if (!containerEl) return;
 		try {
 			containerEl.releasePointerCapture(e.pointerId);
-		} catch {}
+		} catch {
+			// The pointer was already released, which is fine.
+		}
 		pointers.delete(e.pointerId);
 		if (pointers.size === 1) {
 			// switch to single-pointer pan base

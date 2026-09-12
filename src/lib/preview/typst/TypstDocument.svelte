@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 
 	import * as typst from '@myriaddreamin/typst.ts';
 	import { createGlobalRenderer } from '@myriaddreamin/typst.ts/dist/esm/contrib/global-renderer.mjs';
@@ -211,6 +211,7 @@
 	{#if svgHTML}
 		<SvgPanZoom class={cn('typst-app', className)}>
 			{#snippet svg()}
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -- SVG produced by the Typst compiler in this page, not user input -->
 				{@html svgHTML}
 			{/snippet}
 		</SvgPanZoom>

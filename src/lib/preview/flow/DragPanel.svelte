@@ -19,11 +19,10 @@
 	import { type RegisteredNodeType, dragPanelNodes } from '@/nodes/types';
 	import { flowchartDocument } from '@/document/store.svelte';
 
-	import { useNodes, useSvelteFlow } from '@xyflow/svelte';
+	import { useSvelteFlow } from '@xyflow/svelte';
 
 	import { scale } from 'svelte/transition';
 
-	const nodes = useNodes();
 	const { screenToFlowPosition } = useSvelteFlow();
 
 	// Click-add places the node where you are already looking.
@@ -67,27 +66,22 @@
 		event.dataTransfer.effectAllowed = 'move';
 	};
 
-	const nodeTypeCounts = $derived(
-		nodes.current
-			.map((node) => node.type ?? '')
-			.reduce(
-				(d, nodeType) => {
-					if (nodeType in d) {
-						d[nodeType] += 1;
-					} else {
-						d[nodeType] = 1;
-					}
-					return d;
-				},
-				{} as { [key: string]: number }
-			)
-	);
+	// A drag abandoned outside the canvas never reaches the drop handler, so the
+	// pending type has to be cleared here too or it would apply to the next drop.
+	const onDragEnd = () => {
+		dragAndDropNodeType.current = null;
+	};
 </script>
 
 {#snippet panelContent()}
 	{#each dragPanelNodes as [nodeType, config]}
-		{#if config !== null && (config.maxCount === undefined || (nodeTypeCounts[nodeType] ?? 0) < config.maxCount)}
-			<nav ondragstart={(event) => onDragStart(event, nodeType)} draggable={true} transition:scale>
+		{#if config !== null && flowchartDocument.canAddNode(nodeType)}
+			<nav
+				ondragstart={(event) => onDragStart(event, nodeType)}
+				ondragend={onDragEnd}
+				draggable={true}
+				transition:scale
+			>
 				<Button variant="secondary" size="sm" onclick={() => onClick(nodeType)}
 					><config.icon class={cn('size-4! stroke-2', config.class)} />{config.label}</Button
 				>

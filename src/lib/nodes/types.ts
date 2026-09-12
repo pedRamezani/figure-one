@@ -36,7 +36,6 @@ export const dragPanelNodes: Map<
 		icon: Component;
 		label: string;
 		class?: string;
-		maxCount?: number;
 	} | null
 > = new Map([
 	['start', null],
@@ -44,5 +43,5 @@ export const dragPanelNodes: Map<
 	['step', { icon: StepIcon, label: 'Step' }],
 	['substep', { icon: SubstepIcon, label: 'Substep' }],
 	['groups', { icon: GroupIcon, label: 'Group', class: '-rotate-90' }],
-	['split', { icon: SplitIcon, label: 'Split', maxCount: 1 }]
+	['split', { icon: SplitIcon, label: 'Split' }]
 ]);

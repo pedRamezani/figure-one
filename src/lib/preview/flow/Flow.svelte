@@ -108,16 +108,22 @@
 	const handleDrop = (event: DragEvent) => {
 		event.preventDefault();
 
-		if (!dragAndDropNodeType.current) {
-			return;
-		}
+		const nodeType = dragAndDropNodeType.current;
+
+		// Consume it either way. Leaving it set meant any later drop on the
+		// canvas, added another node of whatever type was last dragged from
+		// the panel.
+		dragAndDropNodeType.current = null;
+
+		if (!nodeType) return;
+		if (!flowchartDocument.canAddNode(nodeType)) return;
 
 		const position = screenToFlowPosition({
 			x: event.clientX,
 			y: event.clientY
 		});
 
-		flowchartDocument.addNode(dragAndDropNodeType.current, position, [0.5, 0.5]);
+		flowchartDocument.addNode(nodeType, position, [0.5, 0.5]);
 	};
 
 	function layoutNodes() {

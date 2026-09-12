@@ -22,8 +22,6 @@ export const projectDocumentSchema = z.object({
 	graph: persistedGraphSchema
 });
 
-export type ProjectDocumentFile = z.infer<typeof projectDocumentSchema>;
-
 /** The in-memory form: config is always complete, gaps already filled. */
 export interface ProjectDocument {
 	name: string;

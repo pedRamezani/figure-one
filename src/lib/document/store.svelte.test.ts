@@ -363,3 +363,41 @@ describe('replacing the document', () => {
 		expect(store.nodes).toHaveLength(1);
 	});
 });
+
+describe('node limits', () => {
+	it('allows the types a chart may have many of', () => {
+		expect(store.canAddNode('step')).toBe(true);
+		expect(store.canAddNode('substep')).toBe(true);
+		expect(store.canAddNode('groups')).toBe(true);
+	});
+
+	it('allows the first split', () => {
+		expect(store.canAddNode('split')).toBe(true);
+	});
+
+	it('refuses a second split', () => {
+		store.addNode('split');
+		expect(store.canAddNode('split')).toBe(false);
+	});
+
+	it('refuses a second start, since a fresh chart already has one', () => {
+		expect(store.countOf('start')).toBe(1);
+		expect(store.canAddNode('start')).toBe(false);
+	});
+
+	it('allows a split again once the first is deleted', () => {
+		const split = store.addNode('split');
+		expect(store.canAddNode('split')).toBe(false);
+
+		store.nodes = store.nodes.filter((n) => n.id !== split.id);
+		expect(store.canAddNode('split')).toBe(true);
+	});
+
+	it('counts what is actually on the canvas', () => {
+		store.addNode('step');
+		store.addNode('step');
+
+		expect(store.countOf('step')).toBe(2);
+		expect(store.countOf('split')).toBe(0);
+	});
+});

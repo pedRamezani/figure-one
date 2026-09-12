@@ -19,15 +19,17 @@ export type RegisteredNodeType =
 	| 'step'
 	| 'substep';
 
-export const registeredNodeTypes = [
-	'groups',
-	'row',
-	'split',
-	'splitstart',
-	'start',
-	'step',
-	'substep'
-] as const satisfies readonly RegisteredNodeType[];
+/**
+ * How many of a node type one chart may contain. Absent means unlimited.
+ *
+ * A CONSORT diagram has one start and at most one split. More than one split
+ * is not supported: rows are numbered per split, so two of them would fold
+ * their stages together.
+ */
+export const nodeLimits: Partial<Record<RegisteredNodeType, number>> = {
+	start: 1,
+	split: 1
+};
 
 export const getNodeDataDefaults = (type: RegisteredNodeType): Record<string, unknown> => {
 	switch (type) {

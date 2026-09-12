@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/svelte';
 
-import { getNodeDataDefaults, type RegisteredNodeType } from '@/nodes/handles';
+import { getNodeDataDefaults, nodeLimits, type RegisteredNodeType } from '@/nodes/handles';
 import { edgeId, nextIdAfter } from '@/nodes/ids';
 import { computeRows } from '@/nodes/rows';
 import { defaultConfig, type TypstFlowchartConfig } from '@/preview/style/config';
@@ -285,6 +285,16 @@ export class FlowchartDocumentStore {
 	// ---------------------------------------------------------------
 	// Graph edits
 	// ---------------------------------------------------------------
+
+	countOf(nodeType: RegisteredNodeType): number {
+		return this.nodes.reduce((total, node) => total + (node.type === nodeType ? 1 : 0), 0);
+	}
+
+	/** Whether another node of this type may be added. */
+	canAddNode(nodeType: RegisteredNodeType): boolean {
+		const limit = nodeLimits[nodeType];
+		return limit === undefined || this.countOf(nodeType) < limit;
+	}
 
 	addNode(
 		nodeType: RegisteredNodeType,

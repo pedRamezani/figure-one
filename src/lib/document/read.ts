@@ -94,7 +94,7 @@ function readProject(raw: Record<string, unknown>, version: number): ReadResult 
 		needsLayout: false,
 		document: {
 			name: parsed.data.name,
-			config: mergeFlowchartConfig(parsed.data.config),
+			config: mergeFlowchartConfig(readPartialConfig(parsed.data.config)),
 			graph: parsed.data.graph
 		}
 	};

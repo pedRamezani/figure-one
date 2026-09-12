@@ -1,8 +1,7 @@
 import { z } from 'zod';
 
-import { defaultConfig, type TypstFlowchartConfig } from '@/preview/style/config';
+import { mergeFlowchartConfig, type TypstFlowchartConfig } from '@/preview/style/config';
 
-import { partialFlowchartConfigSchema } from './config-schema.ts';
 import { persistedGraphSchema, type PersistedGraph } from './graph-schema.ts';
 import { CURRENT_PROJECT_VERSION, PROJECT_KIND } from './kinds.ts';
 
@@ -18,7 +17,9 @@ export const projectDocumentSchema = z.object({
 	$version: z.literal(CURRENT_PROJECT_VERSION),
 	/** Bare base name, no extension. Empty means "use the fallback". */
 	name: z.string().default(''),
-	config: partialFlowchartConfigSchema.prefault({}),
+	// Deliberately not validated here. `readPartialConfig` handles it, dropping
+	// only the sections it cannot read rather than refusing the whole document.
+	config: z.unknown(),
 	graph: persistedGraphSchema
 });
 
@@ -42,7 +43,10 @@ export function createProjectDocument(document: ProjectDocument) {
 export function emptyProjectDocument(): ProjectDocument {
 	return {
 		name: '',
-		config: { ...defaultConfig },
+		// `mergeFlowchartConfig` builds fresh section objects. A shallow spread of
+		// `defaultConfig` would share them, so editing a document would rewrite the
+		// defaults every other document is built from.
+		config: mergeFlowchartConfig({}),
 		graph: {
 			nodes: [
 				{

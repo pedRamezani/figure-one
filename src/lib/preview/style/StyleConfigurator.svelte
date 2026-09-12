@@ -5,6 +5,8 @@
 		arrowHeads,
 		aligmentOptions,
 		textAligmentOptions,
+		fontOptions,
+		titlePlacementOptions,
 		numberingBodyOptions,
 		numberingFormattingOptions,
 		subDeltaMarkerOptions,
@@ -24,6 +26,10 @@
 	import { ColorPicker } from '@/components/composed/color-picker';
 	import { SimpleField } from '@/components/composed/simple-field';
 
+	import ArrowDownIcon from '@lucide/svelte/icons/arrow-down';
+	import ArrowUpIcon from '@lucide/svelte/icons/arrow-up';
+	import BoldIcon from '@lucide/svelte/icons/bold';
+	import TypeIcon from '@lucide/svelte/icons/type';
 	import EyeIcon from '@lucide/svelte/icons/eye';
 	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import SquareIcon from '@lucide/svelte/icons/square';
@@ -41,6 +47,16 @@
 
 	// A two-option group rather than a single toggle, so it reads the same way as
 	// Title Alignment beside it and neither state is ambiguous.
+	const weightOptions: { value: string; label: string; icon: Component }[] = [
+		{ value: 'regular', label: 'Regular', icon: TypeIcon },
+		{ value: 'bold', label: 'Bold', icon: BoldIcon }
+	];
+
+	const valueVisibilityOptions: { value: string; label: string; icon: Component }[] = [
+		{ value: 'shown', label: 'Shown', icon: EyeIcon },
+		{ value: 'hidden', label: 'Hidden', icon: EyeOffIcon }
+	];
+
 	const titleOptions: { value: string; label: string; icon: Component }[] = [
 		{ value: 'shown', label: 'Shown', icon: EyeIcon },
 		{ value: 'hidden', label: 'Hidden', icon: EyeOffIcon }
@@ -130,6 +146,40 @@
 		styleConfig.reset();
 	}
 </script>
+
+{#snippet weightToggle(
+	name: string,
+	label: string,
+	get: () => boolean,
+	set: (bold: boolean) => void
+)}
+	<Field.Field class="max-w-fit">
+		<Field.Label for={name}>{label}</Field.Label>
+		<ToggleGroup.Root
+			type="single"
+			variant="outline"
+			bind:value={
+				() => (get() ? 'bold' : 'regular'),
+				(next) => {
+					if (next) set(next === 'bold');
+				}
+			}
+		>
+			{#each weightOptions as option (option.value)}
+				<ToggleGroup.Item
+					{name}
+					value={option.value}
+					aria-label={`${label} ${option.label}`}
+					class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+				>
+					{@const Icon = option.icon}
+					<Icon />
+					{option.label}
+				</ToggleGroup.Item>
+			{/each}
+		</ToggleGroup.Root>
+	</Field.Field>
+{/snippet}
 
 <svg
 	viewBox="0 0 30 15"
@@ -537,6 +587,35 @@
 		<Field.Group class="flex flex-row flex-wrap">
 			<SimpleField title="Title" name="page-title" bind:value={styleConfig.current.page.title} />
 
+			<SimpleField
+				title="Caption"
+				name="page-caption"
+				bind:value={styleConfig.current.page.caption}
+				placeholder="CONSORT flowchart of participant selection"
+			/>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="page-title-placement">Title Placement</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.page.titlePlacement}
+				>
+					{#each titlePlacementOptions as placement (placement)}
+						<ToggleGroup.Item
+							name="page-title-placement"
+							value={placement}
+							aria-label={`Title at ${placement}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = placement === 'top' ? ArrowUpIcon : ArrowDownIcon}
+							<Icon />
+							{placement.substring(0, 1).toUpperCase() + placement.substring(1)}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
 			<Field.Field class="max-w-fit">
 				<Field.Label for="page-show-title">Title Visibility</Field.Label>
 				<ToggleGroup.Root
@@ -618,6 +697,18 @@
 						</ToggleGroup.Item>
 					{/each}
 				</ToggleGroup.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-2xs">
+				<Field.Label for="page-font">Font</Field.Label>
+				<Select.Root name="page-font" type="single" bind:value={styleConfig.current.page.font}>
+					<Select.Trigger>{styleConfig.current.page.font}</Select.Trigger>
+					<Select.Content>
+						{#each fontOptions as font (font)}
+							<Select.Item value={font}>{font}</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
 			</Field.Field>
 
 			<SimpleField
@@ -773,6 +864,20 @@
 				min={0}
 			/>
 
+			{@render weightToggle(
+				'mainbox-label-weight',
+				'Label Weight',
+				() => styleConfig.current.mainBox.labelBold,
+				(bold) => (styleConfig.current.mainBox.labelBold = bold)
+			)}
+
+			{@render weightToggle(
+				'mainbox-value-weight',
+				'Value Weight',
+				() => styleConfig.current.mainBox.valueBold,
+				(bold) => (styleConfig.current.mainBox.valueBold = bold)
+			)}
+
 			<Field.Field class="max-w-fit">
 				<Field.Label for="node-text-aligment">Text Aligment</Field.Label>
 				<ToggleGroup.Root
@@ -868,6 +973,20 @@
 				min={0}
 			/>
 
+			{@render weightToggle(
+				'stepbox-delta-label-weight',
+				'Delta Label Weight',
+				() => styleConfig.current.stepBox.deltaLabelBold,
+				(bold) => (styleConfig.current.stepBox.deltaLabelBold = bold)
+			)}
+
+			{@render weightToggle(
+				'stepbox-delta-value-weight',
+				'Delta Value Weight',
+				() => styleConfig.current.stepBox.deltaValueBold,
+				(bold) => (styleConfig.current.stepBox.deltaValueBold = bold)
+			)}
+
 			<Field.Field class="max-w-fit">
 				<Field.Label for="stepbox-delta-text-aligment">Delta Text Aligment</Field.Label>
 				<ToggleGroup.Root
@@ -942,6 +1061,47 @@
 				name="stepbox-delta-suffix"
 				bind:value={styleConfig.current.stepBox.deltaSuffix}
 			/>
+
+			{@render weightToggle(
+				'stepbox-subdelta-label-weight',
+				'Sub-Delta Label Weight',
+				() => styleConfig.current.stepBox.subDeltaLabelBold,
+				(bold) => (styleConfig.current.stepBox.subDeltaLabelBold = bold)
+			)}
+
+			{@render weightToggle(
+				'stepbox-subdelta-value-weight',
+				'Sub-Delta Value Weight',
+				() => styleConfig.current.stepBox.subDeltaValueBold,
+				(bold) => (styleConfig.current.stepBox.subDeltaValueBold = bold)
+			)}
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-subdelta-value">Sub-Delta Value</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={
+						() => (styleConfig.current.stepBox.showSubDeltaValue ? 'shown' : 'hidden'),
+						(next) => {
+							if (next) styleConfig.current.stepBox.showSubDeltaValue = next === 'shown';
+						}
+					}
+				>
+					{#each valueVisibilityOptions as option (option.value)}
+						<ToggleGroup.Item
+							name="stepbox-subdelta-value"
+							value={option.value}
+							aria-label={`Sub-delta value ${option.label}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = option.icon}
+							<Icon />
+							{option.label}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
 
 			<Field.Field class="max-w-fit">
 				<Field.Label for="stepbox-subdelta-text-aligment">Sub-Delta Text Aligment</Field.Label>

@@ -59,7 +59,11 @@
 	const accessModel = new MemoryAccessModel();
 	const compilerInitOpts: typst.InitOptions = {
 		beforeBuild: [
-			loadFonts([]),
+			// Inter is the only proportional sans available: the compiler embeds
+			// only serif and monospace faces, and an unknown family falls back
+			// silently rather than erroring. Served from static/ so the figure
+			// renders the same offline and on every machine.
+			loadFonts(['/fonts/Inter-Regular.ttf', '/fonts/Inter-Bold.ttf']),
 			withAccessModel(accessModel),
 			withPackageRegistry(new FetchPackageRegistry(accessModel))
 		],

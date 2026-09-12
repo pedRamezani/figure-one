@@ -64,7 +64,7 @@
   fill: if style.page.transparent { none } else { get-tint(style.page.tint).lighten(80%) },
 )
 
-#set text(font: "New Computer Modern")
+#set text(font: style.page.font)
 
 // ============================
 // Styled primitives
@@ -143,29 +143,50 @@
 }
 
 // ----------------------------
+// Small helpers
+// ----------------------------
+// Bold when the style asks for it.
+#let weighted(body, bold) = if bold { strong(body) } else { body }
+
+// A count wearing its configured prefix and suffix, such as "(n = 139)".
+#let formatted-value(value, prefix, suffix) = prefix + str(value) + suffix
+
+// Horizontal alignment from a style name.
+#let to-align(name) = alignment-mapping.at(name)
+
+// A "text-*" mode puts the value beside the label; anything else stacks it
+// underneath.
+#let beside-label(mode) = mode.starts-with("text")
+
+// Within a beside-label mode, whether the value comes first.
+#let value-leads(mode) = mode.ends-with("left")
+
+// The label and value in reading order for a beside-label layout.
+#let ordered-spans(label, value, mode) = if value-leads(mode) {
+  (value, label)
+} else {
+  (label, value)
+}
+
+// ----------------------------
 // Label and value layout
 // ----------------------------
-// A "text-*" mode puts the value beside the label; anything else stacks it
-// underneath, aligned to that edge. Grid cells align to the top so a label that
-// wraps onto several lines keeps its value level with the first line rather
-// than floating to the vertical middle.
-#let labelled-value(label, value, mode, gutter: 0.4em) = {
-  if mode.starts-with("text") {
-    let spans = if mode.ends-with("left") {
-      (value, label)
-    } else {
-      (label, value)
-    }
+// Grid cells align to the top so a label that wraps onto several lines keeps
+// its value level with the first line rather than floating to the middle.
+#let labelled-value(label, value, mode, gutter: 0.4em, label-bold: false, value-bold: false) = {
+  let label = weighted(label, label-bold)
+  let value = weighted(value, value-bold)
 
+  if beside-label(mode) {
     grid(
-      ..spans,
+      ..ordered-spans(label, value, mode),
       inset: 0pt,
       column-gutter: gutter,
       columns: 2,
       align: top,
     )
   } else {
-    label + pad(align(value, alignment-mapping.at(mode)), top: -0.5em)
+    label + pad(align(value, to-align(mode)), top: -0.5em)
   }
 }
 
@@ -180,6 +201,115 @@
   } else if s.subDeltaNumbering != none {
     enum(numbering: s.subDeltaNumbering, body-indent: 0mm, enum.item(index + 1)[])
   }
+}
+
+// ----------------------------
+// Box contents
+// ----------------------------
+// What goes inside a population box.
+#let population-body(m, it) = align(
+  to-align(m.textAlign),
+  labelled-value(
+    it.label,
+    formatted-value(it.value, m.valuePrefix, m.valueSuffix),
+    m.valueAlign,
+    label-bold: m.labelBold,
+    value-bold: m.valueBold,
+  ),
+)
+
+// The list of substeps inside an exclusion box.
+#let substep-list(s, substeps) = {
+  let has-marker = s.subDeltaMarker != none or s.subDeltaNumbering != none
+  let stacked = not beside-label(s.subDeltaAlign)
+  let show-value = s.showSubDeltaValue
+  let content-columns = if not show-value or stacked { 1 } else { 2 }
+
+  let cells-for(i, sub) = {
+    let value-text = formatted-value(sub.value, s.subDeltaPrefix, s.subDeltaSuffix)
+
+    let cells = if not show-value {
+      (weighted(sub.label, s.subDeltaLabelBold),)
+    } else if stacked {
+      (
+        labelled-value(
+          sub.label,
+          value-text,
+          s.subDeltaAlign,
+          label-bold: s.subDeltaLabelBold,
+          value-bold: s.subDeltaValueBold,
+        ),
+      )
+    } else {
+      ordered-spans(
+        weighted(sub.label, s.subDeltaLabelBold),
+        weighted(value-text, s.subDeltaValueBold),
+        s.subDeltaAlign,
+      )
+    }
+
+    if has-marker {
+      (sub-marker(s, i), ..cells)
+    } else {
+      cells
+    }
+  }
+
+  // Top, so a wrapped label keeps its N on the first line.
+  let column-alignment = {
+    let cols = if not show-value {
+      // One column, positioned as a block by subDeltaTextAlign.
+      (top + left,)
+    } else if stacked {
+      (top + to-align(s.subDeltaAlign),)
+    } else if value-leads(s.subDeltaAlign) {
+      (top + right, top + left)
+    } else {
+      (top + left, top + right)
+    }
+
+    if has-marker {
+      (top + right, ..cols)
+    } else {
+      cols
+    }
+  }
+
+  grid(
+    ..for (i, sub) in substeps.enumerate() {
+      cells-for(i, sub)
+    },
+    inset: 0pt,
+    column-gutter: 1em / 3,
+    row-gutter: 0.65em, // Default leading between lines of text
+    columns: if has-marker { content-columns + 1 } else { content-columns },
+    align: column-alignment,
+  )
+}
+
+// What goes inside an exclusion box: its own label and count, then its substeps.
+#let exclusion-body(s, delta) = {
+  align(
+    to-align(s.deltaTextAlign),
+    labelled-value(
+      delta.label,
+      formatted-value(delta.value, s.deltaPrefix, s.deltaSuffix),
+      s.deltaAlign,
+      gutter: 1em / 3,
+      label-bold: s.deltaLabelBold,
+      value-bold: s.deltaValueBold,
+    ),
+  )
+  pad(
+    align(to-align(s.subDeltaTextAlign), substep-list(s, delta.substeps)),
+    left: s.subDeltaIndent * 1em / 3,
+    // Default spacing between paragraphs, plus a line when substeps follow.
+    top: if delta.substeps.len() == 0 {
+      -1.2em
+    } else {
+      -1.2em + 0.65em
+    },
+  )
 }
 
 // ----------------------------
@@ -225,12 +355,10 @@
         }
 
         // Population box
-        let value-fmt = m.valuePrefix + str(it.value) + m.valueSuffix
         let population-col = mapped-col(col, max-cols: max-cols)
-        let population-label = labelled-value(it.label, value-fmt, m.valueAlign)
         styled-node(
           (population-col, row * 2),
-          align(alignment-mapping.at(m.textAlign), population-label),
+          population-body(m, it),
           tint: get-tint(m.tint),
           width: m.width * 1mm,
         )
@@ -248,69 +376,9 @@
           )
 
           // Exclusion box
-          let delta-fmt = s.deltaPrefix + str(it.delta.value) + s.deltaSuffix
           styled-node(
             (population-col + 1, row * 2 - 1),
-            align(
-              alignment-mapping.at(s.deltaTextAlign),
-              labelled-value(it.delta.label, delta-fmt, s.deltaAlign, gutter: 1em / 3),
-            )
-            // Subdeltas
-              + pad(
-                align(alignment-mapping.at(s.subDeltaTextAlign), {
-                  // A bullet or a number, when either is configured.
-                  let has-marker = s.subDeltaMarker != none or s.subDeltaNumbering != none
-                  // "text-*" puts the N beside the label, anything else under it.
-                  let stacked = not s.subDeltaAlign.starts-with("text")
-                  let content-columns = if stacked { 1 } else { 2 }
-
-                  grid(
-                    ..for (i, sub) in it.delta.substeps.enumerate() {
-                      let sub-delta-fmt = s.subDeltaPrefix + str(sub.value) + s.subDeltaSuffix
-
-                      let cells = if stacked {
-                        (labelled-value(sub.label, sub-delta-fmt, s.subDeltaAlign),)
-                      } else if s.subDeltaAlign.ends-with("left") {
-                        (sub-delta-fmt, sub.label)
-                      } else {
-                        (sub.label, sub-delta-fmt)
-                      }
-
-                      if has-marker {
-                        (sub-marker(s, i), ..cells)
-                      } else {
-                        cells
-                      }
-                    },
-                    inset: 0pt,
-                    column-gutter: 1em / 3,
-                    row-gutter: 0.65em, // Default leading between lines of text
-                    columns: if has-marker { content-columns + 1 } else { content-columns },
-                    align: {
-                      // Top, so a wrapped label keeps its N on the first line.
-                      let cols = if stacked {
-                        (top + alignment-mapping.at(s.subDeltaAlign),)
-                      } else if s.subDeltaAlign.ends-with("left") {
-                        (top + right, top + left)
-                      } else {
-                        (top + left, top + right)
-                      }
-
-                      if has-marker {
-                        (top + right, ..cols)
-                      } else {
-                        cols
-                      }
-                    },
-                  )
-                }),
-                left: s.subDeltaIndent * 1em / 3,
-                top: if it.delta.substeps.len() == 0 {
-                  -1.2em // Default spacing between paragraphs (population label and delta label)
-                } else {
-                  -1.2em + 0.65em
-                },
-              ),
+            exclusion-body(s, it.delta),
             tint: get-tint(s.tint),
             width: s.width * 1mm,
           )
@@ -402,7 +470,27 @@
 // ----------------------------
 // Render
 // ----------------------------
-#if style.page.showTitle {
-  heading(text(style.page.title))
+// A published figure reads "**Figure 1.** Description ...", so the title is the
+// bold part and the caption is regular weight after it.
+#let title-block() = {
+  if not style.page.showTitle {
+    return
+  }
+
+  heading({
+    text(style.page.title)
+    if style.page.caption != "" {
+      text(weight: "regular", " " + style.page.caption)
+    }
+  })
 }
+
+#if style.page.titlePlacement == "top" {
+  title-block()
+}
+
 #figure-1(data)
+
+#if style.page.titlePlacement == "bottom" {
+  title-block()
+}

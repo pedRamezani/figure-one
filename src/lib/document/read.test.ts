@@ -148,6 +148,67 @@ describe('the config allowlist regression', () => {
 		expect(result.document.config.stepBox.subDeltaAlign).toBe('center');
 	});
 
+	it('defaults the new weight, font and visibility fields', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		// Defaults chosen to reproduce the previous rendering exactly.
+		expect(result.document.config.page.font).toBe('New Computer Modern');
+		expect(result.document.config.mainBox.labelBold).toBe(false);
+		expect(result.document.config.stepBox.deltaValueBold).toBe(false);
+		expect(result.document.config.stepBox.showSubDeltaValue).toBe(true);
+	});
+
+	it('keeps a chosen font and weights through a round trip', () => {
+		const document = emptyProjectDocument();
+		document.config = {
+			...defaultConfig,
+			page: { ...defaultConfig.page, font: 'Libertinus Serif' },
+			mainBox: { ...defaultConfig.mainBox, labelBold: true },
+			stepBox: { ...defaultConfig.stepBox, deltaLabelBold: true, showSubDeltaValue: false }
+		};
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.font).toBe('Libertinus Serif');
+		expect(result.document.config.mainBox.labelBold).toBe(true);
+		expect(result.document.config.stepBox.deltaLabelBold).toBe(true);
+		expect(result.document.config.stepBox.showSubDeltaValue).toBe(false);
+	});
+
+	it('falls back when a font is not one the compiler has', () => {
+		const wire = structuredClone(createProjectDocument(emptyProjectDocument()));
+		(wire.config.page as unknown as Record<string, unknown>).font = 'Comic Sans MS';
+
+		const result = readDocument(wire);
+		if (!result.ok) throw new Error(result.error);
+
+		// Typst can only use what is embedded, so an unknown family would fail to
+		// render. The section is dropped and the defaults fill in.
+		expect(result.document.config.page.font).toBe('New Computer Modern');
+	});
+
+	it('defaults the caption and title placement', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.caption).toBe('');
+		expect(result.document.config.page.titlePlacement).toBe('top');
+	});
+
+	it('keeps a caption and a bottom placement through a round trip', () => {
+		const document = emptyProjectDocument();
+		document.config.page.caption = 'CONSORT flowchart of participant selection.';
+		document.config.page.titlePlacement = 'bottom';
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.caption).toBe('CONSORT flowchart of participant selection.');
+		expect(result.document.config.page.titlePlacement).toBe('bottom');
+	});
+
 	it('ignores fields written by a newer build instead of refusing the file', () => {
 		const future = structuredClone(dataV2Linear);
 		(future.config.page as Record<string, unknown>).somethingNew = 'from the future';
@@ -155,6 +216,26 @@ describe('the config allowlist regression', () => {
 		const result = readDocument(future, createIdAllocator());
 
 		expect(result.ok).toBe(true);
+	});
+});
+
+describe('the defaults are not shared', () => {
+	it('does not let one document rewrite the defaults for the next', () => {
+		const first = emptyProjectDocument();
+		first.config.page.title = 'Edited';
+
+		// A shallow spread of `defaultConfig` shared every section object, so this
+		// used to change the title every later document started from.
+		expect(defaultConfig.page.title).toBe('Figure 1');
+		expect(emptyProjectDocument().config.page.title).toBe('Figure 1');
+	});
+
+	it('gives each document its own section objects', () => {
+		const first = emptyProjectDocument();
+		const second = emptyProjectDocument();
+
+		expect(first.config.page).not.toBe(second.config.page);
+		expect(first.config.page).not.toBe(defaultConfig.page);
 	});
 });
 

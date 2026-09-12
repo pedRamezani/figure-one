@@ -124,6 +124,30 @@ export type Numbering =
 	| null;
 
 // -------------------------------------------------------------
+// Fonts
+// -------------------------------------------------------------
+// Typst runs in the browser and cannot see locally installed fonts, so this is
+// a closed list of what the compiler embeds rather than a free text field.
+//
+// A family not in this list falls back silently to Libertinus Serif, Typst's
+// default, so it looks like a working choice that simply had no effect. Keep
+// this in step with what `TypstDocument` actually loads.
+//
+// The compiler embeds only serif and monospace faces, so Inter is shipped in
+// `static/fonts/` to provide a proportional sans. See its licence there.
+export const fontOptions = [
+	'New Computer Modern',
+	'Libertinus Serif',
+	'Inter',
+	'DejaVu Sans Mono'
+] as const;
+export type FontFamily = (typeof fontOptions)[number];
+
+/** Whether the title block sits above or below the diagram. */
+export const titlePlacementOptions = ['top', 'bottom'] as const;
+export type TitlePlacement = (typeof titlePlacementOptions)[number];
+
+// -------------------------------------------------------------
 // Sub-objects of the configuration file
 // -------------------------------------------------------------
 export interface PageConfig {
@@ -135,6 +159,13 @@ export interface PageConfig {
 	transparent: boolean;
 	/** Whether the title is rendered above the diagram. */
 	showTitle: boolean;
+	/**
+	 * Regular-weight text following the bold title, as a published figure reads:
+	 * **Figure 1.** CONSORT flowchart of participant selection.
+	 */
+	caption: string;
+	titlePlacement: TitlePlacement;
+	font: FontFamily;
 }
 
 export interface NodeConfig {
@@ -162,6 +193,8 @@ export interface DiagramConfig {
 
 export interface MainBoxConfig {
 	tint: Tint;
+	labelBold: boolean;
+	valueBold: boolean;
 	width: number | 'auto'; // mm or auto
 	textAlign: Alignment;
 	valueAlign: ValueAligment;
@@ -172,10 +205,15 @@ export interface MainBoxConfig {
 export interface StepBoxConfig {
 	tint: Tint;
 	width: number | 'auto'; // mm or auto
+	deltaLabelBold: boolean;
+	deltaValueBold: boolean;
 	deltaTextAlign: Alignment;
 	deltaAlign: ValueAligment;
 	deltaPrefix: string;
 	deltaSuffix: string;
+	subDeltaLabelBold: boolean;
+	subDeltaValueBold: boolean;
+	showSubDeltaValue: boolean;
 	subDeltaTextAlign: Alignment;
 	subDeltaAlign: ValueAligment;
 	subDeltaPrefix: string;
@@ -213,7 +251,10 @@ export const defaultConfig: TypstFlowchartConfig = {
 		tint: 'white',
 		margin: 5,
 		transparent: false,
-		showTitle: true
+		showTitle: true,
+		caption: '',
+		titlePlacement: 'top',
+		font: 'New Computer Modern'
 	},
 	node: {
 		cornerRadius: 5,
@@ -236,6 +277,8 @@ export const defaultConfig: TypstFlowchartConfig = {
 	},
 	mainBox: {
 		tint: 'white',
+		labelBold: false,
+		valueBold: false,
 		width: 80,
 		textAlign: 'left',
 		valueAlign: 'left',
@@ -245,10 +288,15 @@ export const defaultConfig: TypstFlowchartConfig = {
 	stepBox: {
 		tint: 'white',
 		width: 80,
+		deltaLabelBold: false,
+		deltaValueBold: false,
 		deltaTextAlign: 'left',
 		deltaAlign: 'text-left',
 		deltaPrefix: '',
 		deltaSuffix: '',
+		subDeltaLabelBold: false,
+		subDeltaValueBold: false,
+		showSubDeltaValue: true,
 		subDeltaTextAlign: 'left',
 		subDeltaAlign: 'text-left',
 		subDeltaPrefix: '',

@@ -3,7 +3,11 @@ import type { Edge, Node } from '@xyflow/svelte';
 import { getNodeDataDefaults, nodeLimits, type RegisteredNodeType } from '@/flow/nodes/node-types';
 import { edgeId, nextIdAfter } from '@/flow/ids';
 import { computeRows } from '@/flow/rows';
-import { defaultConfig, type TypstFlowchartConfig } from '@/preview/style/config';
+import {
+	defaultConfig,
+	mergeFlowchartConfig,
+	type TypstFlowchartConfig
+} from '@/preview/style/config';
 
 import { dehydrateGraph, hydrateGraph } from './graph-schema.ts';
 import { toBaseName } from './name.ts';
@@ -97,7 +101,7 @@ export class FlowchartDocumentStore {
 	// The canvas. `$state.raw` because xyflow reassigns whole arrays.
 	nodes = $state.raw<Node[]>([]);
 	edges = $state.raw<Edge[]>([]);
-	config = $state<TypstFlowchartConfig>({ ...defaultConfig });
+	config = $state<TypstFlowchartConfig>(mergeFlowchartConfig({}));
 	name = $state('');
 
 	/** Set when a load produced a graph with no positions worth keeping. */

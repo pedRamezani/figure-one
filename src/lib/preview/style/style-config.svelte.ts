@@ -1,6 +1,6 @@
 import { flowchartDocument } from '@/document/store.svelte';
 
-import { defaultConfig, type TypstFlowchartConfig } from './config.ts';
+import { mergeFlowchartConfig, type TypstFlowchartConfig } from './config.ts';
 
 // The configuration vocabulary lives in `./config.ts` so that schemas and tests
 // can import it without pulling in runes or `localStorage`. Re-exported here so
@@ -18,6 +18,6 @@ export const styleConfig = {
 		flowchartDocument.config = value;
 	},
 	reset() {
-		flowchartDocument.config = { ...defaultConfig };
+		flowchartDocument.config = mergeFlowchartConfig({});
 	}
 };

@@ -352,6 +352,47 @@ describe('replacing the document', () => {
 		expect(Number(store.addNode('step').id)).toBeGreaterThan(42);
 	});
 
+	it('clears the chart but keeps styling and name', () => {
+		store.attach(storage);
+		store.name = 'trial-2026';
+		store.config = { ...defaultConfig, page: { ...defaultConfig.page, title: 'Figure 7' } };
+		const step = store.addNode('step');
+		store.addEdge(store.nodes[0].id, step.id);
+
+		store.clearGraph();
+
+		expect(store.nodes).toHaveLength(1);
+		expect(store.nodes[0].type).toBe('start');
+		expect(store.edges).toHaveLength(0);
+
+		// The confirmation only ever mentioned nodes, so nothing else may go.
+		expect(store.name).toBe('trial-2026');
+		expect(store.config.page.title).toBe('Figure 7');
+	});
+
+	it('persists a cleared chart', () => {
+		store.attach(storage);
+		store.name = 'trial-2026';
+		store.addNode('step');
+		store.clearGraph();
+
+		const reopened = new FlowchartDocumentStore();
+		reopened.attach(storage);
+
+		expect(reopened.nodes).toHaveLength(1);
+		expect(reopened.name).toBe('trial-2026');
+	});
+
+	it('is not pristine after clearing a styled chart', () => {
+		store.attach(storage);
+		store.name = 'trial-2026';
+		store.addNode('step');
+		store.clearGraph();
+
+		// There is still something worth warning about losing.
+		expect(store.isPristine).toBe(false);
+	});
+
 	it('resets back to an empty document', () => {
 		store.attach(storage);
 		store.name = 'something';

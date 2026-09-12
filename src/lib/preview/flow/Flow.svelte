@@ -138,7 +138,7 @@
 	}
 
 	async function clearNodes() {
-		flowchartDocument.reset();
+		flowchartDocument.clearGraph();
 		fitView();
 	}
 

@@ -176,6 +176,25 @@ export class FlowchartDocumentStore {
 		this.save();
 	}
 
+	/**
+	 * Empties the chart, keeping the project name and the styling.
+	 *
+	 * This is what the clear button does. It used to call `reset`, which also
+	 * threw away the configuration the user had built up, even though the
+	 * confirmation only ever mentioned nodes.
+	 */
+	clearGraph(): void {
+		const { graph } = emptyProjectDocument();
+		const { nodes, edges } = hydrateGraph(graph);
+
+		this.nodes = nodes;
+		this.edges = edges;
+		this.#nextId = nextIdAfter(graph.nodes);
+		this.needsLayout = false;
+		this.save();
+	}
+
+	/** Starts a new project: empty chart, no name, default styling. */
 	reset(): void {
 		this.replaceWith(emptyProjectDocument());
 	}

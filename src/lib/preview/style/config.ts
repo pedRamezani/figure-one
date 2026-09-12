@@ -107,6 +107,10 @@ export const numberingBodyOptions = [
 ] as const;
 export type NumberingBody = (typeof numberingBodyOptions)[number];
 
+/** Literal bullets offered instead of a counting pattern. */
+export const subDeltaMarkerOptions = ['•', '◦', '‣', '–'] as const;
+export type SubDeltaMarker = (typeof subDeltaMarkerOptions)[number];
+
 export const numberingFormattingOptions = [
 	null,
 	'dot',
@@ -129,6 +133,8 @@ export interface PageConfig {
 	margin: number; // mm
 	/** Leaves the page unfilled, so exports composite onto whatever is behind. */
 	transparent: boolean;
+	/** Whether the title is rendered above the diagram. */
+	showTitle: boolean;
 }
 
 export interface NodeConfig {
@@ -166,14 +172,17 @@ export interface MainBoxConfig {
 export interface StepBoxConfig {
 	tint: Tint;
 	width: number | 'auto'; // mm or auto
-	deltaAlign: TextAlignment;
+	deltaTextAlign: Alignment;
+	deltaAlign: ValueAligment;
 	deltaPrefix: string;
 	deltaSuffix: string;
-	subDeltaAlign: TextAlignment;
+	subDeltaTextAlign: Alignment;
+	subDeltaAlign: ValueAligment;
 	subDeltaPrefix: string;
 	subDeltaSuffix: string;
 	subDeltaIndent: number; // spaces
 	subDeltaNumbering: Numbering;
+	subDeltaMarker: string | null;
 }
 
 export interface GroupBoxConfig {
@@ -203,7 +212,8 @@ export const defaultConfig: TypstFlowchartConfig = {
 		titleAlign: 'left',
 		tint: 'white',
 		margin: 5,
-		transparent: false
+		transparent: false,
+		showTitle: true
 	},
 	node: {
 		cornerRadius: 5,
@@ -235,14 +245,17 @@ export const defaultConfig: TypstFlowchartConfig = {
 	stepBox: {
 		tint: 'white',
 		width: 80,
+		deltaTextAlign: 'left',
 		deltaAlign: 'text-left',
 		deltaPrefix: '',
 		deltaSuffix: '',
+		subDeltaTextAlign: 'left',
 		subDeltaAlign: 'text-left',
 		subDeltaPrefix: '',
 		subDeltaSuffix: '',
 		subDeltaIndent: 3,
-		subDeltaNumbering: null
+		subDeltaNumbering: null,
+		subDeltaMarker: null
 	},
 	groupBox: {
 		tint: 'green'

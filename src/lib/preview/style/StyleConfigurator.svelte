@@ -1,13 +1,13 @@
 <script lang="ts">
 	import {
 		styleConfig,
-		tintOptions,
 		arrowBodies,
 		arrowHeads,
 		aligmentOptions,
 		textAligmentOptions,
 		numberingBodyOptions,
 		numberingFormattingOptions,
+		subDeltaMarkerOptions,
 		type ArrowBody,
 		type ArrowHead,
 		type Alignment,
@@ -24,6 +24,8 @@
 	import { ColorPicker } from '@/components/composed/color-picker';
 	import { SimpleField } from '@/components/composed/simple-field';
 
+	import EyeIcon from '@lucide/svelte/icons/eye';
+	import EyeOffIcon from '@lucide/svelte/icons/eye-off';
 	import SquareIcon from '@lucide/svelte/icons/square';
 	import SquareDashedIcon from '@lucide/svelte/icons/square-dashed';
 	import TextAlignStartIcon from '@lucide/svelte/icons/text-align-start';
@@ -39,6 +41,11 @@
 
 	// A two-option group rather than a single toggle, so it reads the same way as
 	// Title Alignment beside it and neither state is ambiguous.
+	const titleOptions: { value: string; label: string; icon: Component }[] = [
+		{ value: 'shown', label: 'Shown', icon: EyeIcon },
+		{ value: 'hidden', label: 'Hidden', icon: EyeOffIcon }
+	];
+
 	const backgroundOptions: { value: string; label: string; icon: Component }[] = [
 		{ value: 'filled', label: 'Filled', icon: SquareIcon },
 		{ value: 'transparent', label: 'Transparent', icon: SquareDashedIcon }
@@ -80,10 +87,27 @@
 		styleConfig.current.mark.arrow = `${arrowBody}${arrowHead}`;
 	}
 
-	let numberingBody = $state<NumberingBody>(null);
+	let numberingBody = $state<NumberingBody | string>(null);
 	let numberingFormatting = $state<NumberingFormatting>(null);
 
+	/** True when the chosen body is a literal bullet rather than a counter. */
+	const isMarker = $derived(
+		numberingBody !== null && (subDeltaMarkerOptions as readonly string[]).includes(numberingBody)
+	);
+
 	function numberingUpdate() {
+		const step = styleConfig.current.stepBox;
+
+		// A bullet is not a counting pattern, so it goes in its own field and the
+		// dot and parentheses formatting does not apply to it.
+		if (isMarker) {
+			step.subDeltaMarker = numberingBody;
+			step.subDeltaNumbering = null;
+			return;
+		}
+
+		step.subDeltaMarker = null;
+
 		let prefix = '';
 		let suffix = '';
 		if (numberingFormatting) {
@@ -96,9 +120,9 @@
 		}
 
 		if (numberingBody) {
-			styleConfig.current.stepBox.subDeltaNumbering = `${prefix}${numberingBody}${suffix}`;
+			step.subDeltaNumbering = `${prefix}${numberingBody as NumberingBody}${suffix}`;
 		} else {
-			styleConfig.current.stepBox.subDeltaNumbering = null;
+			step.subDeltaNumbering = null;
 		}
 	}
 
@@ -514,6 +538,33 @@
 			<SimpleField title="Title" name="page-title" bind:value={styleConfig.current.page.title} />
 
 			<Field.Field class="max-w-fit">
+				<Field.Label for="page-show-title">Title Visibility</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={
+						() => (styleConfig.current.page.showTitle ? 'shown' : 'hidden'),
+						(next) => {
+							if (next) styleConfig.current.page.showTitle = next === 'shown';
+						}
+					}
+				>
+					{#each titleOptions as option (option.value)}
+						<ToggleGroup.Item
+							name="page-show-title"
+							value={option.value}
+							aria-label={`Title ${option.label}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = option.icon}
+							<Icon />
+							{option.label}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-fit">
 				<Field.Label for="page-title-aligment">Title Aligment</Field.Label>
 				<ToggleGroup.Root
 					type="single"
@@ -536,20 +587,8 @@
 			</Field.Field>
 
 			<Field.Field class="max-w-2xs">
-				<Field.Label for="page-tint">Tint</Field.Label>
-				<Select.Root
-					name="page-tint"
-					type="single"
-					bind:value={styleConfig.current.page.tint}
-					disabled={styleConfig.current.page.transparent}
-				>
-					<Select.Trigger>{styleConfig.current.page.tint}</Select.Trigger>
-					<Select.Content>
-						{#each tintOptions as t (t)}
-							<Select.Item value={t}>{t}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+				<Field.Label>Tint</Field.Label>
+				<ColorPicker bind:value={styleConfig.current.page.tint} />
 			</Field.Field>
 
 			<Field.Field class="max-w-fit">
@@ -830,6 +869,28 @@
 			/>
 
 			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-delta-text-aligment">Delta Text Aligment</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.stepBox.deltaTextAlign}
+				>
+					{#each aligmentOptions as alignment (alignment)}
+						<ToggleGroup.Item
+							name="stepbox-delta-text-aligment"
+							value={alignment}
+							aria-label={`Align ${alignment}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = alignmentMapping[alignment]}
+							<Icon />
+							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-fit">
 				<Field.Label for="stepbox-delta-aligment">Delta Aligment</Field.Label>
 				<ToggleGroup.Root
 					type="single"
@@ -840,12 +901,31 @@
 						<ToggleGroup.Item
 							name="stepbox-delta-aligment"
 							value={alignment}
-							aria-label="Toggle star"
+							aria-label={alignment == 'text-left' ? 'Left of text' : 'Right of text'}
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
 						>
 							{@const Icon = textAlignmentMapping[alignment]}
 							<Icon />
 							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.stepBox.deltaAlign}
+				>
+					{#each aligmentOptions as alignment (alignment)}
+						<ToggleGroup.Item
+							name="stepbox-delta-aligment"
+							value={alignment}
+							aria-label={`Align ${alignment}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = alignmentMapping[alignment]}
+							<Icon />
+							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
 						</ToggleGroup.Item>
 					{/each}
 				</ToggleGroup.Root>
@@ -864,6 +944,28 @@
 			/>
 
 			<Field.Field class="max-w-fit">
+				<Field.Label for="stepbox-subdelta-text-aligment">Sub-Delta Text Aligment</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.stepBox.subDeltaTextAlign}
+				>
+					{#each aligmentOptions as alignment (alignment)}
+						<ToggleGroup.Item
+							name="stepbox-subdelta-text-aligment"
+							value={alignment}
+							aria-label={`Align ${alignment}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = alignmentMapping[alignment]}
+							<Icon />
+							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-fit">
 				<Field.Label for="stepbox-subdelta-aligment">Sub-Delta Aligment</Field.Label>
 				<ToggleGroup.Root
 					type="single"
@@ -874,12 +976,31 @@
 						<ToggleGroup.Item
 							name="stepbox-subdelta-aligment"
 							value={alignment}
-							aria-label="Toggle star"
+							aria-label={alignment == 'text-left' ? 'Left of text' : 'Right of text'}
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
 						>
 							{@const Icon = textAlignmentMapping[alignment]}
 							<Icon />
 							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={styleConfig.current.stepBox.subDeltaAlign}
+				>
+					{#each aligmentOptions as alignment (alignment)}
+						<ToggleGroup.Item
+							name="stepbox-subdelta-aligment"
+							value={alignment}
+							aria-label={`Align ${alignment}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = alignmentMapping[alignment]}
+							<Icon />
+							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
 						</ToggleGroup.Item>
 					{/each}
 				</ToggleGroup.Root>
@@ -917,7 +1038,7 @@
 				>
 					<Select.Trigger>{numberingBody || 'None'}</Select.Trigger>
 					<Select.Content>
-						{#each numberingBodyOptions as option (option)}
+						{#each [...numberingBodyOptions, ...subDeltaMarkerOptions] as option (option)}
 							<Select.Item value={option || 'None'}>{option || 'None'}</Select.Item>
 						{/each}
 					</Select.Content>
@@ -931,6 +1052,7 @@
 				<Select.Root
 					name="stepbox-subdelta-numbering-formatting"
 					type="single"
+					disabled={isMarker}
 					value={numberingFormatting || 'None'}
 					onValueChange={(value) => {
 						numberingFormatting = (value === 'None' ? null : value) as NumberingFormatting;

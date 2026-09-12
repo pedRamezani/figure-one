@@ -116,6 +116,38 @@ describe('the config allowlist regression', () => {
 		expect(result.document.config.page.transparent).toBe(true);
 	});
 
+	it('defaults the new step box alignments for a file written before they existed', () => {
+		// Adding a field needs no version bump: the schema reads partial configs
+		// and fills gaps from the defaults, in both directions.
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.stepBox.deltaTextAlign).toBe('left');
+		expect(result.document.config.stepBox.subDeltaTextAlign).toBe('left');
+	});
+
+	it('keeps a value alignment that predates the widened options', () => {
+		// `deltaAlign` used to allow only text-left and text-right. Those stay
+		// valid, so nothing has to be rewritten.
+		const legacy = structuredClone(dataV2Linear);
+		(legacy.config.stepBox as Record<string, unknown>).deltaAlign = 'text-right';
+
+		const result = readDocument(legacy, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.stepBox.deltaAlign).toBe('text-right');
+	});
+
+	it('accepts the alignments that were only added later', () => {
+		const widened = structuredClone(dataV2Linear);
+		(widened.config.stepBox as Record<string, unknown>).subDeltaAlign = 'center';
+
+		const result = readDocument(widened, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.stepBox.subDeltaAlign).toBe('center');
+	});
+
 	it('ignores fields written by a newer build instead of refusing the file', () => {
 		const future = structuredClone(dataV2Linear);
 		(future.config.page as Record<string, unknown>).somethingNew = 'from the future';

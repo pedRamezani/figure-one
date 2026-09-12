@@ -143,6 +143,46 @@
 }
 
 // ----------------------------
+// Label and value layout
+// ----------------------------
+// A "text-*" mode puts the value beside the label; anything else stacks it
+// underneath, aligned to that edge. Grid cells align to the top so a label that
+// wraps onto several lines keeps its value level with the first line rather
+// than floating to the vertical middle.
+#let labelled-value(label, value, mode, gutter: 0.4em) = {
+  if mode.starts-with("text") {
+    let spans = if mode.ends-with("left") {
+      (value, label)
+    } else {
+      (label, value)
+    }
+
+    grid(
+      ..spans,
+      inset: 0pt,
+      column-gutter: gutter,
+      columns: 2,
+      align: top,
+    )
+  } else {
+    label + pad(align(value, alignment-mapping.at(mode)), top: -0.5em)
+  }
+}
+
+// The bullet or number shown before a substep. Exactly one of the two is set.
+//
+// Uses the native list and enum so markers and numbers pick up Typst's own
+// spacing and styling rather than being hand-placed text. The body is empty
+// because the label sits in the next grid column, not inside the item.
+#let sub-marker(s, index) = {
+  if s.subDeltaMarker != none {
+    list(marker: s.subDeltaMarker, body-indent: 0mm, list.item[])
+  } else if s.subDeltaNumbering != none {
+    enum(numbering: s.subDeltaNumbering, body-indent: 0mm, enum.item(index + 1)[])
+  }
+}
+
+// ----------------------------
 // Diagram
 // ----------------------------
 #let figure-1(data) = {
@@ -187,32 +227,7 @@
         // Population box
         let value-fmt = m.valuePrefix + str(it.value) + m.valueSuffix
         let population-col = mapped-col(col, max-cols: max-cols)
-        let population-label = if m.valueAlign.starts-with("text") {
-          // Align Ns next to label
-          let sorted-population-spans = if m.valueAlign.ends-with("left") {
-            (value-fmt, it.label)
-          } else {
-            (it.label, value-fmt)
-          }
-          grid(
-            ..sorted-population-spans,
-            inset: 0pt,
-            column-gutter: 0.4em,
-            columns: 2,
-          )
-        } else {
-          // Align Ns below label
-          (
-            it.label
-              + pad(
-                align(
-                  value-fmt,
-                  alignment-mapping.at(m.valueAlign),
-                ),
-                top: -0.5em,
-              )
-          )
-        }
+        let population-label = labelled-value(it.label, value-fmt, m.valueAlign)
         styled-node(
           (population-col, row * 2),
           align(alignment-mapping.at(m.textAlign), population-label),
@@ -234,64 +249,61 @@
 
           // Exclusion box
           let delta-fmt = s.deltaPrefix + str(it.delta.value) + s.deltaSuffix
-          let sorted-delta-spans = if s.deltaAlign.ends-with("left") {
-            (delta-fmt, it.delta.label)
-          } else {
-            (it.delta.label, delta-fmt)
-          }
           styled-node(
             (population-col + 1, row * 2 - 1),
-            grid(
-              ..sorted-delta-spans,
-              inset: 0pt,
-              column-gutter: 1em / 3,
-              columns: 2,
+            align(
+              alignment-mapping.at(s.deltaTextAlign),
+              labelled-value(it.delta.label, delta-fmt, s.deltaAlign, gutter: 1em / 3),
             )
             // Subdeltas
               + pad(
-                grid(
-                  ..for (i, sub) in it.delta.substeps.enumerate() {
-                    let sub-delta-fmt = s.subDeltaPrefix + str(sub.value) + s.subDeltaSuffix
-                    let sorted-sub-delta-spans = if s.subDeltaAlign.ends-with("left") {
-                      (sub-delta-fmt, sub.label)
-                    } else {
-                      (sub.label, sub-delta-fmt)
-                    }
+                align(alignment-mapping.at(s.subDeltaTextAlign), {
+                  // A bullet or a number, when either is configured.
+                  let has-marker = s.subDeltaMarker != none or s.subDeltaNumbering != none
+                  // "text-*" puts the N beside the label, anything else under it.
+                  let stacked = not s.subDeltaAlign.starts-with("text")
+                  let content-columns = if stacked { 1 } else { 2 }
 
-                    if s.subDeltaNumbering != none {
-                      (
-                        enum(numbering: s.subDeltaNumbering, body-indent: 0mm, enum.item(i + 1, ""),),
-                        ..sorted-sub-delta-spans,
-                      )
-                    } else {
-                      sorted-sub-delta-spans
-                    }
-                  },
-                  inset: 0pt,
-                  column-gutter: 1em / 3,
-                  row-gutter: 0.65em, // Default leading between lines of text
-                  columns: if s.subDeltaNumbering != none {
-                    3
-                  } else {
-                    2
-                  },
-                  align: {
-                    let align = if s.subDeltaAlign.ends-with("left") {
-                      (right, left)
-                    } else {
-                      (left, right)
-                    }
+                  grid(
+                    ..for (i, sub) in it.delta.substeps.enumerate() {
+                      let sub-delta-fmt = s.subDeltaPrefix + str(sub.value) + s.subDeltaSuffix
 
-                    if s.subDeltaNumbering != none {
-                      (
-                        right,
-                        ..align,
-                      )
-                    } else {
-                      align
-                    }
-                  },
-                ),
+                      let cells = if stacked {
+                        (labelled-value(sub.label, sub-delta-fmt, s.subDeltaAlign),)
+                      } else if s.subDeltaAlign.ends-with("left") {
+                        (sub-delta-fmt, sub.label)
+                      } else {
+                        (sub.label, sub-delta-fmt)
+                      }
+
+                      if has-marker {
+                        (sub-marker(s, i), ..cells)
+                      } else {
+                        cells
+                      }
+                    },
+                    inset: 0pt,
+                    column-gutter: 1em / 3,
+                    row-gutter: 0.65em, // Default leading between lines of text
+                    columns: if has-marker { content-columns + 1 } else { content-columns },
+                    align: {
+                      // Top, so a wrapped label keeps its N on the first line.
+                      let cols = if stacked {
+                        (top + alignment-mapping.at(s.subDeltaAlign),)
+                      } else if s.subDeltaAlign.ends-with("left") {
+                        (top + right, top + left)
+                      } else {
+                        (top + left, top + right)
+                      }
+
+                      if has-marker {
+                        (top + right, ..cols)
+                      } else {
+                        cols
+                      }
+                    },
+                  )
+                }),
                 left: s.subDeltaIndent * 1em / 3,
                 top: if it.delta.substeps.len() == 0 {
                   -1.2em // Default spacing between paragraphs (population label and delta label)
@@ -390,5 +402,7 @@
 // ----------------------------
 // Render
 // ----------------------------
-#heading(text(style.page.title))
+#if style.page.showTitle {
+  heading(text(style.page.title))
+}
 #figure-1(data)

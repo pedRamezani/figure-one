@@ -3,7 +3,6 @@ import { z } from 'zod';
 import {
 	aligmentOptions,
 	arrowOptions,
-	textAligmentOptions,
 	tintOptions,
 	valueAligmentOptions,
 	type Arrow,
@@ -41,7 +40,6 @@ const numberingSchema = z.custom<Numbering>(
 );
 
 const alignmentSchema = z.enum(aligmentOptions);
-const textAlignmentSchema = z.enum(textAligmentOptions);
 const valueAlignmentSchema = z.enum(valueAligmentOptions);
 
 export const partialFlowchartConfigSchema = z
@@ -52,7 +50,8 @@ export const partialFlowchartConfigSchema = z
 				titleAlign: alignmentSchema,
 				tint: tintSchema,
 				margin: z.number(),
-				transparent: z.boolean()
+				transparent: z.boolean(),
+				showTitle: z.boolean()
 			})
 			.partial(),
 		node: z
@@ -96,14 +95,17 @@ export const partialFlowchartConfigSchema = z
 			.object({
 				tint: tintSchema,
 				width: widthSchema,
-				deltaAlign: textAlignmentSchema,
+				deltaTextAlign: alignmentSchema,
+				deltaAlign: valueAlignmentSchema,
 				deltaPrefix: z.string(),
 				deltaSuffix: z.string(),
-				subDeltaAlign: textAlignmentSchema,
+				subDeltaTextAlign: alignmentSchema,
+				subDeltaAlign: valueAlignmentSchema,
 				subDeltaPrefix: z.string(),
 				subDeltaSuffix: z.string(),
 				subDeltaIndent: z.number(),
-				subDeltaNumbering: numberingSchema
+				subDeltaNumbering: numberingSchema,
+				subDeltaMarker: z.string().nullable()
 			})
 			.partial(),
 		groupBox: z

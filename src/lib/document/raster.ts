@@ -70,7 +70,10 @@ export function measureSvg(svg: string): SvgSize | null {
 
 	const viewBox = attribute(svg, 'viewBox');
 	if (viewBox !== undefined) {
-		const parts = viewBox.trim().split(/[\s,]+/).map(Number);
+		const parts = viewBox
+			.trim()
+			.split(/[\s,]+/)
+			.map(Number);
 		if (parts.length === 4 && parts.every(Number.isFinite)) {
 			const [, , width, height] = parts;
 			if (width > 0 && height > 0) return { width, height };

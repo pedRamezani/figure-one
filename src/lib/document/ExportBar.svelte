@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { confirmDelete } from '@/components/ui/confirm-delete-dialog';
 	import * as ButtonGroup from '@/components/ui/button-group/index.js';
 	import * as DropdownMenu from '@/components/ui/dropdown-menu/index.js';
 	import { Button } from '@/components/ui/button/index.js';
@@ -28,13 +27,16 @@
 		toBaseName
 	} from './name.ts';
 	import { pixelSizeAt, svgToPng } from './raster.ts';
-	import { readDocument } from './read.ts';
+	import { documentImporter } from './importer.svelte.ts';
 	import { flowchartDocument } from './store.svelte.ts';
 
 	// One name, one menu. The name is a bare base name held in the document, so
 	// it governs every artifact rather than just the JSON as it used to.
 
+	// Export failures. Import failures live on the importer, because a drop can
+	// raise one with this component nowhere in the picture.
 	let error = $state<string | null>(null);
+	const shownError = $derived(documentImporter.error ?? error);
 
 	/**
 	 * Resolutions offered for the PNG.
@@ -61,18 +63,21 @@
 
 	function exportProject() {
 		error = null;
+		documentImporter.clearError();
 		const json = projectJSON(flowchartDocument.snapshot());
 		downloadBlob(json, 'application/json', projectFileName(flowchartDocument.name));
 	}
 
 	function exportData() {
 		error = null;
+		documentImporter.clearError();
 		const json = dataJSON(flowchartDocument.snapshot());
 		downloadBlob(json, 'application/json', dataFileName(flowchartDocument.name));
 	}
 
 	async function exportPdf() {
 		error = null;
+		documentImporter.clearError();
 		const compile = exporters.compilePdf;
 		if (!compile) return;
 
@@ -91,6 +96,7 @@
 
 	function exportSvg() {
 		error = null;
+		documentImporter.clearError();
 		const svg = exporters.svg;
 		if (!svg) return;
 
@@ -99,6 +105,7 @@
 
 	async function exportPng(dpi: number) {
 		error = null;
+		documentImporter.clearError();
 		const svg = exporters.svg;
 		if (!svg) return;
 
@@ -108,59 +115,6 @@
 		} catch (cause) {
 			error = cause instanceof Error ? cause.message : 'The figure could not be exported as a PNG.';
 		}
-	}
-
-	// ---------------------------------------------------------------
-	// Import
-	// ---------------------------------------------------------------
-
-	function importFile() {
-		error = null;
-
-		const fileInput = document.createElement('input');
-		fileInput.type = 'file';
-		fileInput.accept = 'application/json,.json';
-
-		fileInput.onchange = async (event) => {
-			const target = event.target as HTMLInputElement | null;
-			const file = target?.files?.[0];
-			if (!file) return;
-
-			let parsed: unknown;
-			try {
-				parsed = JSON.parse(await file.text());
-			} catch {
-				error = `${file.name} is not valid JSON.`;
-				return;
-			}
-
-			const result = readDocument(parsed, flowchartDocument.allocateId);
-
-			if (!result.ok) {
-				// This used to fail silently, so picking a file appeared to do nothing.
-				error = result.error;
-				return;
-			}
-
-			const apply = async () => {
-				flowchartDocument.replaceWith(result.document, { needsLayout: result.needsLayout });
-			};
-
-			// Nothing to lose on a first visit, so do not ask.
-			if (flowchartDocument.isPristine) {
-				await apply();
-				return;
-			}
-
-			confirmDelete({
-				title: 'Replace flowchart',
-				description: `Loading ${file.name} will replace the flowchart you have open, including its styling and name. This cannot be undone.`,
-				confirm: { text: 'Replace' },
-				onConfirm: apply
-			});
-		};
-
-		fileInput.click();
 	}
 
 	// Keyboard shortcut: save the project file.
@@ -175,8 +129,8 @@
 <svelte:document onkeydown={handleKeydown} />
 
 <div class="flex flex-col gap-2">
-	{#if error}
-		<p class="text-destructive text-sm" role="alert">{error}</p>
+	{#if shownError}
+		<p class="text-destructive text-sm" role="alert">{shownError}</p>
 	{/if}
 
 	<div class="flex flex-col @sm:flex-row sm:flex-row justify-between gap-2">
@@ -191,7 +145,9 @@
 		/>
 
 		<ButtonGroup.Root class="self-end">
-			<Button variant="outline" onclick={importFile}><ImportIcon />Import</Button>
+			<Button variant="outline" onclick={() => documentImporter.pickFile()}>
+				<ImportIcon />Import
+			</Button>
 
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger class={buttonVariants({ variant: 'outline' })}>

@@ -6,6 +6,7 @@
 	import * as Tabs from '@/components/ui/tabs/index.js';
 
 	import DocumentSync from '@/document/DocumentSync.svelte';
+	import DropZone from '@/document/DropZone.svelte';
 	import Flow from '@/preview/flow/Flow.svelte';
 	import JsonPreview from '@/preview/json/JsonPreview.svelte';
 	import StyleConfigurator from '@/preview/style/StyleConfigurator.svelte';
@@ -22,6 +23,7 @@
 </script>
 
 <DocumentSync />
+<DropZone />
 
 <main class="flex w-auto h-dvh" bind:clientHeight={height} bind:clientWidth={width}>
 	<!-- fitView -->

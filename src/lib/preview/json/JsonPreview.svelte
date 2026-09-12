@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as Code from '@/components/ui/code';
+	import { CodeOverflow } from '@/components/composed/code-overflow';
 
 	import ExportBar from '@/document/ExportBar.svelte';
 	import { dataJSON } from '@/document/artifacts';
@@ -13,11 +14,11 @@
 
 <div class="@container flex flex-col h-full gap-2 py-4">
 	<div class="grow">
-		<Code.Overflow>
+		<CodeOverflow>
 			<Code.Root hideLines code={preview}>
 				<Code.CopyButton />
 			</Code.Root>
-		</Code.Overflow>
+		</CodeOverflow>
 	</div>
 
 	<ExportBar />

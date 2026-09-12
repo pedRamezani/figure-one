@@ -127,6 +127,8 @@ export interface PageConfig {
 	titleAlign: Alignment;
 	tint: Tint;
 	margin: number; // mm
+	/** Leaves the page unfilled, so exports composite onto whatever is behind. */
+	transparent: boolean;
 }
 
 export interface NodeConfig {
@@ -200,7 +202,8 @@ export const defaultConfig: TypstFlowchartConfig = {
 		title: 'Figure 1',
 		titleAlign: 'left',
 		tint: 'white',
-		margin: 5
+		margin: 5,
+		transparent: false
 	},
 	node: {
 		cornerRadius: 5,

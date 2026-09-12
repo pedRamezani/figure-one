@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { dataFileName, pdfFileName, projectFileName, svgFileName, toBaseName } from './name.ts';
+import {
+	dataFileName,
+	pdfFileName,
+	pngFileName,
+	projectFileName,
+	svgFileName,
+	toBaseName
+} from './name.ts';
 
 describe('toBaseName', () => {
 	it('leaves a plain name alone', () => {
@@ -15,6 +22,7 @@ describe('toBaseName', () => {
 		expect(toBaseName('trial.json')).toBe('trial');
 		expect(toBaseName('trial.pdf')).toBe('trial');
 		expect(toBaseName('trial.svg')).toBe('trial');
+		expect(toBaseName('trial.png')).toBe('trial');
 		expect(toBaseName('trial.data.json')).toBe('trial');
 	});
 
@@ -36,11 +44,12 @@ describe('toBaseName', () => {
 });
 
 describe('filenames', () => {
-	it('gives one base name four consistent filenames', () => {
+	it('gives one base name five consistent filenames', () => {
 		expect(projectFileName('trial')).toBe('trial.json');
 		expect(dataFileName('trial')).toBe('trial.data.json');
 		expect(pdfFileName('trial')).toBe('trial.pdf');
 		expect(svgFileName('trial')).toBe('trial.svg');
+		expect(pngFileName('trial')).toBe('trial.png');
 	});
 
 	it('falls back when no name is set', () => {

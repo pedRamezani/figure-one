@@ -61,7 +61,7 @@
   width: auto,
   height: auto,
   margin: style.page.margin * 1mm,
-  fill: get-tint(style.page.tint).lighten(80%),
+  fill: if style.page.transparent { none } else { get-tint(style.page.tint).lighten(80%) },
 )
 
 #set text(font: "New Computer Modern")

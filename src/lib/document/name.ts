@@ -7,7 +7,7 @@
 
 export const DEFAULT_BASE_NAME = 'flowchart';
 
-const KNOWN_SUFFIXES = ['.data.json', '.json', '.pdf', '.svg'] as const;
+const KNOWN_SUFFIXES = ['.data.json', '.json', '.pdf', '.svg', '.png'] as const;
 
 /**
  * Normalises whatever the user typed into a base name.
@@ -38,3 +38,4 @@ export const projectFileName = (baseName: string) => fileNameFor(baseName, '.jso
 export const dataFileName = (baseName: string) => fileNameFor(baseName, '.data.json');
 export const pdfFileName = (baseName: string) => fileNameFor(baseName, '.pdf');
 export const svgFileName = (baseName: string) => fileNameFor(baseName, '.svg');
+export const pngFileName = (baseName: string) => fileNameFor(baseName, '.png');

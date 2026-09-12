@@ -95,6 +95,27 @@ describe('the config allowlist regression', () => {
 		expect(result.document.config.mark.markScale).toBe(70);
 	});
 
+	it('defaults the background to filled for a file written before the field existed', () => {
+		// Every fixture predates `page.transparent`, so this is the real case.
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.transparent).toBe(false);
+	});
+
+	it('keeps a transparent background through a round trip', () => {
+		const document = emptyProjectDocument();
+		document.config = {
+			...defaultConfig,
+			page: { ...defaultConfig.page, transparent: true }
+		};
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.transparent).toBe(true);
+	});
+
 	it('ignores fields written by a newer build instead of refusing the file', () => {
 		const future = structuredClone(dataV2Linear);
 		(future.config.page as Record<string, unknown>).somethingNew = 'from the future';

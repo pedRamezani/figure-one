@@ -7,24 +7,57 @@
 
 	import { SimpleField } from '@/components/composed/simple-field';
 
+	import { cn } from '@/utils';
+
 	import DownloadIcon from '@lucide/svelte/icons/download';
 	import ImportIcon from '@lucide/svelte/icons/import';
 	import FileJsonIcon from '@lucide/svelte/icons/file-json';
 	import FileDownIcon from '@lucide/svelte/icons/file-down';
 	import ImageDownIcon from '@lucide/svelte/icons/image-down';
+	import ImageIcon from '@lucide/svelte/icons/image';
 
 	import { dataJSON, projectJSON } from './artifacts.ts';
 	import { downloadBlob } from './download.ts';
 	import { exporters } from './exporters.svelte.ts';
-	import { dataFileName, pdfFileName, projectFileName, svgFileName, toBaseName } from './name.ts';
+	import {
+		dataFileName,
+		pdfFileName,
+		pngFileName,
+		projectFileName,
+		svgFileName,
+		toBaseName
+	} from './name.ts';
+	import { pixelSizeAt, svgToPng } from './raster.ts';
 	import { readDocument } from './read.ts';
 	import { flowchartDocument } from './store.svelte.ts';
 
-	// One name, four artifacts, one menu. The name is a bare base name held in
-	// the document, so it governs the project file, the data export, the PDF and
-	// the SVG rather than just the JSON as it used to.
+	// One name, one menu. The name is a bare base name held in the document, so
+	// it governs every artifact rather than just the JSON as it used to.
 
 	let error = $state<string | null>(null);
+
+	/**
+	 * Resolutions offered for the PNG.
+	 *
+	 * Expressed as dots per inch rather than a multiplier because that is what
+	 * journals ask for, and because the figure declares a physical page size, so
+	 * the conversion is exact rather than a guess.
+	 */
+	const RESOLUTIONS = [
+		{ dpi: 96, label: 'Screen' },
+		{ dpi: 150, label: 'Draft print' },
+		{ dpi: 300, label: 'Print' },
+		{ dpi: 600, label: 'High detail' }
+	] as const;
+
+	/** "1500 by 3000" for the menu, or null when the figure cannot be measured. */
+	function dimensionsAt(dpi: number): string | null {
+		const svg = exporters.svg;
+		if (!svg) return null;
+
+		const size = pixelSizeAt(svg, dpi);
+		return size ? `${size.width} × ${size.height}` : null;
+	}
 
 	function exportProject() {
 		error = null;
@@ -62,6 +95,19 @@
 		if (!svg) return;
 
 		downloadBlob(svg, 'image/svg+xml', svgFileName(flowchartDocument.name));
+	}
+
+	async function exportPng(dpi: number) {
+		error = null;
+		const svg = exporters.svg;
+		if (!svg) return;
+
+		try {
+			const png = await svgToPng(svg, dpi);
+			downloadBlob(png, 'image/png', pngFileName(flowchartDocument.name));
+		} catch (cause) {
+			error = cause instanceof Error ? cause.message : 'The figure could not be exported as a PNG.';
+		}
 	}
 
 	// ---------------------------------------------------------------
@@ -172,6 +218,33 @@
 							<ImageDownIcon />
 							{svgFileName(flowchartDocument.name)}
 						</DropdownMenu.Item>
+						<DropdownMenu.Sub>
+							<DropdownMenu.SubTrigger disabled={!exporters.canExportSvg}>
+								<ImageIcon />
+								{pngFileName(flowchartDocument.name)}
+							</DropdownMenu.SubTrigger>
+							<DropdownMenu.SubContent>
+								{#each RESOLUTIONS as resolution (resolution.dpi)}
+									{@const dimensions = dimensionsAt(resolution.dpi)}
+									<DropdownMenu.Item onSelect={() => exportPng(resolution.dpi)}>
+										<span>{resolution.label}</span>
+										{#if dimensions}
+											<span class="text-muted-foreground ml-auto pl-4 text-xs tabular-nums">
+												{dimensions}
+											</span>
+										{/if}
+										<span
+											class={cn(
+												'bg-muted text-muted-foreground rounded-sm px-1.5 py-0.5 text-[0.65rem] font-medium tabular-nums',
+												dimensions ? '' : 'ml-auto'
+											)}
+										>
+											{resolution.dpi} dpi
+										</span>
+									</DropdownMenu.Item>
+								{/each}
+							</DropdownMenu.SubContent>
+						</DropdownMenu.Sub>
 					</DropdownMenu.Group>
 
 					<DropdownMenu.Separator />

@@ -51,7 +51,8 @@ export const partialFlowchartConfigSchema = z
 				title: z.string(),
 				titleAlign: alignmentSchema,
 				tint: tintSchema,
-				margin: z.number()
+				margin: z.number(),
+				transparent: z.boolean()
 			})
 			.partial(),
 		node: z

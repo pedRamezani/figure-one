@@ -24,6 +24,8 @@
 	import { ColorPicker } from '@/components/composed/color-picker';
 	import { SimpleField } from '@/components/composed/simple-field';
 
+	import SquareIcon from '@lucide/svelte/icons/square';
+	import SquareDashedIcon from '@lucide/svelte/icons/square-dashed';
 	import TextAlignStartIcon from '@lucide/svelte/icons/text-align-start';
 	import TextAlignCenterIcon from '@lucide/svelte/icons/text-align-center';
 	import TextAlignEndIcon from '@lucide/svelte/icons/text-align-end';
@@ -34,6 +36,13 @@
 		center: TextAlignCenterIcon,
 		right: TextAlignEndIcon
 	};
+
+	// A two-option group rather than a single toggle, so it reads the same way as
+	// Title Alignment beside it and neither state is ambiguous.
+	const backgroundOptions: { value: string; label: string; icon: Component }[] = [
+		{ value: 'filled', label: 'Filled', icon: SquareIcon },
+		{ value: 'transparent', label: 'Transparent', icon: SquareDashedIcon }
+	];
 
 	const textAlignmentMapping: Record<TextAlignment, Component> = {
 		'text-left': TextAlignStartIcon,
@@ -528,7 +537,12 @@
 
 			<Field.Field class="max-w-2xs">
 				<Field.Label for="page-tint">Tint</Field.Label>
-				<Select.Root name="page-tint" type="single" bind:value={styleConfig.current.page.tint}>
+				<Select.Root
+					name="page-tint"
+					type="single"
+					bind:value={styleConfig.current.page.tint}
+					disabled={styleConfig.current.page.transparent}
+				>
 					<Select.Trigger>{styleConfig.current.page.tint}</Select.Trigger>
 					<Select.Content>
 						{#each tintOptions as t (t)}
@@ -536,6 +550,35 @@
 						{/each}
 					</Select.Content>
 				</Select.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-fit">
+				<Field.Label for="page-background">Background</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={
+						() => (styleConfig.current.page.transparent ? 'transparent' : 'filled'),
+						(next) => {
+							// A single toggle group can deselect, which would otherwise
+							// quietly mean "filled". Keep the current choice instead.
+							if (next) styleConfig.current.page.transparent = next === 'transparent';
+						}
+					}
+				>
+					{#each backgroundOptions as option (option.value)}
+						<ToggleGroup.Item
+							name="page-background"
+							value={option.value}
+							aria-label={`Background ${option.label}`}
+							class="data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary data-[state=on]:bg-transparent"
+						>
+							{@const Icon = option.icon}
+							<Icon />
+							{option.label}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
 			</Field.Field>
 
 			<SimpleField

@@ -2,8 +2,8 @@
 	import { useSvelteFlow, useNodeConnections, useNodesData, type NodeProps } from '@xyflow/svelte';
 
 	import * as Collapsible from '@/components/ui/collapsible/index.js';
-	import Input from '@/components/ui/input/input.svelte';
 	import Label from '@/components/ui/label/label.svelte';
+	import { Textarea } from '@/components/ui/textarea/index.js';
 	import * as NumberField from '$lib/components/ui/number-field';
 
 	import NodeWrapper from './NodeWrapper.svelte';
@@ -95,12 +95,12 @@
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="step-label">Label</Label>
-			<Input
+			<Textarea
 				name="step-label"
-				value={data.stepLabel}
-				type="text"
+				value={data.stepLabel as string}
+				rows={1}
 				oninput={(evt) => updateNodeData(id, { stepLabel: evt.currentTarget.value })}
-				class="nodrag"
+				class="nodrag min-h-9 w-[24ch] resize-none"
 			/>
 
 			<Collapsible.Root>
@@ -126,11 +126,12 @@
 						{#if open}
 							<div {...props} transition:slide>
 								<Label for="dropped-label">Dropped label</Label>
-								<Input
+								<Textarea
 									name="dropped-Label"
-									value={data.droppedLabel}
+									value={data.droppedLabel as string}
+									rows={1}
 									oninput={(evt) => updateNodeData(id, { droppedLabel: evt.currentTarget.value })}
-									class="nodrag"
+									class="nodrag min-h-9 w-[24ch] resize-none"
 								/>
 							</div>
 						{/if}

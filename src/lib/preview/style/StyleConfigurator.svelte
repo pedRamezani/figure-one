@@ -886,11 +886,22 @@
 		<Field.Group
 			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @lg/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
 		>
-			<SimpleField
-				title="Spacing (pt)"
-				name="diagram-spacing"
-				bind:value={styleConfig.current.diagram.spacing}
-			/>
+			{@render pairField('Spacing (pt)', [
+				{
+					name: 'diagram-spacing-x',
+					label: 'Horizontal',
+					get: () => styleConfig.current.diagram.spacingX,
+					set: (next) => (styleConfig.current.diagram.spacingX = next as never),
+					min: 0
+				},
+				{
+					name: 'diagram-spacing-y',
+					label: 'Vertical',
+					get: () => styleConfig.current.diagram.spacingY,
+					set: (next) => (styleConfig.current.diagram.spacingY = next as never),
+					min: 0
+				}
+			])}
 
 			{@render pairField('Minimum Cell Size (mm)', [
 				{

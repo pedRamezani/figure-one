@@ -236,6 +236,45 @@ describe('the config allowlist regression', () => {
 		expect(result.document.config.mainBox.showValue).toBe(false);
 	});
 
+	it('fills both spacings from a document that had only one', () => {
+		// `spacing` became `spacingX` and `spacingY`. Without the shim it would be
+		// an unknown key, stripped by the schema, and the setting would revert.
+		const legacy = structuredClone(dataV2Linear);
+		(legacy.config.diagram as Record<string, unknown>).spacing = 13;
+
+		const result = readDocument(legacy, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.diagram.spacingX).toBe(13);
+		expect(result.document.config.diagram.spacingY).toBe(13);
+	});
+
+	it('leaves separate spacings alone', () => {
+		const document = emptyProjectDocument();
+		document.config.diagram.spacingX = 4;
+		document.config.diagram.spacingY = 16;
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.diagram.spacingX).toBe(4);
+		expect(result.document.config.diagram.spacingY).toBe(16);
+	});
+
+	it('prefers the split values when a document somehow carries both', () => {
+		const both = structuredClone(dataV2Linear);
+		const diagram = both.config.diagram as Record<string, unknown>;
+		diagram.spacing = 13;
+		diagram.spacingX = 4;
+		diagram.spacingY = 16;
+
+		const result = readDocument(both, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.diagram.spacingX).toBe(4);
+		expect(result.document.config.diagram.spacingY).toBe(16);
+	});
+
 	it('ignores fields written by a newer build instead of refusing the file', () => {
 		const future = structuredClone(dataV2Linear);
 		(future.config.page as Record<string, unknown>).somethingNew = 'from the future';

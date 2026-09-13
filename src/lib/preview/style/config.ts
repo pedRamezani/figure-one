@@ -186,7 +186,8 @@ export interface MarkConfig {
 }
 
 export interface DiagramConfig {
-	spacing: number; // pt
+	spacingX: number; // pt
+	spacingY: number; // pt
 	cellWidth: number; // mm
 	cellHeight: number; // mm
 }
@@ -288,7 +289,8 @@ export const defaultConfig: TypstFlowchartConfig = {
 		markScale: 70
 	},
 	diagram: {
-		spacing: 8,
+		spacingX: 8,
+		spacingY: 8,
 		cellWidth: 8,
 		cellHeight: 8
 	},

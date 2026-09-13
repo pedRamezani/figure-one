@@ -148,6 +148,24 @@
 // Bold when the style asks for it.
 #let weighted(body, bold) = if bold { strong(body) } else { body }
 
+// Text as the user typed it, honouring the line breaks they put in.
+//
+// Typst treats a newline inside a string as ordinary whitespace, so it would
+// otherwise come out as a space. Anything that is already content passes
+// through untouched, which makes this safe to apply anywhere a label is used.
+#let rich-text(value) = {
+  if type(value) != str {
+    return value
+  }
+
+  for (index, line) in value.split("\n").enumerate() {
+    if index > 0 {
+      linebreak()
+    }
+    line
+  }
+}
+
 // A count wearing its configured prefix and suffix, such as "(n = 139)".
 #let formatted-value(value, prefix, suffix) = prefix + str(value) + suffix
 
@@ -174,8 +192,8 @@
 // Grid cells align to the top so a label that wraps onto several lines keeps
 // its value level with the first line rather than floating to the middle.
 #let labelled-value(label, value, mode, gutter: 0.4em, label-bold: false, value-bold: false) = {
-  let label = weighted(label, label-bold)
-  let value = weighted(value, value-bold)
+  let label = weighted(rich-text(label), label-bold)
+  let value = weighted(rich-text(value), value-bold)
 
   if beside-label(mode) {
     grid(
@@ -245,7 +263,7 @@
     let value-text = formatted-value(item.value, spec.prefix, spec.suffix)
 
     let cells = if not spec.show-value {
-      (weighted(item.label, spec.label-bold),)
+      (weighted(rich-text(item.label), spec.label-bold),)
     } else if stacked {
       (
         labelled-value(
@@ -258,7 +276,7 @@
       )
     } else {
       ordered-spans(
-        weighted(item.label, spec.label-bold),
+        weighted(rich-text(item.label), spec.label-bold),
         weighted(value-text, spec.value-bold),
         spec.align,
       )
@@ -334,7 +352,7 @@
       )
     } else {
       // A PRISMA start box leaves its total to the breakdown below it.
-      weighted(it.label, m.labelBold)
+      weighted(rich-text(it.label), m.labelBold)
     },
   )
 
@@ -385,7 +403,7 @@
   let steps = (..data.steps.main, ..data.steps.splits)
 
   diagram(
-    spacing: d.spacing * 1pt,
+    spacing: (d.spacingX * 1pt, d.spacingY * 1pt),
     cell-size: (d.cellWidth * 1mm, d.cellHeight * 1mm),
     mark-scale: a.markScale * 1%,
 
@@ -503,7 +521,7 @@
       styled-node(
         // TODO: Fix this workaround
         (group-col, -1),
-        rotate(gr.label, -90deg, reflow: true),
+        rotate(rich-text(gr.label), -90deg, reflow: true),
         tint: get-tint(g.tint),
         width: auto,
         enclose: (
@@ -526,9 +544,9 @@
   }
 
   heading({
-    text(style.page.title)
+    text(rich-text(style.page.title))
     if style.page.caption != "" {
-      text(weight: "regular", " " + style.page.caption)
+      text(weight: "regular", rich-text(" " + style.page.caption))
     }
   })
 }

@@ -2,7 +2,7 @@
 	import { useSvelteFlow, useNodeConnections, useNodesData, type NodeProps } from '@xyflow/svelte';
 
 	import Label from '@/components/ui/label/label.svelte';
-	import Input from '@/components/ui/input/input.svelte';
+	import { Textarea } from '@/components/ui/textarea/index.js';
 
 	import NodeWrapper from './NodeWrapper.svelte';
 
@@ -61,7 +61,12 @@
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="group">Label</Label>
-			<Input name="group" bind:value={groupBinding.value} type="text" class="nodrag" />
+			<Textarea
+				name="group"
+				bind:value={groupBinding.value}
+				rows={1}
+				class="nodrag min-h-9 w-[24ch] resize-none"
+			/>
 		</div>
 	{/snippet}
 </NodeWrapper>

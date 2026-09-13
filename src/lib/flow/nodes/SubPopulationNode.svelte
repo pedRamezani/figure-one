@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { useSvelteFlow, type NodeProps } from '@xyflow/svelte';
 
-	import Input from '@/components/ui/input/input.svelte';
 	import Label from '@/components/ui/label/label.svelte';
+	import { Textarea } from '@/components/ui/textarea/index.js';
 	import * as NumberField from '$lib/components/ui/number-field';
 
 	import NodeWrapper from './NodeWrapper.svelte';
@@ -42,7 +42,12 @@
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="label">Label</Label>
-			<Input name="label" bind:value={labelBinding.value} type="text" class="nodrag" />
+			<Textarea
+				name="label"
+				bind:value={labelBinding.value}
+				rows={1}
+				class="nodrag min-h-9 w-[24ch] resize-none"
+			/>
 
 			<Label for="value">Population size</Label>
 			<NumberField.Root min={0} bind:value={valueBinding.value}>

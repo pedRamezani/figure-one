@@ -81,7 +81,8 @@ export const partialFlowchartConfigSchema = z
 			.partial(),
 		diagram: z
 			.object({
-				spacing: z.number(),
+				spacingX: z.number(),
+				spacingY: z.number(),
 				cellWidth: z.number(),
 				cellHeight: z.number()
 			})
@@ -147,7 +148,41 @@ export type PartialFlowchartConfigInput = z.infer<typeof partialFlowchartConfigS
  * A section that fails validation is dropped and the defaults fill in for it,
  * rather than the whole document being refused over one bad colour.
  */
-export function readPartialConfig(value: unknown): PartialFlowchartConfig {
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Rewrites fields that have been renamed or split since a document was written.
+ *
+ * The configuration carries no version of its own, deliberately: it is read
+ * leniently and any gap is filled from the defaults. That makes this the place
+ * for its backwards compatibility, rather than the document version chain.
+ *
+ * Without this a renamed field is simply an unknown key, which the schema
+ * strips, so the user's setting would silently revert to the default.
+ */
+function applyLegacyConfigShape(value: unknown): unknown {
+	if (!isRecord(value)) return value;
+
+	const diagram = value.diagram;
+	if (!isRecord(diagram)) return value;
+
+	// One `spacing` became separate horizontal and vertical gaps. A document
+	// written before the split meant the same value for both.
+	const legacySpacing = diagram.spacing;
+	const alreadySplit = diagram.spacingX !== undefined || diagram.spacingY !== undefined;
+
+	if (typeof legacySpacing !== 'number' || alreadySplit) return value;
+
+	return {
+		...value,
+		diagram: { ...diagram, spacingX: legacySpacing, spacingY: legacySpacing }
+	};
+}
+
+export function readPartialConfig(input: unknown): PartialFlowchartConfig {
+	const value = applyLegacyConfigShape(input);
 	const parsed = partialFlowchartConfigSchema.safeParse(value);
 	if (parsed.success) {
 		return parsed.data as PartialFlowchartConfig;

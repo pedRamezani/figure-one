@@ -209,6 +209,33 @@ describe('the config allowlist regression', () => {
 		expect(result.document.config.page.titlePlacement).toBe('bottom');
 	});
 
+	it('defaults the sub-population settings', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.mainBox.showSubPopulationValue).toBe(true);
+		expect(result.document.config.mainBox.subPopulationPrefix).toBe('(n = ');
+		expect(result.document.config.mainBox.subPopulationAlign).toBe('text-right');
+	});
+
+	it('defaults the main box value to shown', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.mainBox.showValue).toBe(true);
+	});
+
+	it('keeps a hidden main box value through a round trip', () => {
+		// A PRISMA start box lists its sources and shows no total of its own.
+		const document = emptyProjectDocument();
+		document.config.mainBox.showValue = false;
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.mainBox.showValue).toBe(false);
+	});
+
 	it('ignores fields written by a newer build instead of refusing the file', () => {
 		const future = structuredClone(dataV2Linear);
 		(future.config.page as Record<string, unknown>).somethingNew = 'from the future';

@@ -7,6 +7,7 @@ import SplitNode from './SplitNode.svelte';
 import SplitStartNode from './SplitStartNode.svelte';
 import StartNode from './StartNode.svelte';
 import StepNode from './StepNode.svelte';
+import SubPopulationNode from './SubPopulationNode.svelte';
 import SubstepNode from './SubstepNode.svelte';
 
 import type { RegisteredNodeType } from './node-types.ts';
@@ -29,5 +30,6 @@ export const nodeTypes: Record<
 	splitstart: SplitStartNode,
 	start: StartNode,
 	step: StepNode,
+	subpopulation: SubPopulationNode,
 	substep: SubstepNode
 };

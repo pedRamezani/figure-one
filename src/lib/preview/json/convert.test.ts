@@ -105,3 +105,68 @@ describe('empty input', () => {
 		});
 	});
 });
+
+describe('sub-populations', () => {
+	/** A start box with a breakdown of where its population came from. */
+	const withSources: TypstFlowchartData = {
+		steps: {
+			main: [
+				{
+					label: 'Records identified from:',
+					value: 253,
+					subPopulations: [
+						{ label: 'Web of Science', value: 139 },
+						{ label: 'Scopus', value: 114 }
+					],
+					delta: null
+				},
+				{
+					label: 'Records screened',
+					value: 174,
+					subPopulations: [],
+					delta: { label: 'Duplicate records removed', value: 79, substeps: [] }
+				}
+			],
+			splits: []
+		},
+		groups: {}
+	};
+
+	it('round trips a start box breakdown', () => {
+		expect(roundTrip(withSources)).toEqual(withSources);
+	});
+
+	it('builds a sub-population node per source', () => {
+		const graph = parseTypstFlowchartJSON(withSources, createIdAllocator());
+		expect(graph.nodes.filter((n) => n.type === 'subpopulation')).toHaveLength(2);
+	});
+
+	it('does not build substeps for them', () => {
+		// They are a different node type now, so they cannot be confused with
+		// the exclusion reasons they sit beside.
+		const graph = parseTypstFlowchartJSON(withSources, createIdAllocator());
+		expect(graph.nodes.filter((n) => n.type === 'substep')).toHaveLength(0);
+	});
+
+	it('hangs them off the start box, not the exclusion', () => {
+		const graph = parseTypstFlowchartJSON(withSources, createIdAllocator());
+
+		const sourceEdges = graph.edges.filter((e) => e.sourceHandle === 'start-subpopulations');
+		expect(sourceEdges).toHaveLength(2);
+
+		const start = graph.nodes.find((n) => n.type === 'start')!;
+		expect(sourceEdges.every((e) => e.source === start.id)).toBe(true);
+	});
+
+	it('keeps them out of the exclusion list', () => {
+		// The second step has an exclusion with no reasons; the first step's
+		// sources must not leak into it.
+		expect(roundTrip(withSources).steps.main[1].delta?.substeps).toEqual([]);
+	});
+
+	it('leaves a chart without any as an empty list', () => {
+		for (const step of roundTrip(fixtures.linear).steps.main) {
+			expect(step.subPopulations).toEqual([]);
+		}
+	});
+});

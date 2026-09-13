@@ -195,11 +195,28 @@ export interface MainBoxConfig {
 	tint: Tint;
 	labelBold: boolean;
 	valueBold: boolean;
+	/**
+	 * Whether the box shows its own total.
+	 *
+	 * A PRISMA start box lists where its records came from and shows no total of
+	 * its own, leaving the breakdown to speak for itself.
+	 */
+	showValue: boolean;
 	width: number | 'auto'; // mm or auto
 	textAlign: Alignment;
 	valueAlign: ValueAligment;
 	valuePrefix: string;
 	valueSuffix: string;
+	subPopulationLabelBold: boolean;
+	subPopulationValueBold: boolean;
+	showSubPopulationValue: boolean;
+	subPopulationTextAlign: Alignment;
+	subPopulationAlign: ValueAligment;
+	subPopulationPrefix: string;
+	subPopulationSuffix: string;
+	subPopulationIndent: number; // spaces
+	subPopulationNumbering: Numbering;
+	subPopulationMarker: string | null;
 }
 
 export interface StepBoxConfig {
@@ -279,11 +296,22 @@ export const defaultConfig: TypstFlowchartConfig = {
 		tint: 'white',
 		labelBold: false,
 		valueBold: false,
+		showValue: true,
 		width: 80,
 		textAlign: 'left',
 		valueAlign: 'left',
 		valuePrefix: '',
-		valueSuffix: ''
+		valueSuffix: '',
+		subPopulationLabelBold: false,
+		subPopulationValueBold: false,
+		showSubPopulationValue: true,
+		subPopulationTextAlign: 'left',
+		subPopulationAlign: 'text-right',
+		subPopulationPrefix: '(n = ',
+		subPopulationSuffix: ')',
+		subPopulationIndent: 3,
+		subPopulationNumbering: null,
+		subPopulationMarker: null
 	},
 	stepBox: {
 		tint: 'white',

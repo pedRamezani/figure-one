@@ -2,6 +2,7 @@ import Dagre from '@dagrejs/dagre';
 import type { Node, Edge } from '@xyflow/svelte';
 
 import {
+	subPopulationTarget,
 	substepTarget,
 	groupSource,
 	rowTargetGroup,
@@ -33,12 +34,15 @@ export function getLayoutedElements(
 	const excludedNodeTypes = new Set([
 		groupSource.nodeType,
 		rowTargetGroup.nodeType,
+		subPopulationTarget.nodeType,
 		substepTarget.nodeType
 	]);
 
 	const rawGroupNodes = nodes.filter((n) => n.type === groupSource.nodeType);
 	const rawRowNodes = nodes.filter((n) => n.type === rowTargetGroup.nodeType);
-	const rawSubstepNodes = nodes.filter((n) => n.type === substepTarget.nodeType);
+	const rawSubstepNodes = nodes.filter(
+		(n) => n.type === substepTarget.nodeType || n.type === subPopulationTarget.nodeType
+	);
 
 	const includedNodes = nodes.filter(
 		(node) => !excludedNodeTypes.has(node.type as RegisteredNodeType)
@@ -88,15 +92,26 @@ export function getLayoutedElements(
 			y: number;
 		};
 	} = {};
+	// Sub-populations belong to the population box and substeps to the exclusion
+	// box beside it, so grouping by type keeps the two lists from interleaving
+	// on the canvas. Within a type, the existing order by anchor position is
+	// what the Typst output already shows.
+	const attachmentOrder: Record<string, number> = {
+		[subPopulationTarget.nodeType]: 0,
+		[substepTarget.nodeType]: 1
+	};
+
+	const anchorX = (node: Node) => {
+		const source = edges.find((edge) => edge.target == node.id)?.source;
+		return tbNodes.find((n) => n.id === source)?.position.x ?? 0;
+	};
+
 	const substepNodes = rawSubstepNodes
 		.sort((n1, n2) => {
-			const n1Source = edges.find((edge) => edge.target == n1.id)?.source;
-			const n2Source = edges.find((edge) => edge.target == n2.id)?.source;
+			const byAnchor = anchorX(n1) - anchorX(n2);
+			if (byAnchor !== 0) return byAnchor;
 
-			const n1PosX = tbNodes.find((node) => node.id === n1Source)?.position.x ?? 0;
-			const n2PosX = tbNodes.find((node) => node.id === n2Source)?.position.x ?? 0;
-
-			return n1PosX - n2PosX;
+			return (attachmentOrder[n1.type ?? ''] ?? 0) - (attachmentOrder[n2.type ?? ''] ?? 0);
 		})
 		.map((ssNode) => {
 			const source = edges.find((edge) => edge.target == ssNode.id)?.source;

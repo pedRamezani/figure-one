@@ -86,6 +86,17 @@ const stepNode = z.object({
 		.prefault({})
 });
 
+const subPopulationNode = z.object({
+	...baseNodeFields,
+	type: z.literal('subpopulation'),
+	data: z
+		.object({
+			label: z.string().default('Sub-population'),
+			value: z.number().default(0)
+		})
+		.prefault({})
+});
+
 const substepNode = z.object({
 	...baseNodeFields,
 	type: z.literal('substep'),
@@ -104,6 +115,7 @@ export const persistedNodeSchema = z.discriminatedUnion('type', [
 	splitstartNode,
 	startNode,
 	stepNode,
+	subPopulationNode,
 	substepNode
 ]);
 

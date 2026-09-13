@@ -2,7 +2,12 @@ import type { Edge, Node } from '@xyflow/svelte';
 
 import { rowSpanOf } from './edges/edge-types.ts';
 import { ROW_PADDING } from './geometry.ts';
-import { splitstartTargetInput, stepTargetInput, substepTarget } from './handles/handle-types.ts';
+import {
+	splitstartTargetInput,
+	stepTargetInput,
+	subPopulationTarget,
+	substepTarget
+} from './handles/handle-types.ts';
 
 /**
  * Which split row each node sits in.
@@ -85,6 +90,13 @@ export function computeRows(
 
 			if (edge.targetHandle === substepTarget.handleId && targetType === 'substep') {
 				// A substep belongs to the same stage as the step it hangs off.
+				rows.set(edge.target, row);
+				queue.push(edge.target);
+				continue;
+			}
+
+			if (edge.targetHandle === subPopulationTarget.handleId && targetType === 'subpopulation') {
+				// As does a sub-population of that step's own population.
 				rows.set(edge.target, row);
 				queue.push(edge.target);
 			}

@@ -91,11 +91,22 @@ export const partialFlowchartConfigSchema = z
 				tint: tintSchema,
 				labelBold: z.boolean(),
 				valueBold: z.boolean(),
+				showValue: z.boolean(),
 				width: widthSchema,
 				textAlign: alignmentSchema,
 				valueAlign: valueAlignmentSchema,
 				valuePrefix: z.string(),
-				valueSuffix: z.string()
+				valueSuffix: z.string(),
+				subPopulationLabelBold: z.boolean(),
+				subPopulationValueBold: z.boolean(),
+				showSubPopulationValue: z.boolean(),
+				subPopulationTextAlign: alignmentSchema,
+				subPopulationAlign: valueAlignmentSchema,
+				subPopulationPrefix: z.string(),
+				subPopulationSuffix: z.string(),
+				subPopulationIndent: z.number(),
+				subPopulationNumbering: numberingSchema,
+				subPopulationMarker: z.string().nullable()
 			})
 			.partial(),
 		stepBox: z

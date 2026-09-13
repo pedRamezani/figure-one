@@ -57,7 +57,7 @@
 	});
 </script>
 
-<NodeWrapper title="Group" description="The group name of a node." nodeId={id} nodeType={type}>
+<NodeWrapper title="Group" description="Names a band of stages." nodeId={id} nodeType={type}>
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="group">Label</Label>

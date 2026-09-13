@@ -31,7 +31,7 @@
 	};
 </script>
 
-<NodeWrapper title="Substep" description="Inclusion or Exclusion" nodeId={id} nodeType={type}>
+<NodeWrapper title="Substep" description="One exclusion reason." nodeId={id} nodeType={type}>
 	{#snippet content()}
 		<div class="flex flex-col gap-2">
 			<Label for="label">Label</Label>

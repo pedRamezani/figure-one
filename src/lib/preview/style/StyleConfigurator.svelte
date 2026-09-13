@@ -14,6 +14,8 @@
 		type ArrowHead,
 		type Alignment,
 		type TextAlignment,
+		type TitlePlacement,
+		type ValueAligment,
 		type NumberingBody,
 		type NumberingFormatting
 	} from './style-config.svelte';
@@ -147,17 +149,116 @@
 	}
 </script>
 
-{#snippet weightToggle(
+{#snippet alignToggle(
 	name: string,
 	label: string,
-	get: () => boolean,
-	set: (bold: boolean) => void
+	get: () => Alignment,
+	set: (next: Alignment) => void,
+	disabled: boolean = false
 )}
-	<Field.Field class="max-w-fit">
+	<Field.Field>
 		<Field.Label for={name}>{label}</Field.Label>
 		<ToggleGroup.Root
 			type="single"
 			variant="outline"
+			{disabled}
+			bind:value={
+				() => get(),
+				(next) => {
+					if (next) set(next as Alignment);
+				}
+			}
+		>
+			{#each aligmentOptions as alignment (alignment)}
+				<ToggleGroup.Item
+					{name}
+					value={alignment}
+					aria-label={`${label} ${alignment}`}
+					class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+				>
+					{@const Icon = alignmentMapping[alignment]}
+					<Icon />
+					{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+				</ToggleGroup.Item>
+			{/each}
+		</ToggleGroup.Root>
+	</Field.Field>
+{/snippet}
+
+{#snippet valueAlignToggle(
+	name: string,
+	label: string,
+	get: () => ValueAligment,
+	set: (next: ValueAligment) => void,
+	disabled: boolean = false
+)}
+	<Field.Field>
+		<Field.Label for={name}>{label}</Field.Label>
+		<ToggleGroup.Root
+			type="single"
+			variant="outline"
+			{disabled}
+			bind:value={
+				() => get(),
+				(next) => {
+					if (next) set(next as ValueAligment);
+				}
+			}
+		>
+			{#each textAligmentOptions as alignment (alignment)}
+				<ToggleGroup.Item
+					{name}
+					value={alignment}
+					aria-label={alignment === 'text-left' ? 'Left of text' : 'Right of text'}
+					class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+				>
+					{@const Icon = textAlignmentMapping[alignment]}
+					<Icon />
+					{alignment === 'text-left' ? 'Left of Text' : 'Right of Text'}
+				</ToggleGroup.Item>
+			{/each}
+		</ToggleGroup.Root>
+
+		<ToggleGroup.Root
+			type="single"
+			variant="outline"
+			{disabled}
+			bind:value={
+				() => get(),
+				(next) => {
+					if (next) set(next as ValueAligment);
+				}
+			}
+		>
+			{#each aligmentOptions as alignment (alignment)}
+				<ToggleGroup.Item
+					{name}
+					value={alignment}
+					aria-label={`${label} ${alignment}`}
+					class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+				>
+					{@const Icon = alignmentMapping[alignment]}
+					<Icon />
+					{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+				</ToggleGroup.Item>
+			{/each}
+		</ToggleGroup.Root>
+	</Field.Field>
+{/snippet}
+
+{#snippet weightToggle(
+	name: string,
+	label: string,
+	get: () => boolean,
+	set: (bold: boolean) => void,
+	disabled: boolean = false
+)}
+	<Field.Field>
+		<Field.Label for={name}>{label}</Field.Label>
+		<ToggleGroup.Root
+			type="single"
+			variant="outline"
+			{disabled}
 			bind:value={
 				() => (get() ? 'bold' : 'regular'),
 				(next) => {
@@ -579,44 +680,15 @@
 	>
 {/snippet}
 
-<div class="flex flex-col h-full gap-2 py-4">
+<div class="@container/fields flex h-full flex-col gap-2 py-4">
 	<!-- PAGE SETTINGS -->
 	<Field.Set>
 		<Field.Legend>Page</Field.Legend>
 		<Field.Description>Customise page appearance.</Field.Description>
-		<Field.Group class="flex flex-row flex-wrap">
-			<SimpleField title="Title" name="page-title" bind:value={styleConfig.current.page.title} />
-
-			<SimpleField
-				title="Caption"
-				name="page-caption"
-				bind:value={styleConfig.current.page.caption}
-				placeholder="CONSORT flowchart of participant selection"
-			/>
-
-			<Field.Field class="max-w-fit">
-				<Field.Label for="page-title-placement">Title Placement</Field.Label>
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.page.titlePlacement}
-				>
-					{#each titlePlacementOptions as placement (placement)}
-						<ToggleGroup.Item
-							name="page-title-placement"
-							value={placement}
-							aria-label={`Title at ${placement}`}
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = placement === 'top' ? ArrowUpIcon : ArrowDownIcon}
-							<Icon />
-							{placement.substring(0, 1).toUpperCase() + placement.substring(1)}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-			</Field.Field>
-
-			<Field.Field class="max-w-fit">
+		<Field.Group
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+		>
+			<Field.Field>
 				<Field.Label for="page-show-title">Title Visibility</Field.Label>
 				<ToggleGroup.Root
 					type="single"
@@ -643,34 +715,67 @@
 				</ToggleGroup.Root>
 			</Field.Field>
 
-			<Field.Field class="max-w-fit">
-				<Field.Label for="page-title-aligment">Title Aligment</Field.Label>
+			<!-- Everything below describes the title, so it is dead while hidden. -->
+			<SimpleField
+				title="Title"
+				name="page-title"
+				bind:value={styleConfig.current.page.title}
+				disabled={!styleConfig.current.page.showTitle}
+			/>
+
+			<SimpleField
+				title="Caption"
+				name="page-caption"
+				bind:value={styleConfig.current.page.caption}
+				placeholder="CONSORT flowchart of participant selection"
+				disabled={!styleConfig.current.page.showTitle}
+			/>
+
+			<Field.Field>
+				<Field.Label for="page-title-placement">Title Placement</Field.Label>
 				<ToggleGroup.Root
 					type="single"
 					variant="outline"
-					bind:value={styleConfig.current.page.titleAlign}
+					disabled={!styleConfig.current.page.showTitle}
+					bind:value={
+						() => styleConfig.current.page.titlePlacement,
+						(next) => {
+							if (next) styleConfig.current.page.titlePlacement = next as TitlePlacement;
+						}
+					}
 				>
-					{#each aligmentOptions as alignment (alignment)}
+					{#each titlePlacementOptions as placement (placement)}
 						<ToggleGroup.Item
-							name="page-title-aligment"
-							value={alignment}
-							aria-label="Toggle star"
+							name="page-title-placement"
+							value={placement}
+							aria-label={`Title at ${placement}`}
 							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
 						>
-							{@const Icon = alignmentMapping[alignment]}
+							{@const Icon = placement === 'top' ? ArrowUpIcon : ArrowDownIcon}
 							<Icon />
-							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+							{placement.substring(0, 1).toUpperCase() + placement.substring(1)}
 						</ToggleGroup.Item>
 					{/each}
 				</ToggleGroup.Root>
 			</Field.Field>
 
+			{@render alignToggle(
+				'page-title-aligment',
+				'Title Aligment',
+				() => styleConfig.current.page.titleAlign,
+				(next) => (styleConfig.current.page.titleAlign = next),
+				!styleConfig.current.page.showTitle
+			)}
+
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
-				<ColorPicker bind:value={styleConfig.current.page.tint} />
+				<ColorPicker
+					bind:value={styleConfig.current.page.tint}
+					disabled={styleConfig.current.page.transparent}
+				/>
 			</Field.Field>
 
-			<Field.Field class="max-w-fit">
+			<Field.Field>
 				<Field.Label for="page-background">Background</Field.Label>
 				<ToggleGroup.Root
 					type="single"
@@ -725,7 +830,9 @@
 	<Field.Set>
 		<Field.Legend>Diagram</Field.Legend>
 		<Field.Description>Customise diagram appearance.</Field.Description>
-		<Field.Group class="flex flex-row flex-wrap">
+		<Field.Group
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+		>
 			<SimpleField
 				title="Spacing (pt)"
 				name="diagram-spacing"
@@ -753,7 +860,9 @@
 	<Field.Set>
 		<Field.Legend>Nodes</Field.Legend>
 		<Field.Description>Customise general node appearance.</Field.Description>
-		<Field.Group class="flex flex-row flex-wrap">
+		<Field.Group
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+		>
 			<SimpleField
 				title="Stroke (pt)"
 				name="node-stroke"
@@ -789,7 +898,9 @@
 	<Field.Set>
 		<Field.Legend>Edges</Field.Legend>
 		<Field.Description>Customise general edge appearance.</Field.Description>
-		<Field.Group class="flex flex-row flex-wrap">
+		<Field.Group
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+		>
 			<SimpleField
 				title="Stroke (pt)"
 				name="edge-stroke"
@@ -811,7 +922,9 @@
 	<Field.Set>
 		<Field.Legend>Arrow</Field.Legend>
 		<Field.Description>Customise general arrow appearance.</Field.Description>
-		<Field.Group class="flex flex-row flex-wrap">
+		<Field.Group
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+		>
 			<Field.Field class="max-w-40">
 				<Field.Label>Arrow Body</Field.Label>
 				<Select.Root type="single" bind:value={arrowBody} onValueChange={arrowUpdate}>
@@ -851,7 +964,9 @@
 	<Field.Set>
 		<Field.Legend>Main Box</Field.Legend>
 		<Field.Description>Customise main box appearance.</Field.Description>
-		<Field.Group class="flex flex-row flex-wrap">
+		<Field.Group
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+		>
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
 				<ColorPicker bind:value={styleConfig.current.mainBox.tint} />
@@ -871,86 +986,146 @@
 				(bold) => (styleConfig.current.mainBox.labelBold = bold)
 			)}
 
+			<Field.Field>
+				<Field.Label for="mainbox-value">Value</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={
+						() => (styleConfig.current.mainBox.showValue ? 'shown' : 'hidden'),
+						(next) => {
+							if (next) styleConfig.current.mainBox.showValue = next === 'shown';
+						}
+					}
+				>
+					{#each valueVisibilityOptions as option (option.value)}
+						<ToggleGroup.Item
+							name="mainbox-value"
+							value={option.value}
+							aria-label={`Value ${option.label}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = option.icon}
+							<Icon />
+							{option.label}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
 			{@render weightToggle(
 				'mainbox-value-weight',
 				'Value Weight',
 				() => styleConfig.current.mainBox.valueBold,
-				(bold) => (styleConfig.current.mainBox.valueBold = bold)
+				(bold) => (styleConfig.current.mainBox.valueBold = bold),
+				!styleConfig.current.mainBox.showValue
 			)}
 
-			<Field.Field class="max-w-fit">
-				<Field.Label for="node-text-aligment">Text Aligment</Field.Label>
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.mainBox.textAlign}
-				>
-					{#each aligmentOptions as alignment (alignment)}
-						<ToggleGroup.Item
-							name="mainbox-text-aligment"
-							value={alignment}
-							aria-label="Toggle star"
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = alignmentMapping[alignment]}
-							<Icon />
-							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-			</Field.Field>
+			{@render alignToggle(
+				'mainbox-text-aligment',
+				'Text Aligment',
+				() => styleConfig.current.mainBox.textAlign,
+				(next) => (styleConfig.current.mainBox.textAlign = next)
+			)}
 
-			<Field.Field class="max-w-fit">
-				<Field.Label for="mainbox-value-aligment">Value Aligment</Field.Label>
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.mainBox.valueAlign}
-				>
-					{#each textAligmentOptions as alignment (alignment)}
-						<ToggleGroup.Item
-							name="mainbox-value-aligment"
-							value={alignment}
-							aria-label="Toggle star"
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = textAlignmentMapping[alignment]}
-							<Icon />
-							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.mainBox.valueAlign}
-				>
-					{#each aligmentOptions as alignment (alignment)}
-						<ToggleGroup.Item
-							name="mainbox-value-aligment"
-							value={alignment}
-							aria-label="Toggle star"
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = alignmentMapping[alignment]}
-							<Icon />
-							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-			</Field.Field>
+			{@render valueAlignToggle(
+				'mainbox-value-aligment',
+				'Value Aligment',
+				() => styleConfig.current.mainBox.valueAlign,
+				(next) => (styleConfig.current.mainBox.valueAlign = next),
+				!styleConfig.current.mainBox.showValue
+			)}
 
 			<SimpleField
 				title="Value Prefix"
-				name="page-title"
+				name="mainbox-value-prefix"
 				bind:value={styleConfig.current.mainBox.valuePrefix}
+				disabled={!styleConfig.current.mainBox.showValue}
 			/>
 
 			<SimpleField
 				title="Value Suffix"
-				name="page-title"
+				name="mainbox-value-suffix"
 				bind:value={styleConfig.current.mainBox.valueSuffix}
+				disabled={!styleConfig.current.mainBox.showValue}
+			/>
+
+			{@render weightToggle(
+				'mainbox-subpop-label-weight',
+				'Sub-Population Label Weight',
+				() => styleConfig.current.mainBox.subPopulationLabelBold,
+				(bold) => (styleConfig.current.mainBox.subPopulationLabelBold = bold)
+			)}
+
+			{@render weightToggle(
+				'mainbox-subpop-value-weight',
+				'Sub-Population Value Weight',
+				() => styleConfig.current.mainBox.subPopulationValueBold,
+				(bold) => (styleConfig.current.mainBox.subPopulationValueBold = bold),
+				!styleConfig.current.mainBox.showSubPopulationValue
+			)}
+
+			<Field.Field>
+				<Field.Label for="mainbox-subpop-value">Sub-Population Value</Field.Label>
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					bind:value={
+						() => (styleConfig.current.mainBox.showSubPopulationValue ? 'shown' : 'hidden'),
+						(next) => {
+							if (next) styleConfig.current.mainBox.showSubPopulationValue = next === 'shown';
+						}
+					}
+				>
+					{#each valueVisibilityOptions as option (option.value)}
+						<ToggleGroup.Item
+							name="mainbox-subpop-value"
+							value={option.value}
+							aria-label={`Sub-population value ${option.label}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = option.icon}
+							<Icon />
+							{option.label}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
+
+			{@render alignToggle(
+				'mainbox-subpop-text-aligment',
+				'Sub-Population Text Aligment',
+				() => styleConfig.current.mainBox.subPopulationTextAlign,
+				(next) => (styleConfig.current.mainBox.subPopulationTextAlign = next)
+			)}
+
+			{@render valueAlignToggle(
+				'mainbox-subpop-aligment',
+				'Sub-Population Aligment',
+				() => styleConfig.current.mainBox.subPopulationAlign,
+				(next) => (styleConfig.current.mainBox.subPopulationAlign = next),
+				!styleConfig.current.mainBox.showSubPopulationValue
+			)}
+
+			<SimpleField
+				title="Sub-Population Prefix"
+				name="mainbox-subpop-prefix"
+				bind:value={styleConfig.current.mainBox.subPopulationPrefix}
+				disabled={!styleConfig.current.mainBox.showSubPopulationValue}
+			/>
+
+			<SimpleField
+				title="Sub-Population Suffix"
+				name="mainbox-subpop-suffix"
+				bind:value={styleConfig.current.mainBox.subPopulationSuffix}
+				disabled={!styleConfig.current.mainBox.showSubPopulationValue}
+			/>
+
+			<SimpleField
+				title="Sub-Population Indent (spaces)"
+				name="mainbox-subpop-indent"
+				bind:value={styleConfig.current.mainBox.subPopulationIndent}
+				min={0}
 			/>
 		</Field.Group>
 	</Field.Set>
@@ -960,7 +1135,9 @@
 	<Field.Set>
 		<Field.Legend>Step Box</Field.Legend>
 		<Field.Description>Customise step box appearance.</Field.Description>
-		<Field.Group class="flex flex-row flex-wrap">
+		<Field.Group
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+		>
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
 				<ColorPicker bind:value={styleConfig.current.stepBox.tint} />
@@ -987,68 +1164,19 @@
 				(bold) => (styleConfig.current.stepBox.deltaValueBold = bold)
 			)}
 
-			<Field.Field class="max-w-fit">
-				<Field.Label for="stepbox-delta-text-aligment">Delta Text Aligment</Field.Label>
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.stepBox.deltaTextAlign}
-				>
-					{#each aligmentOptions as alignment (alignment)}
-						<ToggleGroup.Item
-							name="stepbox-delta-text-aligment"
-							value={alignment}
-							aria-label={`Align ${alignment}`}
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = alignmentMapping[alignment]}
-							<Icon />
-							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-			</Field.Field>
+			{@render alignToggle(
+				'stepbox-delta-text-aligment',
+				'Delta Text Aligment',
+				() => styleConfig.current.stepBox.deltaTextAlign,
+				(next) => (styleConfig.current.stepBox.deltaTextAlign = next)
+			)}
 
-			<Field.Field class="max-w-fit">
-				<Field.Label for="stepbox-delta-aligment">Delta Aligment</Field.Label>
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.stepBox.deltaAlign}
-				>
-					{#each textAligmentOptions as alignment (alignment)}
-						<ToggleGroup.Item
-							name="stepbox-delta-aligment"
-							value={alignment}
-							aria-label={alignment == 'text-left' ? 'Left of text' : 'Right of text'}
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = textAlignmentMapping[alignment]}
-							<Icon />
-							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.stepBox.deltaAlign}
-				>
-					{#each aligmentOptions as alignment (alignment)}
-						<ToggleGroup.Item
-							name="stepbox-delta-aligment"
-							value={alignment}
-							aria-label={`Align ${alignment}`}
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = alignmentMapping[alignment]}
-							<Icon />
-							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-			</Field.Field>
+			{@render valueAlignToggle(
+				'stepbox-delta-aligment',
+				'Delta Aligment',
+				() => styleConfig.current.stepBox.deltaAlign,
+				(next) => (styleConfig.current.stepBox.deltaAlign = next)
+			)}
 
 			<SimpleField
 				title="Delta Prefix"
@@ -1073,10 +1201,11 @@
 				'stepbox-subdelta-value-weight',
 				'Sub-Delta Value Weight',
 				() => styleConfig.current.stepBox.subDeltaValueBold,
-				(bold) => (styleConfig.current.stepBox.subDeltaValueBold = bold)
+				(bold) => (styleConfig.current.stepBox.subDeltaValueBold = bold),
+				!styleConfig.current.stepBox.showSubDeltaValue
 			)}
 
-			<Field.Field class="max-w-fit">
+			<Field.Field>
 				<Field.Label for="stepbox-subdelta-value">Sub-Delta Value</Field.Label>
 				<ToggleGroup.Root
 					type="single"
@@ -1103,79 +1232,33 @@
 				</ToggleGroup.Root>
 			</Field.Field>
 
-			<Field.Field class="max-w-fit">
-				<Field.Label for="stepbox-subdelta-text-aligment">Sub-Delta Text Aligment</Field.Label>
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.stepBox.subDeltaTextAlign}
-				>
-					{#each aligmentOptions as alignment (alignment)}
-						<ToggleGroup.Item
-							name="stepbox-subdelta-text-aligment"
-							value={alignment}
-							aria-label={`Align ${alignment}`}
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = alignmentMapping[alignment]}
-							<Icon />
-							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-			</Field.Field>
+			{@render alignToggle(
+				'stepbox-subdelta-text-aligment',
+				'Sub-Delta Text Aligment',
+				() => styleConfig.current.stepBox.subDeltaTextAlign,
+				(next) => (styleConfig.current.stepBox.subDeltaTextAlign = next)
+			)}
 
-			<Field.Field class="max-w-fit">
-				<Field.Label for="stepbox-subdelta-aligment">Sub-Delta Aligment</Field.Label>
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.stepBox.subDeltaAlign}
-				>
-					{#each textAligmentOptions as alignment (alignment)}
-						<ToggleGroup.Item
-							name="stepbox-subdelta-aligment"
-							value={alignment}
-							aria-label={alignment == 'text-left' ? 'Left of text' : 'Right of text'}
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = textAlignmentMapping[alignment]}
-							<Icon />
-							{alignment == 'text-left' ? 'Left of Text' : 'Right of Text'}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-
-				<ToggleGroup.Root
-					type="single"
-					variant="outline"
-					bind:value={styleConfig.current.stepBox.subDeltaAlign}
-				>
-					{#each aligmentOptions as alignment (alignment)}
-						<ToggleGroup.Item
-							name="stepbox-subdelta-aligment"
-							value={alignment}
-							aria-label={`Align ${alignment}`}
-							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
-						>
-							{@const Icon = alignmentMapping[alignment]}
-							<Icon />
-							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
-						</ToggleGroup.Item>
-					{/each}
-				</ToggleGroup.Root>
-			</Field.Field>
+			{@render valueAlignToggle(
+				'stepbox-subdelta-aligment',
+				'Sub-Delta Aligment',
+				() => styleConfig.current.stepBox.subDeltaAlign,
+				(next) => (styleConfig.current.stepBox.subDeltaAlign = next),
+				!styleConfig.current.stepBox.showSubDeltaValue
+			)}
 
 			<SimpleField
 				title="Sub-Delta Prefix"
 				name="stepbox-subdelta-prefix"
 				bind:value={styleConfig.current.stepBox.subDeltaPrefix}
+				disabled={!styleConfig.current.stepBox.showSubDeltaValue}
 			/>
 
 			<SimpleField
 				title="Sub-Delta Suffix"
 				name="stepbox-subdelta-suffix"
 				bind:value={styleConfig.current.stepBox.subDeltaSuffix}
+				disabled={!styleConfig.current.stepBox.showSubDeltaValue}
 			/>
 
 			<SimpleField
@@ -1185,7 +1268,7 @@
 				min={0}
 			/>
 
-			<Field.Field class="max-w-fit">
+			<Field.Field class="max-w-2xs">
 				<Field.Label for="stepbox-subdelta-numbering-body">Sub-Delta Numbering</Field.Label>
 				<Select.Root
 					name="stepbox-subdelta-formatting"
@@ -1205,7 +1288,7 @@
 				</Select.Root>
 			</Field.Field>
 
-			<Field.Field class="max-w-fit">
+			<Field.Field class="max-w-2xs">
 				<Field.Label for="stepbox-subdelta-numbering-formatting"
 					>Sub-Delta Numbering Formatting</Field.Label
 				>
@@ -1239,7 +1322,9 @@
 	<Field.Set>
 		<Field.Legend>Group Box</Field.Legend>
 		<Field.Description>Customise group box appearance.</Field.Description>
-		<Field.Group class="flex flex-row flex-wrap">
+		<Field.Group
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+		>
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
 				<ColorPicker bind:value={styleConfig.current.groupBox.tint} />

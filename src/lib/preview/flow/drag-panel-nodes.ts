@@ -3,6 +3,7 @@ import type { Component } from 'svelte';
 import SplitIcon from '@lucide/svelte/icons/git-fork';
 import StepIcon from '@lucide/svelte/icons/square';
 import SubstepIcon from '@lucide/svelte/icons/workflow';
+import SubPopulationIcon from '@lucide/svelte/icons/chart-pie';
 import GroupIcon from '@lucide/svelte/icons/workflow';
 
 import type { RegisteredNodeType } from '@/flow/nodes/node-types';
@@ -27,6 +28,7 @@ export const dragPanelNodes: Map<
 	['splitstart', null],
 	['step', { icon: StepIcon, label: 'Step' }],
 	['substep', { icon: SubstepIcon, label: 'Substep' }],
+	['subpopulation', { icon: SubPopulationIcon, label: 'Sub-population' }],
 	['groups', { icon: GroupIcon, label: 'Group', class: '-rotate-90' }],
 	['split', { icon: SplitIcon, label: 'Split' }]
 ]);

@@ -190,79 +190,95 @@
   }
 }
 
-// The bullet or number shown before a substep. Exactly one of the two is set.
+// ----------------------------
+// Value lists
+// ----------------------------
+// Two lists in this figure behave identically: the exclusion reasons under a
+// delta, and the sub-populations under a population box. A spec gathers the
+// settings each needs so one implementation serves both.
+#let sub-delta-spec(s) = (
+  marker: s.subDeltaMarker,
+  numbering: s.subDeltaNumbering,
+  align: s.subDeltaAlign,
+  text-align: s.subDeltaTextAlign,
+  prefix: s.subDeltaPrefix,
+  suffix: s.subDeltaSuffix,
+  label-bold: s.subDeltaLabelBold,
+  value-bold: s.subDeltaValueBold,
+  show-value: s.showSubDeltaValue,
+  indent: s.subDeltaIndent,
+)
+
+#let sub-population-spec(m) = (
+  marker: m.subPopulationMarker,
+  numbering: m.subPopulationNumbering,
+  align: m.subPopulationAlign,
+  text-align: m.subPopulationTextAlign,
+  prefix: m.subPopulationPrefix,
+  suffix: m.subPopulationSuffix,
+  label-bold: m.subPopulationLabelBold,
+  value-bold: m.subPopulationValueBold,
+  show-value: m.showSubPopulationValue,
+  indent: m.subPopulationIndent,
+)
+
+// The bullet or number shown before an item. At most one of the two is set.
 //
 // Uses the native list and enum so markers and numbers pick up Typst's own
 // spacing and styling rather than being hand-placed text. The body is empty
 // because the label sits in the next grid column, not inside the item.
-#let sub-marker(s, index) = {
-  if s.subDeltaMarker != none {
-    list(marker: s.subDeltaMarker, body-indent: 0mm, list.item[])
-  } else if s.subDeltaNumbering != none {
-    enum(numbering: s.subDeltaNumbering, body-indent: 0mm, enum.item(index + 1)[])
+#let sub-marker(spec, index) = {
+  if spec.marker != none {
+    list(marker: spec.marker, body-indent: 0mm, list.item[])
+  } else if spec.numbering != none {
+    enum(numbering: spec.numbering, body-indent: 0mm, enum.item(index + 1)[])
   }
 }
 
-// ----------------------------
-// Box contents
-// ----------------------------
-// What goes inside a population box.
-#let population-body(m, it) = align(
-  to-align(m.textAlign),
-  labelled-value(
-    it.label,
-    formatted-value(it.value, m.valuePrefix, m.valueSuffix),
-    m.valueAlign,
-    label-bold: m.labelBold,
-    value-bold: m.valueBold,
-  ),
-)
+// A list of labels with their counts.
+#let value-list(spec, items) = {
+  let has-marker = spec.marker != none or spec.numbering != none
+  let stacked = not beside-label(spec.align)
+  let content-columns = if not spec.show-value or stacked { 1 } else { 2 }
 
-// The list of substeps inside an exclusion box.
-#let substep-list(s, substeps) = {
-  let has-marker = s.subDeltaMarker != none or s.subDeltaNumbering != none
-  let stacked = not beside-label(s.subDeltaAlign)
-  let show-value = s.showSubDeltaValue
-  let content-columns = if not show-value or stacked { 1 } else { 2 }
+  let cells-for(i, item) = {
+    let value-text = formatted-value(item.value, spec.prefix, spec.suffix)
 
-  let cells-for(i, sub) = {
-    let value-text = formatted-value(sub.value, s.subDeltaPrefix, s.subDeltaSuffix)
-
-    let cells = if not show-value {
-      (weighted(sub.label, s.subDeltaLabelBold),)
+    let cells = if not spec.show-value {
+      (weighted(item.label, spec.label-bold),)
     } else if stacked {
       (
         labelled-value(
-          sub.label,
+          item.label,
           value-text,
-          s.subDeltaAlign,
-          label-bold: s.subDeltaLabelBold,
-          value-bold: s.subDeltaValueBold,
+          spec.align,
+          label-bold: spec.label-bold,
+          value-bold: spec.value-bold,
         ),
       )
     } else {
       ordered-spans(
-        weighted(sub.label, s.subDeltaLabelBold),
-        weighted(value-text, s.subDeltaValueBold),
-        s.subDeltaAlign,
+        weighted(item.label, spec.label-bold),
+        weighted(value-text, spec.value-bold),
+        spec.align,
       )
     }
 
     if has-marker {
-      (sub-marker(s, i), ..cells)
+      (sub-marker(spec, i), ..cells)
     } else {
       cells
     }
   }
 
-  // Top, so a wrapped label keeps its N on the first line.
+  // Top, so a wrapped label keeps its count on the first line.
   let column-alignment = {
-    let cols = if not show-value {
-      // One column, positioned as a block by subDeltaTextAlign.
+    let cols = if not spec.show-value {
+      // One column, positioned as a block by the spec's text alignment.
       (top + left,)
     } else if stacked {
-      (top + to-align(s.subDeltaAlign),)
-    } else if value-leads(s.subDeltaAlign) {
+      (top + to-align(spec.align),)
+    } else if value-leads(spec.align) {
       (top + right, top + left)
     } else {
       (top + left, top + right)
@@ -276,8 +292,8 @@
   }
 
   grid(
-    ..for (i, sub) in substeps.enumerate() {
-      cells-for(i, sub)
+    ..for (i, item) in items.enumerate() {
+      cells-for(i, item)
     },
     inset: 0pt,
     column-gutter: 1em / 3,
@@ -287,7 +303,48 @@
   )
 }
 
-// What goes inside an exclusion box: its own label and count, then its substeps.
+// The list indented under whatever it belongs to. The negative offset removes
+// the paragraph gap that would otherwise sit above it, which is why it is
+// emitted even when the list is empty.
+#let indented-list(spec, items) = pad(
+  align(to-align(spec.text-align), value-list(spec, items)),
+  left: spec.indent * 1em / 3,
+  top: if items.len() == 0 {
+    -1.2em
+  } else {
+    -1.2em + 0.65em
+  },
+)
+
+// ----------------------------
+// Box contents
+// ----------------------------
+// What goes inside a population box: its label and count, then any breakdown
+// of where that population came from.
+#let population-body(m, it) = {
+  align(
+    to-align(m.textAlign),
+    if m.showValue {
+      labelled-value(
+        it.label,
+        formatted-value(it.value, m.valuePrefix, m.valueSuffix),
+        m.valueAlign,
+        label-bold: m.labelBold,
+        value-bold: m.valueBold,
+      )
+    } else {
+      // A PRISMA start box leaves its total to the breakdown below it.
+      weighted(it.label, m.labelBold)
+    },
+  )
+
+  // Only when there are any, so a box without them is spaced as before.
+  if it.subPopulations.len() > 0 {
+    indented-list(sub-population-spec(m), it.subPopulations)
+  }
+}
+
+// What goes inside an exclusion box: its own label and count, then its reasons.
 #let exclusion-body(s, delta) = {
   align(
     to-align(s.deltaTextAlign),
@@ -300,16 +357,7 @@
       value-bold: s.deltaValueBold,
     ),
   )
-  pad(
-    align(to-align(s.subDeltaTextAlign), substep-list(s, delta.substeps)),
-    left: s.subDeltaIndent * 1em / 3,
-    // Default spacing between paragraphs, plus a line when substeps follow.
-    top: if delta.substeps.len() == 0 {
-      -1.2em
-    } else {
-      -1.2em + 0.65em
-    },
-  )
+  indented-list(sub-delta-spec(s), delta.substeps)
 }
 
 // ----------------------------

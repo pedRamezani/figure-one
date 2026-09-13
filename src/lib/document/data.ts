@@ -55,6 +55,9 @@ const substepSchema = z.object({
 const stepSchema: z.ZodType<TypstStep> = z.object({
 	label: z.string(),
 	value: z.number(),
+	// Absent in every document written before sub-populations existed, so it
+	// defaults rather than needing a version bump.
+	subPopulations: z.array(substepSchema).default([]),
 	delta: z
 		.object({
 			label: z.string(),
@@ -97,6 +100,7 @@ function migrateV1ToV2(legacy: DataV1): TypstFlowchartData {
 		main.push({
 			label: entry.stepLabel,
 			value: entry.value,
+			subPopulations: [],
 			delta:
 				index === 0
 					? null

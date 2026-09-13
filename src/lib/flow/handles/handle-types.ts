@@ -21,6 +21,13 @@ export type Handle = {
 	handleId: string;
 	handleType: HandleType;
 	position: Position;
+	/**
+	 * Where along its edge the handle sits, as a CSS percentage.
+	 *
+	 * Only needed when a node exposes two handles on the same side, which would
+	 * otherwise sit on top of each other. Absent means centred.
+	 */
+	offset?: string;
 };
 
 export const groupSource: Handle = {
@@ -79,6 +86,35 @@ export const startSourceOutput: Handle = {
 	position: Position.Bottom
 };
 
+export const startSourceSubPopulations: Handle = {
+	nodeType: 'start',
+	handleId: 'start-subpopulations',
+	handleType: 'source',
+	position: Position.Right
+};
+
+export const splitstartSourceSubPopulations: Handle = {
+	nodeType: 'splitstart',
+	handleId: 'splitstart-subpopulations',
+	handleType: 'source',
+	position: Position.Right
+};
+
+export const stepSourceSubPopulations: Handle = {
+	nodeType: 'step',
+	handleId: 'step-subpopulations',
+	handleType: 'source',
+	position: Position.Right,
+	offset: '30%'
+};
+
+export const subPopulationTarget: Handle = {
+	nodeType: 'subpopulation',
+	handleId: 'subpopulation',
+	handleType: 'target',
+	position: Position.Left
+};
+
 export const startTargetGroup: Handle = {
 	nodeType: 'start',
 	handleId: 'start-group',
@@ -97,7 +133,8 @@ export const stepSourceSubsteps: Handle = {
 	nodeType: 'step',
 	handleId: 'step-substeps',
 	handleType: 'source',
-	position: Position.Right
+	position: Position.Right,
+	offset: '70%'
 };
 
 export const stepTargetInput: Handle = {
@@ -162,6 +199,9 @@ export const handleGraph = (): Graph<Handle> => {
 	graph.addEdge(stepSourceOutput, stepTargetInput);
 	graph.addEdge(stepSourceOutput, splitTargetInput);
 	graph.addEdge(stepSourceSubsteps, substepTarget);
+	graph.addEdge(startSourceSubPopulations, subPopulationTarget);
+	graph.addEdge(splitstartSourceSubPopulations, subPopulationTarget);
+	graph.addEdge(stepSourceSubPopulations, subPopulationTarget);
 	// graph.addEdge(groupSource, splitstartTargetGroup);
 	graph.addEdge(groupSource, rowTargetGroup);
 	graph.addEdge(groupSource, startTargetGroup);
@@ -179,6 +219,10 @@ export const handleConnectionLimits: Map<Handle, number> = new Map([
 	// [splitstartTargetGroup, 1],
 	[splitstartTargetInput, 1],
 	[startSourceOutput, 1],
+	[startSourceSubPopulations, Infinity],
+	[splitstartSourceSubPopulations, Infinity],
+	[stepSourceSubPopulations, Infinity],
+	[subPopulationTarget, 1],
 	[startTargetGroup, 1],
 	[stepSourceOutput, 1],
 	[stepSourceSubsteps, Infinity],
@@ -197,7 +241,10 @@ export const handleDragCreate: Map<Handle, Handle> = new Map([
 	[startTargetGroup, groupSource],
 	[stepSourceOutput, stepTargetInput],
 	[stepTargetGroup, groupSource],
-	[stepSourceSubsteps, substepTarget]
+	[stepSourceSubsteps, substepTarget],
+	[startSourceSubPopulations, subPopulationTarget],
+	[splitstartSourceSubPopulations, subPopulationTarget],
+	[stepSourceSubPopulations, subPopulationTarget]
 ]);
 
 export type NodeHandleMap = {
@@ -209,8 +256,15 @@ export const nodeHandles: NodeHandleMap = {
 	groups: [groupSource],
 	row: [rowTargetGroup],
 	split: [splitSourceOutput, splitTargetInput],
-	splitstart: [splitstartSourceOutput, splitstartTargetInput], // splitstartTargetGroup
-	start: [startSourceOutput, startTargetGroup],
-	step: [stepSourceOutput, stepSourceSubsteps, stepTargetInput, stepTargetGroup],
+	splitstart: [splitstartSourceOutput, splitstartSourceSubPopulations, splitstartTargetInput],
+	start: [startSourceOutput, startSourceSubPopulations, startTargetGroup],
+	step: [
+		stepSourceOutput,
+		stepSourceSubsteps,
+		stepSourceSubPopulations,
+		stepTargetInput,
+		stepTargetGroup
+	],
+	subpopulation: [subPopulationTarget],
 	substep: [substepTarget]
 };

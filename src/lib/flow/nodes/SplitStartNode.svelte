@@ -33,7 +33,7 @@
 
 <NodeWrapper
 	title="Split Start"
-	description="The split will start from here."
+	description="The first box of one arm."
 	nodeId={id}
 	nodeType={type}
 >

@@ -87,7 +87,7 @@
 
 <NodeWrapper
 	title="Step"
-	description="Inclusion or Exclusion"
+	description="Population and exclusion."
 	nodeId={id}
 	nodeType={type}
 	excludedHandles={flowchartDocument.rowOf(id) === null ? [] : [stepTargetGroup.handleId]}

@@ -89,12 +89,7 @@
 	}
 </script>
 
-<NodeWrapper
-	title="Split"
-	description="The flowchart will split from here."
-	nodeId={id}
-	nodeType={type}
->
+<NodeWrapper title="Split" description="Splits into parallel arms." nodeId={id} nodeType={type}>
 	{#snippet content()}
 		<div class="w-3xs"></div>
 		{#if targetSummedValue && noSourceConnection}

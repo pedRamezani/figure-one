@@ -6,7 +6,8 @@
 	import ColorPicker from './colorpicker.min.js';
 	import './colorpicker.css';
 
-	let { value = $bindable('white') }: { value: string } = $props();
+	let { value = $bindable('white'), disabled = false }: { value: string; disabled?: boolean } =
+		$props();
 
 	// let pickerSetter = $state<(value: string) => void>(() => {});
 
@@ -98,4 +99,4 @@
 </script>
 
 <!-- NOTE: Will not use type color to display typst color names when possible -->
-<Input {@attach swatchPicker(tintMapping)} {value} type="text" />
+<Input {@attach swatchPicker(tintMapping)} {value} {disabled} type="text" />

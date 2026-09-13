@@ -14,6 +14,7 @@ export type RegisteredNodeType =
 	| 'splitstart'
 	| 'start'
 	| 'step'
+	| 'subpopulation'
 	| 'substep';
 
 /**
@@ -43,6 +44,8 @@ export const getNodeDataDefaults = (type: RegisteredNodeType): Record<string, un
 			};
 		case 'substep':
 			return { delta: 0, label: 'Substep' };
+		case 'subpopulation':
+			return { value: 0, label: 'Sub-population' };
 		case 'start':
 			return { label: 'Start population', value: 1000 };
 		default:

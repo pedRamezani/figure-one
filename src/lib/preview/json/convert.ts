@@ -6,8 +6,12 @@ import { computeRows } from '@/flow/rows';
 import {
 	groupSource,
 	rowTargetGroup,
+	splitstartSourceSubPopulations,
 	startSourceOutput,
+	startSourceSubPopulations,
 	startTargetGroup,
+	stepSourceSubPopulations,
+	subPopulationTarget,
 	stepSourceSubsteps,
 	stepSourceOutput,
 	stepTargetGroup,
@@ -34,7 +38,7 @@ export type TypstFlowchartDataLegacyV1 = {
 export type TypstStep = {
 	label: string;
 	value: number;
-
+	subPopulations: { label: string; value: number }[];
 	delta: {
 		label: string;
 		value: number;
@@ -132,6 +136,15 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		return g ? (nodeById[g].data.group as string) : '';
 	};
 
+	const getSubPopulations = (nodeId: string) =>
+		(children[nodeId] ?? [])
+			.map((id) => nodeById[id])
+			.filter((n) => n?.type === 'subpopulation')
+			.map((n) => ({
+				label: n.data.label as string,
+				value: n.data.value as number
+			}));
+
 	const getSubsteps = (stepId: string) =>
 		(children[stepId] ?? [])
 			.map((id) => nodeById[id])
@@ -153,6 +166,8 @@ export function convertFlowchartToTypstFlowchartData(raw: {
 		const newStep: TypstStep = {
 			label: (node.data.stepLabel as string) ?? (node.data.label as string) ?? '',
 			value: (node.data.value as number) ?? 0,
+
+			subPopulations: getSubPopulations(node.id),
 
 			delta:
 				node?.type === 'step'
@@ -265,6 +280,40 @@ export function parseTypstFlowchartJSON(
 	const nodes: Node[] = [];
 	const edges: Edge[] = [];
 
+	const subPopulationHandles: Record<string, string> = {
+		start: startSourceSubPopulations.handleId,
+		splitstart: splitstartSourceSubPopulations.handleId,
+		step: stepSourceSubPopulations.handleId
+	};
+
+	/** Hangs a population breakdown off whichever box it belongs to. */
+	function addSubPopulations(
+		boxId: string,
+		boxType: keyof typeof subPopulationHandles | string,
+		items: { label: string; value: number }[],
+		rowId?: string
+	): void {
+		for (const item of items) {
+			const subId = nextId();
+
+			nodes.push({
+				id: subId,
+				type: 'subpopulation',
+				data: { label: item.label, value: item.value },
+				position: { x: 0, y: 0 },
+				...(rowId === undefined ? {} : { parentId: rowId })
+			});
+
+			edges.push({
+				id: edgeId(boxId, subId),
+				source: boxId,
+				target: subId,
+				sourceHandle: subPopulationHandles[boxType],
+				targetHandle: subPopulationTarget.handleId
+			});
+		}
+	}
+
 	// Flat group index → the node a group edge should attach to.
 	const logicalMap: Map<number, ['START' | 'STEP' | 'ROW', string]> = new Map();
 
@@ -309,6 +358,9 @@ export function parseTypstFlowchartJSON(
 
 		mainNodeIds.push(id);
 		logicalMap.set(i, [i == 0 ? 'START' : 'STEP', id]);
+
+		// Sub-populations hang off the box itself rather than its exclusion.
+		addSubPopulations(id, i === 0 ? 'start' : 'step', step.subPopulations ?? []);
 
 		// substeps
 		step.delta?.substeps?.forEach((sub) => {
@@ -403,6 +455,13 @@ export function parseTypstFlowchartJSON(
 
 				if (!columnMap[colIndex]) columnMap[colIndex] = [];
 				columnMap[colIndex][rowIndex] = id;
+
+				addSubPopulations(
+					id,
+					rowIndex === 0 ? 'splitstart' : 'step',
+					cell.subPopulations ?? [],
+					rowId
+				);
 
 				if (rowIndex === 0) {
 					edges.push({

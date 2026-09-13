@@ -6,13 +6,16 @@ import {
 	type TypstFlowchartData
 } from './convert.ts';
 import { createIdAllocator } from '@/flow/ids';
+import { flowchartDataSchema } from '@/document/data';
 
 import linear from '@/document/fixtures/data-v2-linear.json' with { type: 'json' };
 import splits from '@/document/fixtures/data-v2-splits.json' with { type: 'json' };
 
+// Read through the schema so fields added after a fixture was frozen are
+// defaulted on both sides of the comparison. The fixtures stay untouched.
 const fixtures: Record<string, TypstFlowchartData> = {
-	linear: linear.data as TypstFlowchartData,
-	splits: splits.data as TypstFlowchartData
+	linear: flowchartDataSchema.parse(linear.data),
+	splits: flowchartDataSchema.parse(splits.data)
 };
 
 /** Semantic data → graph → semantic data. Must be the identity. */

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { dataJSON, projectJSON } from './artifacts.ts';
 import { readDocument } from './read.ts';
+import { flowchartDataSchema } from './data.ts';
 import { emptyProjectDocument, type ProjectDocument } from './project.ts';
 import { defaultConfig } from '@/preview/style/config';
 import { createIdAllocator } from '@/flow/ids';
@@ -64,7 +65,7 @@ describe('the data file', () => {
 		expect(parsed.$version).toBe(3);
 		expect(parsed.config).toBeUndefined();
 		expect(parsed.name).toBeUndefined();
-		expect(parsed.data).toEqual(dataV2Splits.data);
+		expect(parsed.data).toEqual(flowchartDataSchema.parse(dataV2Splits.data));
 	});
 
 	it('can be imported again, falling back to default styling', () => {
@@ -82,6 +83,8 @@ describe('the data file', () => {
 		const viaProject = readDocument(JSON.parse(projectJSON(document)));
 		if (!viaProject.ok) throw new Error(viaProject.error);
 
-		expect(JSON.parse(dataJSON(viaProject.document)).data).toEqual(dataV2Splits.data);
+		expect(JSON.parse(dataJSON(viaProject.document)).data).toEqual(
+			flowchartDataSchema.parse(dataV2Splits.data)
+		);
 	});
 });

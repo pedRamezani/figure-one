@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { readDocument } from './read.ts';
 import { createProjectDocument, emptyProjectDocument } from './project.ts';
-import { createDataDocument } from './data.ts';
+import { createDataDocument, flowchartDataSchema } from './data.ts';
 import { convertFlowchartToTypstFlowchartData } from '@/preview/json/convert';
 import { hydrateGraph } from './graph-schema.ts';
 import { defaultConfig } from '@/preview/style/config';
@@ -56,7 +56,7 @@ describe('the frozen corpus', () => {
 		if (!result.ok) throw new Error(result.error);
 
 		const recovered = convertFlowchartToTypstFlowchartData(hydrateGraph(result.document.graph));
-		expect(recovered).toEqual(dataV2Splits.data);
+		expect(recovered).toEqual(flowchartDataSchema.parse(dataV2Splits.data));
 	});
 
 	it('turns a v1 file into the same semantics as its v2 equivalent', () => {
@@ -64,7 +64,7 @@ describe('the frozen corpus', () => {
 		if (!result.ok) throw new Error(result.error);
 
 		const recovered = convertFlowchartToTypstFlowchartData(hydrateGraph(result.document.graph));
-		expect(recovered).toEqual(dataV2Linear.data);
+		expect(recovered).toEqual(flowchartDataSchema.parse(dataV2Linear.data));
 	});
 });
 

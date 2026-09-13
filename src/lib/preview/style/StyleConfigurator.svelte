@@ -27,6 +27,7 @@
 
 	import { ColorPicker } from '@/components/composed/color-picker';
 	import { SimpleField } from '@/components/composed/simple-field';
+	import Input from '@/components/ui/input/input.svelte';
 
 	import ArrowDownIcon from '@lucide/svelte/icons/arrow-down';
 	import ArrowUpIcon from '@lucide/svelte/icons/arrow-up';
@@ -148,6 +149,44 @@
 		styleConfig.reset();
 	}
 </script>
+
+{#snippet pairField(
+	label: string,
+	parts: {
+		name: string;
+		label: string;
+		get: () => string | number;
+		set: (next: string | number) => void;
+		min?: number;
+	}[],
+	disabled: boolean = false
+)}
+	<!--
+		Two settings that only mean something together: width and height, inset
+		and outset, prefix and suffix. The group label names the pair so each
+		part needs only a single word, which keeps them side by side.
+	-->
+	<Field.Field>
+		<Field.Label>{label}</Field.Label>
+		<div class="flex items-end gap-2">
+			{#each parts as part (part.name)}
+				{@const isText = typeof part.get() === 'string'}
+				<div class="flex min-w-0 flex-1 flex-col gap-1.5">
+					<Field.Label for={part.name} class="text-muted-foreground text-xs font-normal">
+						{part.label}
+					</Field.Label>
+					<Input
+						name={part.name}
+						{disabled}
+						type={isText ? 'text' : 'number'}
+						min={part.min}
+						bind:value={() => part.get(), (next) => part.set(isText ? next : next || part.min || 0)}
+					/>
+				</div>
+			{/each}
+		</div>
+	</Field.Field>
+{/snippet}
 
 {#snippet alignToggle(
 	name: string,
@@ -686,7 +725,7 @@
 		<Field.Legend>Page</Field.Legend>
 		<Field.Description>Customise page appearance.</Field.Description>
 		<Field.Group
-			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @lg/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
 		>
 			<Field.Field>
 				<Field.Label for="page-show-title">Title Visibility</Field.Label>
@@ -757,25 +796,34 @@
 						</ToggleGroup.Item>
 					{/each}
 				</ToggleGroup.Root>
-			</Field.Field>
 
-			{@render alignToggle(
-				'page-title-aligment',
-				'Title Aligment',
-				() => styleConfig.current.page.titleAlign,
-				(next) => (styleConfig.current.page.titleAlign = next),
-				!styleConfig.current.page.showTitle
-			)}
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					disabled={!styleConfig.current.page.showTitle}
+					bind:value={
+						() => styleConfig.current.page.titleAlign,
+						(next) => {
+							if (next) styleConfig.current.page.titleAlign = next as Alignment;
+						}
+					}
+				>
+					{#each aligmentOptions as alignment (alignment)}
+						<ToggleGroup.Item
+							name="page-title-aligment"
+							value={alignment}
+							aria-label={`Title aligned ${alignment}`}
+							class="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:fill-primary data-[state=on]:*:[svg]:stroke-primary bg-secondary"
+						>
+							{@const Icon = alignmentMapping[alignment]}
+							<Icon />
+							{alignment.substring(0, 1).toUpperCase() + alignment.substring(1)}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
+			</Field.Field>
 
 			<Field.Field class="max-w-2xs">
-				<Field.Label>Tint</Field.Label>
-				<ColorPicker
-					bind:value={styleConfig.current.page.tint}
-					disabled={styleConfig.current.page.transparent}
-				/>
-			</Field.Field>
-
-			<Field.Field>
 				<Field.Label for="page-background">Background</Field.Label>
 				<ToggleGroup.Root
 					type="single"
@@ -802,6 +850,11 @@
 						</ToggleGroup.Item>
 					{/each}
 				</ToggleGroup.Root>
+
+				<ColorPicker
+					bind:value={styleConfig.current.page.tint}
+					disabled={styleConfig.current.page.transparent}
+				/>
 			</Field.Field>
 
 			<Field.Field class="max-w-2xs">
@@ -831,7 +884,7 @@
 		<Field.Legend>Diagram</Field.Legend>
 		<Field.Description>Customise diagram appearance.</Field.Description>
 		<Field.Group
-			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @lg/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
 		>
 			<SimpleField
 				title="Spacing (pt)"
@@ -839,19 +892,22 @@
 				bind:value={styleConfig.current.diagram.spacing}
 			/>
 
-			<SimpleField
-				title="Minimum Cell Width (mm)"
-				name="diagram-cell-width"
-				bind:value={styleConfig.current.diagram.cellWidth}
-				min={0}
-			/>
-
-			<SimpleField
-				title="Minimum Cell Height (mm)"
-				name="diagram-cell-height"
-				bind:value={styleConfig.current.diagram.cellHeight}
-				min={0}
-			/>
+			{@render pairField('Minimum Cell Size (mm)', [
+				{
+					name: 'diagram-cell-width',
+					label: 'Width',
+					get: () => styleConfig.current.diagram.cellWidth,
+					set: (next) => (styleConfig.current.diagram.cellWidth = next as never),
+					min: 0
+				},
+				{
+					name: 'diagram-cell-height',
+					label: 'Height',
+					get: () => styleConfig.current.diagram.cellHeight,
+					set: (next) => (styleConfig.current.diagram.cellHeight = next as never),
+					min: 0
+				}
+			])}
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -861,35 +917,41 @@
 		<Field.Legend>Nodes</Field.Legend>
 		<Field.Description>Customise general node appearance.</Field.Description>
 		<Field.Group
-			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @lg/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
 		>
-			<SimpleField
-				title="Stroke (pt)"
-				name="node-stroke"
-				bind:value={styleConfig.current.node.stroke}
-				min={0}
-			/>
+			{@render pairField('Node Border (pt)', [
+				{
+					name: 'node-stroke',
+					label: 'Stroke',
+					get: () => styleConfig.current.node.stroke,
+					set: (next) => (styleConfig.current.node.stroke = next as never),
+					min: 0
+				},
+				{
+					name: 'node-corner-radius',
+					label: 'Corner Radius',
+					get: () => styleConfig.current.node.cornerRadius,
+					set: (next) => (styleConfig.current.node.cornerRadius = next as never),
+					min: 0
+				}
+			])}
 
-			<SimpleField
-				title="Corner Radius (pt)"
-				name="node-corner-radius"
-				bind:value={styleConfig.current.node.cornerRadius}
-				min={0}
-			/>
-
-			<SimpleField
-				title="Inset (pt)"
-				name="node-inset"
-				bind:value={styleConfig.current.node.inset}
-				min={0}
-			/>
-
-			<SimpleField
-				title="Outset (pt)"
-				name="node-outset"
-				bind:value={styleConfig.current.node.outset}
-				min={0}
-			/>
+			{@render pairField('Node Spacing (pt)', [
+				{
+					name: 'node-inset',
+					label: 'Inset',
+					get: () => styleConfig.current.node.inset,
+					set: (next) => (styleConfig.current.node.inset = next as never),
+					min: 0
+				},
+				{
+					name: 'node-outset',
+					label: 'Outset',
+					get: () => styleConfig.current.node.outset,
+					set: (next) => (styleConfig.current.node.outset = next as never),
+					min: 0
+				}
+			])}
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -899,21 +961,24 @@
 		<Field.Legend>Edges</Field.Legend>
 		<Field.Description>Customise general edge appearance.</Field.Description>
 		<Field.Group
-			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @lg/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
 		>
-			<SimpleField
-				title="Stroke (pt)"
-				name="edge-stroke"
-				bind:value={styleConfig.current.edge.stroke}
-				min={0}
-			/>
-
-			<SimpleField
-				title="Corner Radius (pt)"
-				name="edge-corner-radius"
-				bind:value={styleConfig.current.edge.cornerRadius}
-				min={0}
-			/>
+			{@render pairField('Edge Line (pt)', [
+				{
+					name: 'edge-stroke',
+					label: 'Stroke',
+					get: () => styleConfig.current.edge.stroke,
+					set: (next) => (styleConfig.current.edge.stroke = next as never),
+					min: 0
+				},
+				{
+					name: 'edge-corner-radius',
+					label: 'Corner Radius',
+					get: () => styleConfig.current.edge.cornerRadius,
+					set: (next) => (styleConfig.current.edge.cornerRadius = next as never),
+					min: 0
+				}
+			])}
 		</Field.Group>
 	</Field.Set>
 	<Field.Separator class="my-2" />
@@ -923,30 +988,36 @@
 		<Field.Legend>Arrow</Field.Legend>
 		<Field.Description>Customise general arrow appearance.</Field.Description>
 		<Field.Group
-			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @lg/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
 		>
-			<Field.Field class="max-w-40">
-				<Field.Label>Arrow Body</Field.Label>
-				<Select.Root type="single" bind:value={arrowBody} onValueChange={arrowUpdate}>
-					<Select.Trigger>{@render arrayBodySvg(arrowBody)}</Select.Trigger>
-					<Select.Content>
-						{#each arrowBodies as body (body)}
-							<Select.Item value={body}>{@render arrayBodySvg(body)}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
-			</Field.Field>
+			<!-- Body and head compose a single arrow, so neither means much alone. -->
+			<Field.Field class="max-w-2xs">
+				<Field.Label>Arrow</Field.Label>
+				<div class="flex items-end gap-2">
+					<div class="flex min-w-0 flex-1 flex-col gap-1.5">
+						<Field.Label class="text-muted-foreground text-xs font-normal">Body</Field.Label>
+						<Select.Root type="single" bind:value={arrowBody} onValueChange={arrowUpdate}>
+							<Select.Trigger>{@render arrayBodySvg(arrowBody)}</Select.Trigger>
+							<Select.Content>
+								{#each arrowBodies as body (body)}
+									<Select.Item value={body}>{@render arrayBodySvg(body)}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					</div>
 
-			<Field.Field class="max-w-32">
-				<Field.Label>Arrow Head</Field.Label>
-				<Select.Root type="single" bind:value={arrowHead} onValueChange={arrowUpdate}>
-					<Select.Trigger>{@render arrayHeadSvg(arrowHead)}</Select.Trigger>
-					<Select.Content>
-						{#each arrowHeads as head (head)}
-							<Select.Item value={head}>{@render arrayHeadSvg(head)}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+					<div class="flex min-w-0 flex-1 flex-col gap-1.5">
+						<Field.Label class="text-muted-foreground text-xs font-normal">Head</Field.Label>
+						<Select.Root type="single" bind:value={arrowHead} onValueChange={arrowUpdate}>
+							<Select.Trigger>{@render arrayHeadSvg(arrowHead)}</Select.Trigger>
+							<Select.Content>
+								{#each arrowHeads as head (head)}
+									<Select.Item value={head}>{@render arrayHeadSvg(head)}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					</div>
+				</div>
 			</Field.Field>
 
 			<SimpleField
@@ -965,7 +1036,7 @@
 		<Field.Legend>Main Box</Field.Legend>
 		<Field.Description>Customise main box appearance.</Field.Description>
 		<Field.Group
-			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @lg/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
 		>
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
@@ -1036,19 +1107,24 @@
 				!styleConfig.current.mainBox.showValue
 			)}
 
-			<SimpleField
-				title="Value Prefix"
-				name="mainbox-value-prefix"
-				bind:value={styleConfig.current.mainBox.valuePrefix}
-				disabled={!styleConfig.current.mainBox.showValue}
-			/>
-
-			<SimpleField
-				title="Value Suffix"
-				name="mainbox-value-suffix"
-				bind:value={styleConfig.current.mainBox.valueSuffix}
-				disabled={!styleConfig.current.mainBox.showValue}
-			/>
+			{@render pairField(
+				'Value Affixes',
+				[
+					{
+						name: 'mainbox-value-prefix',
+						label: 'Prefix',
+						get: () => styleConfig.current.mainBox.valuePrefix,
+						set: (next) => (styleConfig.current.mainBox.valuePrefix = next as never)
+					},
+					{
+						name: 'mainbox-value-suffix',
+						label: 'Suffix',
+						get: () => styleConfig.current.mainBox.valueSuffix,
+						set: (next) => (styleConfig.current.mainBox.valueSuffix = next as never)
+					}
+				],
+				!styleConfig.current.mainBox.showValue
+			)}
 
 			{@render weightToggle(
 				'mainbox-subpop-label-weight',
@@ -1107,19 +1183,24 @@
 				!styleConfig.current.mainBox.showSubPopulationValue
 			)}
 
-			<SimpleField
-				title="Sub-Population Prefix"
-				name="mainbox-subpop-prefix"
-				bind:value={styleConfig.current.mainBox.subPopulationPrefix}
-				disabled={!styleConfig.current.mainBox.showSubPopulationValue}
-			/>
-
-			<SimpleField
-				title="Sub-Population Suffix"
-				name="mainbox-subpop-suffix"
-				bind:value={styleConfig.current.mainBox.subPopulationSuffix}
-				disabled={!styleConfig.current.mainBox.showSubPopulationValue}
-			/>
+			{@render pairField(
+				'Sub-Population Affixes',
+				[
+					{
+						name: 'mainbox-subpop-prefix',
+						label: 'Prefix',
+						get: () => styleConfig.current.mainBox.subPopulationPrefix,
+						set: (next) => (styleConfig.current.mainBox.subPopulationPrefix = next as never)
+					},
+					{
+						name: 'mainbox-subpop-suffix',
+						label: 'Suffix',
+						get: () => styleConfig.current.mainBox.subPopulationSuffix,
+						set: (next) => (styleConfig.current.mainBox.subPopulationSuffix = next as never)
+					}
+				],
+				!styleConfig.current.mainBox.showSubPopulationValue
+			)}
 
 			<SimpleField
 				title="Sub-Population Indent (spaces)"
@@ -1136,7 +1217,7 @@
 		<Field.Legend>Step Box</Field.Legend>
 		<Field.Description>Customise step box appearance.</Field.Description>
 		<Field.Group
-			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @lg/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
 		>
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>
@@ -1178,17 +1259,20 @@
 				(next) => (styleConfig.current.stepBox.deltaAlign = next)
 			)}
 
-			<SimpleField
-				title="Delta Prefix"
-				name="stepbox-delta-prefix"
-				bind:value={styleConfig.current.stepBox.deltaPrefix}
-			/>
-
-			<SimpleField
-				title="Delta Suffix"
-				name="stepbox-delta-suffix"
-				bind:value={styleConfig.current.stepBox.deltaSuffix}
-			/>
+			{@render pairField('Delta Affixes', [
+				{
+					name: 'stepbox-delta-prefix',
+					label: 'Prefix',
+					get: () => styleConfig.current.stepBox.deltaPrefix,
+					set: (next) => (styleConfig.current.stepBox.deltaPrefix = next as never)
+				},
+				{
+					name: 'stepbox-delta-suffix',
+					label: 'Suffix',
+					get: () => styleConfig.current.stepBox.deltaSuffix,
+					set: (next) => (styleConfig.current.stepBox.deltaSuffix = next as never)
+				}
+			])}
 
 			{@render weightToggle(
 				'stepbox-subdelta-label-weight',
@@ -1247,19 +1331,24 @@
 				!styleConfig.current.stepBox.showSubDeltaValue
 			)}
 
-			<SimpleField
-				title="Sub-Delta Prefix"
-				name="stepbox-subdelta-prefix"
-				bind:value={styleConfig.current.stepBox.subDeltaPrefix}
-				disabled={!styleConfig.current.stepBox.showSubDeltaValue}
-			/>
-
-			<SimpleField
-				title="Sub-Delta Suffix"
-				name="stepbox-subdelta-suffix"
-				bind:value={styleConfig.current.stepBox.subDeltaSuffix}
-				disabled={!styleConfig.current.stepBox.showSubDeltaValue}
-			/>
+			{@render pairField(
+				'Sub-Delta Affixes',
+				[
+					{
+						name: 'stepbox-subdelta-prefix',
+						label: 'Prefix',
+						get: () => styleConfig.current.stepBox.subDeltaPrefix,
+						set: (next) => (styleConfig.current.stepBox.subDeltaPrefix = next as never)
+					},
+					{
+						name: 'stepbox-subdelta-suffix',
+						label: 'Suffix',
+						get: () => styleConfig.current.stepBox.subDeltaSuffix,
+						set: (next) => (styleConfig.current.stepBox.subDeltaSuffix = next as never)
+					}
+				],
+				!styleConfig.current.stepBox.showSubDeltaValue
+			)}
 
 			<SimpleField
 				title="Sub-Delta Indent (spaces)"
@@ -1268,51 +1357,63 @@
 				min={0}
 			/>
 
+			<!-- Marker and formatting compose one numbering pattern. -->
 			<Field.Field class="max-w-2xs">
-				<Field.Label for="stepbox-subdelta-numbering-body">Sub-Delta Numbering</Field.Label>
-				<Select.Root
-					name="stepbox-subdelta-formatting"
-					type="single"
-					value={numberingBody || 'None'}
-					onValueChange={(value) => {
-						numberingBody = (value === 'None' ? null : value) as NumberingBody;
-						numberingUpdate();
-					}}
-				>
-					<Select.Trigger>{numberingBody || 'None'}</Select.Trigger>
-					<Select.Content>
-						{#each [...numberingBodyOptions, ...subDeltaMarkerOptions] as option (option)}
-							<Select.Item value={option || 'None'}>{option || 'None'}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
-			</Field.Field>
+				<Field.Label>Sub-Delta Numbering</Field.Label>
+				<div class="flex items-end gap-2">
+					<div class="flex min-w-0 flex-1 flex-col gap-1.5">
+						<Field.Label
+							for="stepbox-subdelta-numbering-body"
+							class="text-muted-foreground text-xs font-normal"
+						>
+							Marker
+						</Field.Label>
+						<Select.Root
+							name="stepbox-subdelta-numbering-body"
+							type="single"
+							value={numberingBody || 'None'}
+							onValueChange={(value) => {
+								numberingBody = (value === 'None' ? null : value) as NumberingBody;
+								numberingUpdate();
+							}}
+						>
+							<Select.Trigger>{numberingBody || 'None'}</Select.Trigger>
+							<Select.Content>
+								{#each [...numberingBodyOptions, ...subDeltaMarkerOptions] as option (option)}
+									<Select.Item value={option || 'None'}>{option || 'None'}</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					</div>
 
-			<Field.Field class="max-w-2xs">
-				<Field.Label for="stepbox-subdelta-numbering-formatting"
-					>Sub-Delta Numbering Formatting</Field.Label
-				>
-				<Select.Root
-					name="stepbox-subdelta-numbering-formatting"
-					type="single"
-					disabled={isMarker}
-					value={numberingFormatting || 'None'}
-					onValueChange={(value) => {
-						numberingFormatting = (value === 'None' ? null : value) as NumberingFormatting;
-						numberingUpdate();
-					}}
-				>
-					<Select.Trigger>{numberingFormatting || 'None'}</Select.Trigger>
-					<Select.Content>
-						{#each numberingFormattingOptions as format (format)}
-							<Select.Item value={format || 'None'}
-								>{format
-									? format.substring(0, 1).toUpperCase() + format.substring(1)
-									: 'None'}</Select.Item
-							>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+					<div class="flex min-w-0 flex-1 flex-col gap-1.5">
+						<Field.Label
+							for="stepbox-subdelta-numbering-formatting"
+							class="text-muted-foreground text-xs font-normal"
+						>
+							Formatting
+						</Field.Label>
+						<Select.Root
+							name="stepbox-subdelta-numbering-formatting"
+							type="single"
+							disabled={isMarker}
+							value={numberingFormatting || 'None'}
+							onValueChange={(value) => {
+								numberingFormatting = (value === 'None' ? null : value) as NumberingFormatting;
+								numberingUpdate();
+							}}
+						>
+							<Select.Trigger>{numberingFormatting || 'None'}</Select.Trigger>
+							<Select.Content>
+								{#each numberingFormattingOptions as format (format)}
+									<Select.Item value={format || 'None'}>
+										{format ? format.substring(0, 1).toUpperCase() + format.substring(1) : 'None'}
+									</Select.Item>
+								{/each}
+							</Select.Content>
+						</Select.Root>
+					</div>
+				</div>
 			</Field.Field>
 		</Field.Group>
 	</Field.Set>
@@ -1323,7 +1424,7 @@
 		<Field.Legend>Group Box</Field.Legend>
 		<Field.Description>Customise group box appearance.</Field.Description>
 		<Field.Group
-			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @md/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
+			class="grid grid-cols-1 items-start gap-x-6 gap-y-4 @lg/fields:grid-cols-2 @3xl/fields:grid-cols-3 @6xl/fields:grid-cols-4"
 		>
 			<Field.Field class="max-w-2xs">
 				<Field.Label>Tint</Field.Label>

@@ -189,6 +189,61 @@ describe('the config allowlist regression', () => {
 		expect(result.document.config.page.font).toBe('New Computer Modern');
 	});
 
+	it('defaults digit grouping to none, so older figures render unchanged', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.thousandSeparator).toBe('none');
+	});
+
+	it('keeps a chosen thousand separator through a round trip', () => {
+		const document = emptyProjectDocument();
+		document.config = {
+			...defaultConfig,
+			page: { ...defaultConfig.page, thousandSeparator: 'space' }
+		};
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.thousandSeparator).toBe('space');
+	});
+
+	it('defaults to grouping four-digit counts', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.groupFourDigits).toBe(true);
+	});
+
+	it('keeps the SI four-digit exception through a round trip', () => {
+		// SI writes 1000 but 10 000, which is a separate decision from which
+		// character does the grouping.
+		const document = emptyProjectDocument();
+		document.config = {
+			...defaultConfig,
+			page: { ...defaultConfig.page, thousandSeparator: 'space', groupFourDigits: false }
+		};
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.thousandSeparator).toBe('space');
+		expect(result.document.config.page.groupFourDigits).toBe(false);
+	});
+
+	it('falls back when a thousand separator is not one the template knows', () => {
+		// The separator is stored as a name that `figure1.typ` maps to a
+		// character, so a name it has no entry for would silently group nothing.
+		const wire = structuredClone(createProjectDocument(emptyProjectDocument()));
+		(wire.config.page as unknown as Record<string, unknown>).thousandSeparator = 'underscore';
+
+		const result = readDocument(wire);
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.thousandSeparator).toBe('none');
+	});
+
 	it('defaults the caption and title placement', () => {
 		const result = readDocument(dataV2Linear, createIdAllocator());
 		if (!result.ok) throw new Error(result.error);

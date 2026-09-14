@@ -6,6 +6,9 @@
 		aligmentOptions,
 		textAligmentOptions,
 		fontOptions,
+		thousandSeparatorOptions,
+		thousandSeparatorSample,
+		fourDigitSample,
 		titlePlacementOptions,
 		numberingBodyOptions,
 		numberingFormattingOptions,
@@ -867,6 +870,62 @@
 						{/each}
 					</Select.Content>
 				</Select.Root>
+			</Field.Field>
+
+			<Field.Field class="max-w-2xs">
+				<Field.Label for="page-thousand-separator">Thousands</Field.Label>
+				<Select.Root
+					name="page-thousand-separator"
+					type="single"
+					bind:value={styleConfig.current.page.thousandSeparator}
+				>
+					<Select.Trigger>
+						<span class="tabular-nums"
+							>{thousandSeparatorSample(styleConfig.current.page.thousandSeparator)}</span
+						>
+					</Select.Trigger>
+					<Select.Content>
+						{#each thousandSeparatorOptions as separator (separator)}
+							<Select.Item value={separator}>
+								<span class="tabular-nums">{thousandSeparatorSample(separator)}</span>
+								<span class="text-muted-foreground ml-auto pl-4 text-xs capitalize"
+									>{separator}</span
+								>
+							</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+
+				<!--
+					Whether four digits are grouped is the one case the separator alone
+					does not settle: SI writes 1000 but 10 000. Paired with the separator
+					rather than given its own field, because it is meaningless without
+					one, and disabled when there is none for the same reason.
+				-->
+				<ToggleGroup.Root
+					type="single"
+					variant="outline"
+					disabled={styleConfig.current.page.thousandSeparator === 'none'}
+					bind:value={
+						() => (styleConfig.current.page.groupFourDigits ? 'grouped' : 'plain'),
+						(next) => {
+							// A single toggle group can deselect, which would otherwise
+							// quietly mean "grouped". Keep the current choice instead.
+							if (next) styleConfig.current.page.groupFourDigits = next === 'grouped';
+						}
+					}
+				>
+					{#each [true, false] as grouped (grouped)}
+						<ToggleGroup.Item
+							name="page-group-four-digits"
+							value={grouped ? 'grouped' : 'plain'}
+							aria-label={grouped ? 'Group four-digit counts' : 'Leave four-digit counts ungrouped'}
+							class="bg-secondary tabular-nums data-[state=on]:bg-transparent"
+						>
+							{fourDigitSample(styleConfig.current.page.thousandSeparator, grouped)}
+						</ToggleGroup.Item>
+					{/each}
+				</ToggleGroup.Root>
 			</Field.Field>
 
 			<SimpleField

@@ -143,6 +143,44 @@ export const fontOptions = [
 ] as const;
 export type FontFamily = (typeof fontOptions)[number];
 
+// -------------------------------------------------------------
+// Digit grouping
+// -------------------------------------------------------------
+// Stored as a name rather than as the character itself, for the same reason
+// tints and alignments are: the separator a name stands for is a typesetting
+// decision, and `space` in particular is not the character it looks like.
+//
+// `space` is U+202F, a narrow no-break space. That is the SI form, and the
+// no-break part matters here: an ordinary space would let a count wrap across
+// two lines inside a box.
+export const thousandSeparatorOptions = ['none', 'dot', 'comma', 'space', 'apostrophe'] as const;
+export type ThousandSeparator = (typeof thousandSeparatorOptions)[number];
+
+/** The character each name stands for. Keep in step with `figure1.typ`. */
+export const thousandSeparatorCharacters: Record<ThousandSeparator, string> = {
+	none: '',
+	dot: '.',
+	comma: ',',
+	space: '\u202f',
+	apostrophe: '\u2019'
+};
+
+/**
+ * A five-digit sample, which every style groups the same way.
+ *
+ * Deliberately not four digits: whether *those* are grouped is the separate
+ * decision `groupFourDigits` makes, so a four-digit sample would show one
+ * setting answering for two.
+ */
+export function thousandSeparatorSample(separator: ThousandSeparator): string {
+	return `10${thousandSeparatorCharacters[separator]}000`;
+}
+
+/** The four-digit case, which is the only thing `groupFourDigits` changes. */
+export function fourDigitSample(separator: ThousandSeparator, grouped: boolean): string {
+	return grouped ? `1${thousandSeparatorCharacters[separator]}000` : '1000';
+}
+
 /** Whether the title block sits above or below the diagram. */
 export const titlePlacementOptions = ['top', 'bottom'] as const;
 export type TitlePlacement = (typeof titlePlacementOptions)[number];
@@ -166,6 +204,15 @@ export interface PageConfig {
 	caption: string;
 	titlePlacement: TitlePlacement;
 	font: FontFamily;
+	/** Digit grouping applied to every count in the figure. */
+	thousandSeparator: ThousandSeparator;
+	/**
+	 * Whether a four-digit count is grouped too.
+	 *
+	 * SI and several journal styles group only from five digits up, writing
+	 * 1000 but 10 000. Larger counts are unaffected either way.
+	 */
+	groupFourDigits: boolean;
 }
 
 export interface NodeConfig {
@@ -272,7 +319,9 @@ export const defaultConfig: TypstFlowchartConfig = {
 		showTitle: true,
 		caption: '',
 		titlePlacement: 'top',
-		font: 'New Computer Modern'
+		font: 'New Computer Modern',
+		thousandSeparator: 'none',
+		groupFourDigits: true
 	},
 	node: {
 		cornerRadius: 5,

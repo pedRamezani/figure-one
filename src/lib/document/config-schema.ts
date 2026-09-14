@@ -4,6 +4,7 @@ import {
 	aligmentOptions,
 	arrowOptions,
 	fontOptions,
+	thousandSeparatorOptions,
 	titlePlacementOptions,
 	tintOptions,
 	valueAligmentOptions,
@@ -56,7 +57,9 @@ export const partialFlowchartConfigSchema = z
 				showTitle: z.boolean(),
 				caption: z.string(),
 				titlePlacement: z.enum(titlePlacementOptions),
-				font: z.enum(fontOptions)
+				font: z.enum(fontOptions),
+				thousandSeparator: z.enum(thousandSeparatorOptions),
+				groupFourDigits: z.boolean()
 			})
 			.partial(),
 		node: z

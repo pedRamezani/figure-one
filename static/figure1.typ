@@ -166,8 +166,66 @@
   }
 }
 
+// Digit grouping, by the name the style stores. Keep in step with
+// `thousandSeparatorOptions` in `config.ts`.
+#let separator-mapping = (
+  "none": "",
+  "dot": ".",
+  "comma": ",",
+  "space": "\u{202F}",
+  "apostrophe": "\u{2019}",
+)
+
+// A number with its integer part split into groups of three, read from the
+// right. Anything either side of that run is carried through untouched.
+#let ascii-digits = "0123456789"
+
+#let group-digits(value, separator, group-four) = {
+  let text = str(value)
+  if separator == "" {
+    return text
+  }
+
+  let head = ""
+  let body = ""
+  let tail = ""
+
+  for character in text.codepoints() {
+    if tail != "" or (body != "" and not (character in ascii-digits)) {
+      tail += character
+    } else if character in ascii-digits {
+      body += character
+    } else {
+      head += character
+    }
+  }
+
+  // SI and several journal styles group only from five digits up, writing 1000
+  // but 10 000. Anything longer is grouped either way.
+  let smallest = if group-four { 4 } else { 5 }
+  if body.len() < smallest {
+    return head + body + tail
+  }
+
+  // `body` is ASCII digits by construction, so these indices are safe.
+  let groups = ()
+  let cut = body.len()
+  while cut > 3 {
+    groups.insert(0, body.slice(cut - 3, cut))
+    cut -= 3
+  }
+  groups.insert(0, body.slice(0, cut))
+
+  head + groups.join(separator) + tail
+}
+
 // A count wearing its configured prefix and suffix, such as "(n = 139)".
-#let formatted-value(value, prefix, suffix) = prefix + str(value) + suffix
+#let formatted-value(value, prefix, suffix) = {
+  let name = style.page.at("thousandSeparator", default: "none")
+  let separator = separator-mapping.at(name, default: "")
+  let group-four = style.page.at("groupFourDigits", default: true)
+  prefix + group-digits(value, separator, group-four) + suffix
+}
 
 // Horizontal alignment from a style name.
 #let to-align(name) = alignment-mapping.at(name)

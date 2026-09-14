@@ -1,5 +1,6 @@
 import { confirmDelete } from '@/components/ui/confirm-delete-dialog';
 
+import { rejectionReason } from './accept.ts';
 import { readDocument } from './read.ts';
 import { flowchartDocument } from './store.svelte.ts';
 
@@ -17,16 +18,14 @@ class DocumentImporter {
 		this.error = null;
 	}
 
-	/** True for the only thing this app can open. */
-	accepts(file: File): boolean {
-		return file.type === 'application/json' || file.name.toLowerCase().endsWith('.json');
-	}
-
 	async importFile(file: File): Promise<void> {
 		this.error = null;
 
-		if (!this.accepts(file)) {
-			this.error = `${file.name} is not a JSON file.`;
+		// Checked before reading rather than after: the point of the size limit is
+		// that `file.text()` on the wrong file never returns.
+		const rejection = rejectionReason(file);
+		if (rejection) {
+			this.error = rejection;
 			return;
 		}
 

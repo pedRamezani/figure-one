@@ -61,7 +61,7 @@
 
 {#if dragging}
 	<div
-		class="bg-background/80 pointer-events-none fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm"
+		class="bg-background/80 animate-in fade-in-0 pointer-events-none fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm duration-100"
 		role="presentation"
 	>
 		<div

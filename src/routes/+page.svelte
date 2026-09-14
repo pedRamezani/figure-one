@@ -50,20 +50,21 @@
 			</Resizable.Pane>
 			<Resizable.Handle />
 			<Resizable.Pane defaultSize={35} class="border-l-2 border-card">
-				<ScrollArea class="h-full">
-					<Tabs.Root value="typst" class="h-full p-4 md:px-8">
-						<Tabs.List>
-							<Tabs.Trigger value="typst">Preview</Tabs.Trigger>
-							<Tabs.Trigger value="json">Data</Tabs.Trigger>
-						</Tabs.List>
-						<Tabs.Content value="typst">
-							<TypstPreview />
-						</Tabs.Content>
-						<Tabs.Content value="json">
-							<JsonPreview />
-						</Tabs.Content>
-					</Tabs.Root>
-				</ScrollArea>
+				<!-- No scroller on the pane itself. The pane is a fixed-height column: the
+				     tab list and the export bar keep their size and only the region between
+				     them scrolls, so the controls cannot be pushed below the fold. -->
+				<Tabs.Root value="typst" class="h-full min-h-0 p-4 md:px-8">
+					<Tabs.List class="shrink-0">
+						<Tabs.Trigger value="typst">Preview</Tabs.Trigger>
+						<Tabs.Trigger value="json">Data</Tabs.Trigger>
+					</Tabs.List>
+					<Tabs.Content value="typst" class="min-h-0">
+						<TypstPreview />
+					</Tabs.Content>
+					<Tabs.Content value="json" class="min-h-0">
+						<JsonPreview />
+					</Tabs.Content>
+				</Tabs.Root>
 			</Resizable.Pane>
 		</Resizable.PaneGroup>
 	</SvelteFlowProvider>

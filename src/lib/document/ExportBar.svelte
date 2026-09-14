@@ -128,7 +128,7 @@
 
 <svelte:document onkeydown={handleKeydown} />
 
-<div class="flex flex-col gap-2">
+<div class="flex shrink-0 flex-col gap-2">
 	{#if shownError}
 		<p class="text-destructive text-sm" role="alert">{shownError}</p>
 	{/if}

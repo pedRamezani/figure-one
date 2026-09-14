@@ -38,7 +38,7 @@
 	});
 </script>
 
-<div class="flex flex-col h-full gap-2 py-4">
+<div class="flex flex-col h-full min-h-0 gap-2 py-4">
 	<TypstDocument
 		{source}
 		sourceShadowMappings={{

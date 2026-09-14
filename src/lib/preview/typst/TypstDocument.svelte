@@ -211,7 +211,7 @@
 	});
 </script>
 
-<div class="h-full">
+<div class="h-full min-h-0 overflow-hidden">
 	{#if svgHTML}
 		<SvgPanZoom class={cn('typst-app', className)}>
 			{#snippet svg()}

@@ -33,7 +33,7 @@
 			<Resizable.Pane defaultSize={65}>
 				<ScrollArea class="h-full">
 					<Tabs.Root value="flow" class="h-full">
-						<Tabs.List class="absolute top-4 left-4 md:top-8 md:left-8 z-10">
+						<Tabs.List class="absolute top-4 left-4 z-10">
 							<Tabs.Trigger value="flow">Flow</Tabs.Trigger>
 							<Tabs.Trigger value="style" title="Config" aria-label="Config"
 								><SettingsIcon /></Tabs.Trigger
@@ -42,7 +42,7 @@
 						<Tabs.Content value="flow">
 							<Flow />
 						</Tabs.Content>
-						<Tabs.Content value="style" class="p-4 md:p-8 pt-16 md:pt-20">
+						<Tabs.Content value="style" class="p-4 md:px-8 pt-16 md:pt-16">
 							<StyleConfigurator />
 						</Tabs.Content>
 					</Tabs.Root>
@@ -51,7 +51,7 @@
 			<Resizable.Handle />
 			<Resizable.Pane defaultSize={35} class="border-l-2 border-card">
 				<ScrollArea class="h-full">
-					<Tabs.Root value="typst" class="h-full p-4 md:p-8">
+					<Tabs.Root value="typst" class="h-full p-4 md:px-8">
 						<Tabs.List>
 							<Tabs.Trigger value="typst">Preview</Tabs.Trigger>
 							<Tabs.Trigger value="json">Data</Tabs.Trigger>

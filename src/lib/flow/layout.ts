@@ -86,12 +86,19 @@ export function getLayoutedElements(
 		};
 	});
 
-	const counts: {
-		[key: string]: {
-			x: number;
-			y: number;
-		};
-	} = {};
+	/**
+	 * Where the next attachment for each anchor goes.
+	 *
+	 * `lastWidth` is the width of the node most recently placed against this
+	 * anchor. The cursor has to advance by that, not by the width of the node
+	 * about to be placed, which is what it used to do: the two only agree when
+	 * every attachment happens to be the same width.
+	 */
+	const cursors: Record<string, { x: number; y: number; lastWidth: number }> = {};
+
+	/** What a node actually measures, falling back to any width it declares. */
+	const measuredWidth = (node: Node) => node.measured?.width ?? node.width ?? 0;
+	const measuredHeight = (node: Node) => node.measured?.height ?? node.height ?? 0;
 	// Sub-populations belong to the population box and substeps to the exclusion
 	// box beside it, so grouping by type keeps the two lists from interleaving
 	// on the canvas. Within a type, the existing order by anchor position is
@@ -134,29 +141,29 @@ export function getLayoutedElements(
 				return { ...ssNode, position: { x: 0, y: 0 } } as Node;
 			}
 
-			if (!(anchorNode.id in counts)) {
-				const [anchorAnchorX, anchorAnchorY] = anchorNode?.origin ?? [0, 0];
-				const anchorNodeWidth = anchorNode?.measured?.width ?? 0;
-				const anchorNodeHeight = anchorNode?.measured?.height ?? 0;
-				const anchorNodeX = (anchorNode?.position.x ?? 0) - anchorAnchorX * anchorNodeWidth;
-				const anchorNodeY = (anchorNode?.position.y ?? 0) - anchorAnchorY * anchorNodeHeight;
-				counts[anchorNode.id] = {
-					x: anchorNodeX + anchorNodeWidth + gap,
-					y: anchorNodeY
+			const width = measuredWidth(ssNode);
+			const cursor = cursors[anchorNode.id];
+
+			if (cursor === undefined) {
+				const [anchorOriginX, anchorOriginY] = anchorNode.origin ?? [0, 0];
+				const anchorWidth = measuredWidth(anchorNode);
+				const anchorHeight = measuredHeight(anchorNode);
+
+				cursors[anchorNode.id] = {
+					x: anchorNode.position.x - anchorOriginX * anchorWidth + anchorWidth + gap,
+					y: anchorNode.position.y - anchorOriginY * anchorHeight,
+					lastWidth: width
 				};
 			} else {
-				const nodeWidth = ssNode?.measured?.width ?? 0;
-				counts[anchorNode.id] = {
-					...counts[anchorNode.id],
-					x: counts[anchorNode.id].x + nodeWidth + gap
-				};
+				cursor.x += cursor.lastWidth + gap;
+				cursor.lastWidth = width;
 			}
 
-			const [anchorX, anchorY] = ssNode.origin ?? [0, 0];
+			const [originX, originY] = ssNode.origin ?? [0, 0];
 			// We are shifting the node position (anchor=top left) to the anchor
 			// so it matches the Svelte Flow node anchor point (default: top left).
-			const x = counts[anchorNode.id].x + anchorX * (ssNode.measured?.width ?? 0);
-			const y = counts[anchorNode.id].y + anchorY * (ssNode.measured?.height ?? 0);
+			const x = cursors[anchorNode.id].x + originX * width;
+			const y = cursors[anchorNode.id].y + originY * measuredHeight(ssNode);
 
 			return {
 				...ssNode,

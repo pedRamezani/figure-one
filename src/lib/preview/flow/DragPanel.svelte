@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { MediaQuery } from 'svelte/reactivity';
 	import { buttonVariants } from '@/components/ui/button/index.js';
 
 	import OpenIcon from '@lucide/svelte/icons/blocks';
@@ -9,8 +8,6 @@
 	import { Button } from '@/components/ui/button/index.js';
 	import * as Card from '@/components/ui/card/index.js';
 	import * as Popover from '@/components/ui/popover/index.js';
-
-	const medium = new MediaQuery('max-width: 48rem');
 
 	const panelTitel = 'Available nodes';
 	const panelDescription = 'Click or drag to add nodes.';
@@ -25,6 +22,15 @@
 	import { scale } from 'svelte/transition';
 
 	const { screenToFlowPosition } = useSvelteFlow();
+
+	// Which form the panel takes is a question about the canvas, not about the
+	// device: the resizable handle can leave a desktop with a canvas narrower
+	// than a phone's. So both forms are rendered and the `canvas` container query
+	// declared in `Flow.svelte` picks one.
+	//
+	// The card's width is capped in container units so the buttons wrap into
+	// rows as the canvas narrows, and the cap leaves the zoom controls in the
+	// opposite corner room to stay clear.
 
 	// Click-add places the node where you are already looking.
 	// It cascades the nodes to avoid stacking them.
@@ -91,7 +97,8 @@
 	{/each}
 {/snippet}
 
-{#if medium.current}
+<!-- Collapsed form: everything behind one button once the card no longer fits. -->
+<div class="@md/canvas:hidden">
 	<Popover.Root>
 		<Popover.Trigger
 			title="Open Drag & Drop Panel"
@@ -114,14 +121,17 @@
 			</div>
 		</Popover.Content>
 	</Popover.Root>
-{:else}
-	<Card.Root>
-		<Card.Header>
-			<Card.Title>{panelTitel}</Card.Title>
-			<Card.Description>{panelDescription}</Card.Description>
-		</Card.Header>
-		<Card.Content class="flex gap-4 min-w-sm">
-			{@render panelContent()}
-		</Card.Content>
-	</Card.Root>
-{/if}
+</div>
+
+<!-- Expanded form, capped against the canvas so the buttons wrap rather than
+     overflow it. The 6rem allowance covers the panel's own 15px margins and
+     keeps the card off the zoom controls in the opposite corner. -->
+<Card.Root class="@max-md/canvas:hidden max-w-[calc(100cqi-6rem)]">
+	<Card.Header>
+		<Card.Title>{panelTitel}</Card.Title>
+		<Card.Description>{panelDescription}</Card.Description>
+	</Card.Header>
+	<Card.Content class="flex flex-wrap gap-2">
+		{@render panelContent()}
+	</Card.Content>
+</Card.Root>

@@ -174,7 +174,11 @@
 
 <ConfirmDeleteDialog />
 
+<!-- Named query container for the overlay panels. They are positioned against
+     the canvas, so what they have to fit is the canvas width, which the resizable
+     handle changes without the viewport changing at all. -->
 <SvelteFlow
+	class="@container/canvas"
 	bind:nodes={flowchartDocument.nodes}
 	bind:edges={flowchartDocument.edges}
 	{nodeTypes}

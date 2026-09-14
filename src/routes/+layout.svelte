@@ -8,10 +8,10 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>Flowchart Generator</title>
+	<title>Figure One</title>
 	<meta
 		name="description"
-		content="Easily create your consort flowchart in this node editor by dragging and dropping."
+		content="Build CONSORT and PRISMA participant flow diagrams in a drag-and-drop editor, and export them as a print-ready PDF, SVG or PNG."
 	/>
 
 	<link rel="preconnect" href="https://rsms.me/" />

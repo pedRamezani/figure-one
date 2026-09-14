@@ -12,7 +12,7 @@
 	</Popover.Trigger>
 	<Popover.Content align="end">
 		<div class="space-y-2">
-			<h4 class="leading-none font-medium">Flowchart Generator</h4>
+			<h4 class="leading-none font-medium">Figure One</h4>
 			<p class="text-muted-foreground text-sm">
 				Simply drag and drop from the node handles to generate your Flowchart!
 			</p>

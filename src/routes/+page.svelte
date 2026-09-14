@@ -7,6 +7,7 @@
 
 	import DocumentSync from '@/document/DocumentSync.svelte';
 	import DropZone from '@/document/DropZone.svelte';
+	import ExportBar from '@/document/ExportBar.svelte';
 	import Flow from '@/preview/flow/Flow.svelte';
 	import JsonPreview from '@/preview/json/JsonPreview.svelte';
 	import StyleConfigurator from '@/preview/style/StyleConfigurator.svelte';
@@ -52,19 +53,27 @@
 			<Resizable.Pane defaultSize={35} class="border-l-2 border-card">
 				<!-- No scroller on the pane itself. The pane is a fixed-height column: the
 				     tab list and the export bar keep their size and only the region between
-				     them scrolls, so the controls cannot be pushed below the fold. -->
-				<Tabs.Root value="typst" class="h-full min-h-0 p-4 md:px-8">
-					<Tabs.List class="shrink-0">
-						<Tabs.Trigger value="typst">Preview</Tabs.Trigger>
-						<Tabs.Trigger value="json">Data</Tabs.Trigger>
-					</Tabs.List>
-					<Tabs.Content value="typst" class="min-h-0">
-						<TypstPreview />
-					</Tabs.Content>
-					<Tabs.Content value="json" class="min-h-0">
-						<JsonPreview />
-					</Tabs.Content>
-				</Tabs.Root>
+				     them scrolls, so the controls cannot be pushed below the fold.
+
+				     The export bar sits outside the tabs because the name it carries governs
+				     every artifact, not just the data file, so it should not come and go with
+				     the tab that happens to be open. -->
+				<div class="@container flex h-full min-h-0 flex-col gap-2 p-4 md:px-8">
+					<Tabs.Root value="typst" class="min-h-0 grow">
+						<Tabs.List class="shrink-0">
+							<Tabs.Trigger value="typst">Preview</Tabs.Trigger>
+							<Tabs.Trigger value="json">Data</Tabs.Trigger>
+						</Tabs.List>
+						<Tabs.Content value="typst" class="min-h-0">
+							<TypstPreview />
+						</Tabs.Content>
+						<Tabs.Content value="json" class="min-h-0">
+							<JsonPreview />
+						</Tabs.Content>
+					</Tabs.Root>
+
+					<ExportBar />
+				</div>
 			</Resizable.Pane>
 		</Resizable.PaneGroup>
 	</SvelteFlowProvider>

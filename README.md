@@ -56,10 +56,7 @@ src/lib/
   preview/    The four views — flow, style, Typst, JSON — and the Typst template's inputs
   components/ ui/ is shadcn; composed/ is what is built on top of it
 static/figure1.typ   The Typst template that draws the figure
-docs/adr/            Decisions worth keeping, and why
 ```
-
-The graph is the single source of truth. Rows, layout and the data export are all derived from it rather than stored alongside it — see [`docs/adr/0001`](docs/adr/0001-rows-are-derived-from-the-graph.md).
 
 ## Licence
 

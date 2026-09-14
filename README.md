@@ -66,4 +66,4 @@ Inter, in `static/fonts/`, is licensed separately under the [SIL Open Font Licen
 
 ## Citing
 
-If Figure One produced a figure in your paper, [`CITATION.cff`](CITATION.cff) has the details, and GitHub's **Cite this repository** button will format it for you.
+If Figure One produced a figure for your paper, please consider citing this repository. [`CITATION.cff`](CITATION.cff) has the details, and GitHub's **Cite this repository** button will format it for you.

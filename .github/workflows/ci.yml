@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # The whole-project checks live here rather than in the pre-commit hook.
+      # `svelte-check` typechecks the project graph and cannot be narrowed to
+      # the files being committed, so putting it in a hook costs that time on
+      # every commit -- which is how hooks end up routinely bypassed.
+      - name: Typecheck
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      # A green typecheck does not imply the app bundles: the Typst WASM and
+      # the Cloudflare adapter only get exercised here.
+      - name: Build
+        run: npm run build

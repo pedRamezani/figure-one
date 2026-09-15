@@ -12,6 +12,19 @@ const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
+	{
+		// A vendored, minified third-party colour picker and its hand-written
+		// declarations. Linting them produces many errors and none of them are
+		// actionable, because the file is not ours to edit.
+		// `components/ui` is a registry mirror, written by shadcn-svelte and by
+		// `@ieedan/shadcn-svelte-extras` through jsrepo, so a fix there is
+		// overwritten by the next update. See `components/composed/README.md`.
+		ignores: [
+			'src/lib/components/ui/**',
+			'src/lib/components/composed/color-picker/colorpicker.min.js',
+			'src/lib/components/composed/color-picker/colorpicker.d.ts'
+		]
+	},
 	js.configs.recommended,
 	...ts.configs.recommended,
 	...svelte.configs.recommended,

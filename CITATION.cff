@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+title: Figure One
+abstract: >-
+  A browser-based editor for CONSORT and PRISMA participant flow diagrams.
+  Boxes and their counts are arranged on a node canvas, and the figure is
+  typeset with Typst for export as PDF, SVG or PNG at a chosen resolution.
+  Styling covers the details journals ask about, including fonts, digit
+  grouping, box fills and arrow forms. A flowchart is stored as a plain JSON
+  project file that can be reopened, shared, or kept alongside the manuscript.
+type: software
+authors:
+  - given-names: Pedram
+    family-names: Ramezani
+    email: me@pedramramezani.de
+repository-code: https://github.com/pedRamezani/figure-one
+license: MIT
+url: https://figureone.app
+keywords:
+  - CONSORT
+  - PRISMA
+  - flow diagram
+  - reporting guidelines
+  - clinical trial
+  - systematic review
+  - Typst
+  - research software

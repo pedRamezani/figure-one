@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onMount } from 'svelte';
 
 	import * as typst from '@myriaddreamin/typst.ts';
 	import { createGlobalRenderer } from '@myriaddreamin/typst.ts/dist/esm/contrib/global-renderer.mjs';
@@ -19,7 +19,7 @@
 
 	import { cn } from '@/utils';
 	import './typst.css';
-	import SvgPanZoom from './SvgPanZoom.svelte';
+	import { SvgPanZoom } from '@/components/composed/svg-pan-zoom';
 	import { Skeleton } from '$lib/components/ui/skeleton/index.js';
 
 	/* ---------------- props ---------------- */
@@ -59,7 +59,11 @@
 	const accessModel = new MemoryAccessModel();
 	const compilerInitOpts: typst.InitOptions = {
 		beforeBuild: [
-			loadFonts([]),
+			// Inter is the only proportional sans available: the compiler embeds
+			// only serif and monospace faces, and an unknown family falls back
+			// silently rather than erroring. Served from static/ so the figure
+			// renders the same offline and on every machine.
+			loadFonts(['/fonts/Inter-Regular.ttf', '/fonts/Inter-Bold.ttf']),
 			withAccessModel(accessModel),
 			withPackageRegistry(new FetchPackageRegistry(accessModel))
 		],
@@ -207,10 +211,11 @@
 	});
 </script>
 
-<div class="h-full">
+<div class="h-full min-h-0 overflow-hidden">
 	{#if svgHTML}
 		<SvgPanZoom class={cn('typst-app', className)}>
 			{#snippet svg()}
+				<!-- eslint-disable-next-line svelte/no-at-html-tags -- SVG produced by the Typst compiler in this page, not user input -->
 				{@html svgHTML}
 			{/snippet}
 		</SvgPanZoom>

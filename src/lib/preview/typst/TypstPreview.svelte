@@ -1,102 +1,44 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { useSvelteFlow } from '@xyflow/svelte';
 	import TypstDocument from './TypstDocument.svelte';
 
-	import { downloadBlob } from '../../index.ts';
 	import { convertFlowchartToTypstFlowchartData } from '../json/convert.ts';
-	import { styleConfig } from '../style/style-config.svelte.ts';
 
-	import * as ButtonGroup from '$lib/components/ui/button-group/index.js';
-	import * as Select from '$lib/components/ui/select/index.js';
-	import { Button } from '@/components/ui/button/index.js';
+	import { exporters } from '@/document/exporters.svelte';
+	import { hydrateGraph } from '@/document/graph-schema';
+	import { flowchartDocument } from '@/document/store.svelte';
 
-	import DownloadIcon from '@lucide/svelte/icons/download';
-	import ImageDownloadIcon from '@lucide/svelte/icons/image-down';
-	import FileDownIcon from '@lucide/svelte/icons/file-down';
+	// Rendering only. The download buttons moved to the single export menu next
+	// to the project name, so that one name governs all four artifacts; this
+	// component registers what it can produce and the menu offers it.
 
-	const { toObject } = useSvelteFlow();
-	const flowchartData = $derived(convertFlowchartToTypstFlowchartData(toObject()));
+	const flowchartData = $derived(
+		convertFlowchartToTypstFlowchartData(hydrateGraph(flowchartDocument.snapshot().graph))
+	);
+
 	const encoder = new TextEncoder();
 	const encodedFlowchartJsonData = $derived(encoder.encode(JSON.stringify(flowchartData)));
-	const encodedStyleConfigData = $derived(encoder.encode(JSON.stringify(styleConfig.current)));
+	const encodedStyleConfigData = $derived(encoder.encode(JSON.stringify(flowchartDocument.config)));
 
 	let source: string | undefined = $state();
 	onMount(() => {
 		fetch('figure1.typ').then((response) => response.text().then((text) => (source = text)));
 	});
 
-	// PDF Download
 	let compilePdf = $state<(() => Promise<Uint8Array<ArrayBufferLike> | undefined>) | undefined>();
-	const exportPdf = (pdfData: Uint8Array<ArrayBufferLike> | undefined) => {
-		if (!pdfData) return;
-
-		const pdfDataCopy = new Uint8Array(pdfData.length);
-		pdfDataCopy.set(pdfData);
-
-		downloadBlob(pdfDataCopy, 'application/pdf', 'flowchart.pdf');
-	};
-
-	const downloadPdf = () => {
-		if (compilePdf) {
-			compilePdf().then((pdfData) => {
-				exportPdf(pdfData);
-			});
-		}
-	};
-
-	// SVG Download
 	let currentSvg: string | undefined = $state();
-	const exportSvg = (mainContent: string | undefined) => {
-		if (!mainContent) return;
 
-		downloadBlob(mainContent, 'application/svg+xml', 'flowchart.svg');
-	};
-
-	const downloadSvg = () => {
-		exportSvg(currentSvg);
-	};
-
-	// Select options
-	const DOWNLOAD_TYPES = [
-		{
-			value: 'svg',
-			icon: ImageDownloadIcon,
-			label: 'SVG'
-		},
-		{
-			value: 'pdf',
-			icon: FileDownIcon,
-			label: 'PDF'
-		}
-	];
-	let downloadType = $state('pdf');
-	let disabled = $derived.by(() => {
-		if (downloadType == 'pdf') {
-			return !compilePdf;
-		}
-
-		if (downloadType == 'svg') {
-			return !currentSvg;
-		}
-
-		return false;
+	$effect(() => {
+		exporters.compilePdf = compilePdf ?? null;
 	});
-	let onclick = $derived.by(() => {
-		if (downloadType == 'pdf') {
-			return downloadPdf;
-		}
 
-		if (downloadType == 'svg') {
-			return downloadSvg;
-		}
-
-		return () => {};
+	$effect(() => {
+		exporters.svg = currentSvg ?? null;
 	});
 </script>
 
-<div class="flex flex-col h-full gap-2 py-4">
+<div class="flex flex-col h-full min-h-0 gap-2 py-4">
 	<TypstDocument
 		{source}
 		sourceShadowMappings={{
@@ -109,26 +51,4 @@
 		bind:compilePdf
 		class="grow"
 	/>
-
-	<ButtonGroup.Root class="self-end" aria-label="Download options">
-		<Button variant="outline" {disabled} {onclick}
-			><DownloadIcon />Download {DOWNLOAD_TYPES.find((option) => option.value == downloadType)
-				?.label}</Button
-		>
-		<Select.Root type="single" bind:value={downloadType} required={true}>
-			<Select.Trigger
-				class="border-inherit"
-				title="Select Download Type"
-				aria-label="Select Download Type"
-			/>
-			<Select.Content class="min-w-24">
-				{#each DOWNLOAD_TYPES as downloadOption (downloadOption.value)}
-					<Select.Item value={downloadOption.value}>
-						<downloadOption.icon />
-						<span class="text-muted-foreground">{downloadOption.label}</span>
-					</Select.Item>
-				{/each}
-			</Select.Content>
-		</Select.Root>
-	</ButtonGroup.Root>
 </div>

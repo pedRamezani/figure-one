@@ -5,6 +5,9 @@
 	import { ScrollArea } from '$lib/components/ui/scroll-area/index.js';
 	import * as Tabs from '@/components/ui/tabs/index.js';
 
+	import DocumentSync from '@/document/DocumentSync.svelte';
+	import DropZone from '@/document/DropZone.svelte';
+	import ExportBar from '@/document/ExportBar.svelte';
 	import Flow from '@/preview/flow/Flow.svelte';
 	import JsonPreview from '@/preview/json/JsonPreview.svelte';
 	import StyleConfigurator from '@/preview/style/StyleConfigurator.svelte';
@@ -20,6 +23,9 @@
 	);
 </script>
 
+<DocumentSync />
+<DropZone />
+
 <main class="flex w-auto h-dvh" bind:clientHeight={height} bind:clientWidth={width}>
 	<!-- fitView -->
 	<!-- You need the SvelteFlowProvider so you can useSvelteFlow  -->
@@ -28,7 +34,7 @@
 			<Resizable.Pane defaultSize={65}>
 				<ScrollArea class="h-full">
 					<Tabs.Root value="flow" class="h-full">
-						<Tabs.List class="absolute top-4 left-4 md:top-8 md:left-8 z-10">
+						<Tabs.List class="absolute top-4 left-4 z-10">
 							<Tabs.Trigger value="flow">Flow</Tabs.Trigger>
 							<Tabs.Trigger value="style" title="Config" aria-label="Config"
 								><SettingsIcon /></Tabs.Trigger
@@ -37,7 +43,7 @@
 						<Tabs.Content value="flow">
 							<Flow />
 						</Tabs.Content>
-						<Tabs.Content value="style" class="p-4 md:p-8 pt-16 md:pt-20">
+						<Tabs.Content value="style" class="p-4 md:px-8 pt-16 md:pt-16">
 							<StyleConfigurator />
 						</Tabs.Content>
 					</Tabs.Root>
@@ -45,20 +51,29 @@
 			</Resizable.Pane>
 			<Resizable.Handle />
 			<Resizable.Pane defaultSize={35} class="border-l-2 border-card">
-				<ScrollArea class="h-full">
-					<Tabs.Root value="typst" class="h-full p-4 md:p-8">
-						<Tabs.List>
+				<!-- No scroller on the pane itself. The pane is a fixed-height column: the
+				     tab list and the export bar keep their size and only the region between
+				     them scrolls, so the controls cannot be pushed below the fold.
+
+				     The export bar sits outside the tabs because the name it carries governs
+				     every artifact, not just the data file, so it should not come and go with
+				     the tab that happens to be open. -->
+				<div class="@container flex h-full min-h-0 flex-col gap-2 p-4 md:px-8">
+					<Tabs.Root value="typst" class="min-h-0 grow">
+						<Tabs.List class="shrink-0">
 							<Tabs.Trigger value="typst">Preview</Tabs.Trigger>
-							<Tabs.Trigger value="json">Profile</Tabs.Trigger>
+							<Tabs.Trigger value="json">Data</Tabs.Trigger>
 						</Tabs.List>
-						<Tabs.Content value="typst">
+						<Tabs.Content value="typst" class="min-h-0">
 							<TypstPreview />
 						</Tabs.Content>
-						<Tabs.Content value="json">
+						<Tabs.Content value="json" class="min-h-0">
 							<JsonPreview />
 						</Tabs.Content>
 					</Tabs.Root>
-				</ScrollArea>
+
+					<ExportBar />
+				</div>
 			</Resizable.Pane>
 		</Resizable.PaneGroup>
 	</SvelteFlowProvider>

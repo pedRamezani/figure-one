@@ -8,3 +8,6 @@ bun.lockb
 # Miscellaneous
 /static/
 /node_modules/
+
+# Vendored, minified. Not ours to format.
+src/lib/components/composed/color-picker/colorpicker.min.js

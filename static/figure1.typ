@@ -61,10 +61,10 @@
   width: auto,
   height: auto,
   margin: style.page.margin * 1mm,
-  fill: get-tint(style.page.tint).lighten(80%),
+  fill: if style.page.transparent { none } else { get-tint(style.page.tint).lighten(80%) },
 )
 
-#set text(font: "New Computer Modern")
+#set text(font: style.page.font)
 
 // ============================
 // Styled primitives
@@ -143,6 +143,300 @@
 }
 
 // ----------------------------
+// Small helpers
+// ----------------------------
+// Bold when the style asks for it.
+#let weighted(body, bold) = if bold { strong(body) } else { body }
+
+// Text as the user typed it, honouring the line breaks they put in.
+//
+// Typst treats a newline inside a string as ordinary whitespace, so it would
+// otherwise come out as a space. Anything that is already content passes
+// through untouched, which makes this safe to apply anywhere a label is used.
+#let rich-text(value) = {
+  if type(value) != str {
+    return value
+  }
+
+  for (index, line) in value.split("\n").enumerate() {
+    if index > 0 {
+      linebreak()
+    }
+    line
+  }
+}
+
+// Digit grouping, by the name the style stores. Keep in step with
+// `thousandSeparatorOptions` in `config.ts`.
+#let separator-mapping = (
+  "none": "",
+  "dot": ".",
+  "comma": ",",
+  "space": "\u{202F}",
+  "apostrophe": "\u{2019}",
+)
+
+// A number with its integer part split into groups of three, read from the
+// right. Anything either side of that run is carried through untouched.
+#let ascii-digits = "0123456789"
+
+#let group-digits(value, separator, group-four) = {
+  let text = str(value)
+  if separator == "" {
+    return text
+  }
+
+  let head = ""
+  let body = ""
+  let tail = ""
+
+  for character in text.codepoints() {
+    if tail != "" or (body != "" and not (character in ascii-digits)) {
+      tail += character
+    } else if character in ascii-digits {
+      body += character
+    } else {
+      head += character
+    }
+  }
+
+  // SI and several journal styles group only from five digits up, writing 1000
+  // but 10 000. Anything longer is grouped either way.
+  let smallest = if group-four { 4 } else { 5 }
+  if body.len() < smallest {
+    return head + body + tail
+  }
+
+  // `body` is ASCII digits by construction, so these indices are safe.
+  let groups = ()
+  let cut = body.len()
+  while cut > 3 {
+    groups.insert(0, body.slice(cut - 3, cut))
+    cut -= 3
+  }
+  groups.insert(0, body.slice(0, cut))
+
+  head + groups.join(separator) + tail
+}
+
+// A count wearing its configured prefix and suffix, such as "(n = 139)".
+#let formatted-value(value, prefix, suffix) = {
+  let name = style.page.at("thousandSeparator", default: "none")
+  let separator = separator-mapping.at(name, default: "")
+  let group-four = style.page.at("groupFourDigits", default: true)
+  prefix + group-digits(value, separator, group-four) + suffix
+}
+
+// Horizontal alignment from a style name.
+#let to-align(name) = alignment-mapping.at(name)
+
+// A "text-*" mode puts the value beside the label; anything else stacks it
+// underneath.
+#let beside-label(mode) = mode.starts-with("text")
+
+// Within a beside-label mode, whether the value comes first.
+#let value-leads(mode) = mode.ends-with("left")
+
+// The label and value in reading order for a beside-label layout.
+#let ordered-spans(label, value, mode) = if value-leads(mode) {
+  (value, label)
+} else {
+  (label, value)
+}
+
+// ----------------------------
+// Label and value layout
+// ----------------------------
+// Grid cells align to the top so a label that wraps onto several lines keeps
+// its value level with the first line rather than floating to the middle.
+#let labelled-value(label, value, mode, gutter: 0.4em, label-bold: false, value-bold: false) = {
+  let label = weighted(rich-text(label), label-bold)
+  let value = weighted(rich-text(value), value-bold)
+
+  if beside-label(mode) {
+    grid(
+      ..ordered-spans(label, value, mode),
+      inset: 0pt,
+      column-gutter: gutter,
+      columns: 2,
+      align: top,
+    )
+  } else {
+    label + pad(align(value, to-align(mode)), top: -0.5em)
+  }
+}
+
+// ----------------------------
+// Value lists
+// ----------------------------
+// Two lists in this figure behave identically: the exclusion reasons under a
+// delta, and the sub-populations under a population box. A spec gathers the
+// settings each needs so one implementation serves both.
+#let sub-delta-spec(s) = (
+  marker: s.subDeltaMarker,
+  numbering: s.subDeltaNumbering,
+  align: s.subDeltaAlign,
+  text-align: s.subDeltaTextAlign,
+  prefix: s.subDeltaPrefix,
+  suffix: s.subDeltaSuffix,
+  label-bold: s.subDeltaLabelBold,
+  value-bold: s.subDeltaValueBold,
+  show-value: s.showSubDeltaValue,
+  indent: s.subDeltaIndent,
+)
+
+#let sub-population-spec(m) = (
+  marker: m.subPopulationMarker,
+  numbering: m.subPopulationNumbering,
+  align: m.subPopulationAlign,
+  text-align: m.subPopulationTextAlign,
+  prefix: m.subPopulationPrefix,
+  suffix: m.subPopulationSuffix,
+  label-bold: m.subPopulationLabelBold,
+  value-bold: m.subPopulationValueBold,
+  show-value: m.showSubPopulationValue,
+  indent: m.subPopulationIndent,
+)
+
+// The bullet or number shown before an item. At most one of the two is set.
+//
+// Uses the native list and enum so markers and numbers pick up Typst's own
+// spacing and styling rather than being hand-placed text. The body is empty
+// because the label sits in the next grid column, not inside the item.
+#let sub-marker(spec, index) = {
+  if spec.marker != none {
+    list(marker: spec.marker, body-indent: 0mm, list.item[])
+  } else if spec.numbering != none {
+    enum(numbering: spec.numbering, body-indent: 0mm, enum.item(index + 1)[])
+  }
+}
+
+// A list of labels with their counts.
+#let value-list(spec, items) = {
+  let has-marker = spec.marker != none or spec.numbering != none
+  let stacked = not beside-label(spec.align)
+  let content-columns = if not spec.show-value or stacked { 1 } else { 2 }
+
+  let cells-for(i, item) = {
+    let value-text = formatted-value(item.value, spec.prefix, spec.suffix)
+
+    let cells = if not spec.show-value {
+      (weighted(rich-text(item.label), spec.label-bold),)
+    } else if stacked {
+      (
+        labelled-value(
+          item.label,
+          value-text,
+          spec.align,
+          label-bold: spec.label-bold,
+          value-bold: spec.value-bold,
+        ),
+      )
+    } else {
+      ordered-spans(
+        weighted(rich-text(item.label), spec.label-bold),
+        weighted(value-text, spec.value-bold),
+        spec.align,
+      )
+    }
+
+    if has-marker {
+      (sub-marker(spec, i), ..cells)
+    } else {
+      cells
+    }
+  }
+
+  // Top, so a wrapped label keeps its count on the first line.
+  let column-alignment = {
+    let cols = if not spec.show-value {
+      // One column, positioned as a block by the spec's text alignment.
+      (top + left,)
+    } else if stacked {
+      (top + to-align(spec.align),)
+    } else if value-leads(spec.align) {
+      (top + right, top + left)
+    } else {
+      (top + left, top + right)
+    }
+
+    if has-marker {
+      (top + right, ..cols)
+    } else {
+      cols
+    }
+  }
+
+  grid(
+    ..for (i, item) in items.enumerate() {
+      cells-for(i, item)
+    },
+    inset: 0pt,
+    column-gutter: 1em / 3,
+    row-gutter: 0.65em, // Default leading between lines of text
+    columns: if has-marker { content-columns + 1 } else { content-columns },
+    align: column-alignment,
+  )
+}
+
+// The list indented under whatever it belongs to. The negative offset removes
+// the paragraph gap that would otherwise sit above it, which is why it is
+// emitted even when the list is empty.
+#let indented-list(spec, items) = pad(
+  align(to-align(spec.text-align), value-list(spec, items)),
+  left: spec.indent * 1em / 3,
+  top: if items.len() == 0 {
+    -1.2em
+  } else {
+    -1.2em + 0.65em
+  },
+)
+
+// ----------------------------
+// Box contents
+// ----------------------------
+// What goes inside a population box: its label and count, then any breakdown
+// of where that population came from.
+#let population-body(m, it) = {
+  align(
+    to-align(m.textAlign),
+    if m.showValue {
+      labelled-value(
+        it.label,
+        formatted-value(it.value, m.valuePrefix, m.valueSuffix),
+        m.valueAlign,
+        label-bold: m.labelBold,
+        value-bold: m.valueBold,
+      )
+    } else {
+      // A PRISMA start box leaves its total to the breakdown below it.
+      weighted(rich-text(it.label), m.labelBold)
+    },
+  )
+
+  // Only when there are any, so a box without them is spaced as before.
+  if it.subPopulations.len() > 0 {
+    indented-list(sub-population-spec(m), it.subPopulations)
+  }
+}
+
+// What goes inside an exclusion box: its own label and count, then its reasons.
+#let exclusion-body(s, delta) = {
+  align(
+    to-align(s.deltaTextAlign),
+    labelled-value(
+      delta.label,
+      formatted-value(delta.value, s.deltaPrefix, s.deltaSuffix),
+      s.deltaAlign,
+      gutter: 1em / 3,
+      label-bold: s.deltaLabelBold,
+      value-bold: s.deltaValueBold,
+    ),
+  )
+  indented-list(sub-delta-spec(s), delta.substeps)
+}
+
+// ----------------------------
 // Diagram
 // ----------------------------
 #let figure-1(data) = {
@@ -167,7 +461,7 @@
   let steps = (..data.steps.main, ..data.steps.splits)
 
   diagram(
-    spacing: d.spacing * 1pt,
+    spacing: (d.spacingX * 1pt, d.spacingY * 1pt),
     cell-size: (d.cellWidth * 1mm, d.cellHeight * 1mm),
     mark-scale: a.markScale * 1%,
 
@@ -185,37 +479,10 @@
         }
 
         // Population box
-        let value-fmt = m.valuePrefix + str(it.value) + m.valueSuffix
         let population-col = mapped-col(col, max-cols: max-cols)
-        let population-label = if m.valueAlign.starts-with("text") {
-          // Align Ns next to label
-          let sorted-population-spans = if m.valueAlign.ends-with("left") {
-            (value-fmt, it.label)
-          } else {
-            (it.label, value-fmt)
-          }
-          grid(
-            ..sorted-population-spans,
-            inset: 0pt,
-            column-gutter: 0.4em,
-            columns: 2,
-          )
-        } else {
-          // Align Ns below label
-          (
-            it.label
-              + pad(
-                align(
-                  value-fmt,
-                  alignment-mapping.at(m.valueAlign),
-                ),
-                top: -0.5em,
-              )
-          )
-        }
         styled-node(
           (population-col, row * 2),
-          align(alignment-mapping.at(m.textAlign), population-label),
+          population-body(m, it),
           tint: get-tint(m.tint),
           width: m.width * 1mm,
         )
@@ -233,72 +500,9 @@
           )
 
           // Exclusion box
-          let delta-fmt = s.deltaPrefix + str(it.delta.value) + s.deltaSuffix
-          let sorted-delta-spans = if s.deltaAlign.ends-with("left") {
-            (delta-fmt, it.delta.label)
-          } else {
-            (it.delta.label, delta-fmt)
-          }
           styled-node(
             (population-col + 1, row * 2 - 1),
-            grid(
-              ..sorted-delta-spans,
-              inset: 0pt,
-              column-gutter: 1em / 3,
-              columns: 2,
-            )
-            // Subdeltas
-              + pad(
-                grid(
-                  ..for (i, sub) in it.delta.substeps.enumerate() {
-                    let sub-delta-fmt = s.subDeltaPrefix + str(sub.value) + s.subDeltaSuffix
-                    let sorted-sub-delta-spans = if s.subDeltaAlign.ends-with("left") {
-                      (sub-delta-fmt, sub.label)
-                    } else {
-                      (sub.label, sub-delta-fmt)
-                    }
-
-                    if s.subDeltaNumbering != none {
-                      (
-                        enum(numbering: s.subDeltaNumbering, body-indent: 0mm, enum.item(i + 1, ""),),
-                        ..sorted-sub-delta-spans,
-                      )
-                    } else {
-                      sorted-sub-delta-spans
-                    }
-                  },
-                  inset: 0pt,
-                  column-gutter: 1em / 3,
-                  row-gutter: 0.65em, // Default leading between lines of text
-                  columns: if s.subDeltaNumbering != none {
-                    3
-                  } else {
-                    2
-                  },
-                  align: {
-                    let align = if s.subDeltaAlign.ends-with("left") {
-                      (right, left)
-                    } else {
-                      (left, right)
-                    }
-
-                    if s.subDeltaNumbering != none {
-                      (
-                        right,
-                        ..align,
-                      )
-                    } else {
-                      align
-                    }
-                  },
-                ),
-                left: s.subDeltaIndent * 1em / 3,
-                top: if it.delta.substeps.len() == 0 {
-                  -1.2em // Default spacing between paragraphs (population label and delta label)
-                } else {
-                  -1.2em + 0.65em
-                },
-              ),
+            exclusion-body(s, it.delta),
             tint: get-tint(s.tint),
             width: s.width * 1mm,
           )
@@ -375,7 +579,7 @@
       styled-node(
         // TODO: Fix this workaround
         (group-col, -1),
-        rotate(gr.label, -90deg, reflow: true),
+        rotate(rich-text(gr.label), -90deg, reflow: true),
         tint: get-tint(g.tint),
         width: auto,
         enclose: (
@@ -390,5 +594,27 @@
 // ----------------------------
 // Render
 // ----------------------------
-#heading(text(style.page.title))
+// A published figure reads "**Figure 1.** Description ...", so the title is the
+// bold part and the caption is regular weight after it.
+#let title-block() = {
+  if not style.page.showTitle {
+    return
+  }
+
+  heading({
+    text(rich-text(style.page.title))
+    if style.page.caption != "" {
+      text(weight: "regular", rich-text(" " + style.page.caption))
+    }
+  })
+}
+
+#if style.page.titlePlacement == "top" {
+  title-block()
+}
+
 #figure-1(data)
+
+#if style.page.titlePlacement == "bottom" {
+  title-block()
+}

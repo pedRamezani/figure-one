@@ -1,0 +1,423 @@
+// Pure configuration types, option lists and defaults.
+//
+// Deliberately free of runes and of any browser API, so that schemas and tests
+// can import it from plain Node. The reactive store lives in
+// `style-config.svelte.ts`, which re-exports everything here.
+
+// -------------------------------------------------------------
+// Tint Mapping Keys (Typst tint-mapping)
+// -------------------------------------------------------------
+export const tintOptions = [
+	'black',
+	'gray',
+	'silver',
+	'white',
+	'navy',
+	'blue',
+	'aqua',
+	'teal',
+	'eastern',
+	'purple',
+	'fuchsia',
+	'maroon',
+	'red',
+	'orange',
+	'yellow',
+	'olive',
+	'green',
+	'lime'
+] as const;
+export type Hex = `#${string}`;
+export type Swatch = (typeof tintOptions)[number];
+export type Tint = Swatch | Hex;
+
+// -------------------------------------------------------------
+// Arrow Body + Head Definitions
+// -------------------------------------------------------------
+export const arrowBodies = ['-', '=', '==', '--', '..'] as const;
+export type ArrowBody = (typeof arrowBodies)[number];
+
+export const arrowHeads = [
+	'>',
+	'>>',
+	'>>>',
+	'o',
+	'O',
+	'|>',
+	'}>',
+	'x',
+	'X',
+	'*',
+	'@',
+	'[]',
+	'<>'
+] as const;
+export type ArrowHead = (typeof arrowHeads)[number];
+
+// Combined arrow form, such as "-|>" or "==X"
+export type Arrow = `${ArrowBody}${ArrowHead}`;
+
+/** Every legal `${body}${head}` combination, built once. */
+export const arrowOptions: readonly Arrow[] = arrowBodies.flatMap((body) =>
+	arrowHeads.map((head) => `${body}${head}` as Arrow)
+);
+
+// -------------------------------------------------------------
+// Alignment Mapping Keys (Typst alignment-mapping)
+// -------------------------------------------------------------
+export const aligmentOptions = ['left', 'center', 'right'] as const;
+export type Alignment = (typeof aligmentOptions)[number];
+
+export const textAligmentOptions = ['text-left', 'text-right'] as const;
+export type TextAlignment = (typeof textAligmentOptions)[number];
+
+export type ValueAligment = Alignment | TextAlignment;
+
+export const valueAligmentOptions = [...aligmentOptions, ...textAligmentOptions] as const;
+
+// -------------------------------------------------------------
+// Numbering Mapping Keys (Typst alignment-mapping)
+// -------------------------------------------------------------
+export const numberingBodyOptions = [
+	null,
+	'1',
+	'a',
+	'A',
+	'i',
+	'I',
+	// 'α', // Works, but disable for now
+	// 'Α', // Works, but disable for now
+	// '一',
+	// '壹',
+	// 'あ',
+	// 'い',
+	// 'ア',
+	// 'イ',
+	// 'א',
+	// '가',
+	// 'ㄱ',
+	// '*',
+	// '١', // Works, but disable for now
+	// '۱', // Works, but disable for now
+	// '१', // Works, but disable for now
+	// '১',
+	// 'ক',
+	'①',
+	'⓵'
+] as const;
+export type NumberingBody = (typeof numberingBodyOptions)[number];
+
+/** Literal bullets offered instead of a counting pattern. */
+export const subDeltaMarkerOptions = ['•', '◦', '‣', '–'] as const;
+export type SubDeltaMarker = (typeof subDeltaMarkerOptions)[number];
+
+export const numberingFormattingOptions = [
+	null,
+	'dot',
+	'single parentheses',
+	'double parentheses'
+] as const;
+export type NumberingFormatting = (typeof numberingFormattingOptions)[number];
+
+export type Numbering =
+	| `${string}${NumberingBody extends null ? '1' : NumberingBody}${string}`
+	| null;
+
+// -------------------------------------------------------------
+// Fonts
+// -------------------------------------------------------------
+// Typst runs in the browser and cannot see locally installed fonts, so this is
+// a closed list of what the compiler embeds rather than a free text field.
+//
+// A family not in this list falls back silently to Libertinus Serif, Typst's
+// default, so it looks like a working choice that simply had no effect. Keep
+// this in step with what `TypstDocument` actually loads.
+//
+// The compiler embeds only serif and monospace faces, so Inter is shipped in
+// `static/fonts/` to provide a proportional sans. See its licence there.
+export const fontOptions = [
+	'New Computer Modern',
+	'Libertinus Serif',
+	'Inter',
+	'DejaVu Sans Mono'
+] as const;
+export type FontFamily = (typeof fontOptions)[number];
+
+// -------------------------------------------------------------
+// Digit grouping
+// -------------------------------------------------------------
+// Stored as a name rather than as the character itself, for the same reason
+// tints and alignments are: the separator a name stands for is a typesetting
+// decision, and `space` in particular is not the character it looks like.
+//
+// `space` is U+202F, a narrow no-break space. That is the SI form, and the
+// no-break part matters here: an ordinary space would let a count wrap across
+// two lines inside a box.
+export const thousandSeparatorOptions = ['none', 'dot', 'comma', 'space', 'apostrophe'] as const;
+export type ThousandSeparator = (typeof thousandSeparatorOptions)[number];
+
+/** The character each name stands for. Keep in step with `figure1.typ`. */
+export const thousandSeparatorCharacters: Record<ThousandSeparator, string> = {
+	none: '',
+	dot: '.',
+	comma: ',',
+	space: '\u202f',
+	apostrophe: '\u2019'
+};
+
+/**
+ * A five-digit sample, which every style groups the same way.
+ *
+ * Deliberately not four digits: whether *those* are grouped is the separate
+ * decision `groupFourDigits` makes, so a four-digit sample would show one
+ * setting answering for two.
+ */
+export function thousandSeparatorSample(separator: ThousandSeparator): string {
+	return `10${thousandSeparatorCharacters[separator]}000`;
+}
+
+/** The four-digit case, which is the only thing `groupFourDigits` changes. */
+export function fourDigitSample(separator: ThousandSeparator, grouped: boolean): string {
+	return grouped ? `1${thousandSeparatorCharacters[separator]}000` : '1000';
+}
+
+/** Whether the title block sits above or below the diagram. */
+export const titlePlacementOptions = ['top', 'bottom'] as const;
+export type TitlePlacement = (typeof titlePlacementOptions)[number];
+
+// -------------------------------------------------------------
+// Sub-objects of the configuration file
+// -------------------------------------------------------------
+export interface PageConfig {
+	title: string;
+	titleAlign: Alignment;
+	tint: Tint;
+	margin: number; // mm
+	/** Leaves the page unfilled, so exports composite onto whatever is behind. */
+	transparent: boolean;
+	/** Whether the title is rendered above the diagram. */
+	showTitle: boolean;
+	/**
+	 * Regular-weight text following the bold title, as a published figure reads:
+	 * **Figure 1.** CONSORT flowchart of participant selection.
+	 */
+	caption: string;
+	titlePlacement: TitlePlacement;
+	font: FontFamily;
+	/** Digit grouping applied to every count in the figure. */
+	thousandSeparator: ThousandSeparator;
+	/**
+	 * Whether a four-digit count is grouped too.
+	 *
+	 * SI and several journal styles group only from five digits up, writing
+	 * 1000 but 10 000. Larger counts are unaffected either way.
+	 */
+	groupFourDigits: boolean;
+}
+
+export interface NodeConfig {
+	cornerRadius: number; // pt
+	stroke: number; // pt
+	inset: number; // pt
+	outset: number; // pt
+}
+
+export interface EdgesConfig {
+	stroke: number; // pt
+	cornerRadius: number; // pt
+}
+
+export interface MarkConfig {
+	arrow: Arrow;
+	markScale: number; // 0–100
+}
+
+export interface DiagramConfig {
+	spacingX: number; // pt
+	spacingY: number; // pt
+	cellWidth: number; // mm
+	cellHeight: number; // mm
+}
+
+export interface MainBoxConfig {
+	tint: Tint;
+	labelBold: boolean;
+	valueBold: boolean;
+	/**
+	 * Whether the box shows its own total.
+	 *
+	 * A PRISMA start box lists where its records came from and shows no total of
+	 * its own, leaving the breakdown to speak for itself.
+	 */
+	showValue: boolean;
+	width: number | 'auto'; // mm or auto
+	textAlign: Alignment;
+	valueAlign: ValueAligment;
+	valuePrefix: string;
+	valueSuffix: string;
+	subPopulationLabelBold: boolean;
+	subPopulationValueBold: boolean;
+	showSubPopulationValue: boolean;
+	subPopulationTextAlign: Alignment;
+	subPopulationAlign: ValueAligment;
+	subPopulationPrefix: string;
+	subPopulationSuffix: string;
+	subPopulationIndent: number; // spaces
+	subPopulationNumbering: Numbering;
+	subPopulationMarker: string | null;
+}
+
+export interface StepBoxConfig {
+	tint: Tint;
+	width: number | 'auto'; // mm or auto
+	deltaLabelBold: boolean;
+	deltaValueBold: boolean;
+	deltaTextAlign: Alignment;
+	deltaAlign: ValueAligment;
+	deltaPrefix: string;
+	deltaSuffix: string;
+	subDeltaLabelBold: boolean;
+	subDeltaValueBold: boolean;
+	showSubDeltaValue: boolean;
+	subDeltaTextAlign: Alignment;
+	subDeltaAlign: ValueAligment;
+	subDeltaPrefix: string;
+	subDeltaSuffix: string;
+	subDeltaIndent: number; // spaces
+	subDeltaNumbering: Numbering;
+	subDeltaMarker: string | null;
+}
+
+export interface GroupBoxConfig {
+	tint: Tint;
+}
+
+// -------------------------------------------------------------
+// Full Flowchart Configuration Schema
+// -------------------------------------------------------------
+export interface TypstFlowchartConfig {
+	page: PageConfig;
+	node: NodeConfig;
+	edge: EdgesConfig;
+	mark: MarkConfig;
+	diagram: DiagramConfig;
+	mainBox: MainBoxConfig;
+	stepBox: StepBoxConfig;
+	groupBox: GroupBoxConfig;
+}
+
+// -------------------------------------------------------------
+// Default Values
+// -------------------------------------------------------------
+export const defaultConfig: TypstFlowchartConfig = {
+	page: {
+		title: 'Figure 1',
+		titleAlign: 'left',
+		tint: 'white',
+		margin: 5,
+		transparent: false,
+		showTitle: true,
+		caption: '',
+		titlePlacement: 'top',
+		font: 'New Computer Modern',
+		thousandSeparator: 'none',
+		groupFourDigits: true
+	},
+	node: {
+		cornerRadius: 5,
+		stroke: 1,
+		inset: 6,
+		outset: 0
+	},
+	edge: {
+		stroke: 1,
+		cornerRadius: 5
+	},
+	mark: {
+		arrow: '-|>',
+		markScale: 70
+	},
+	diagram: {
+		spacingX: 8,
+		spacingY: 8,
+		cellWidth: 8,
+		cellHeight: 8
+	},
+	mainBox: {
+		tint: 'white',
+		labelBold: false,
+		valueBold: false,
+		showValue: true,
+		width: 80,
+		textAlign: 'left',
+		valueAlign: 'left',
+		valuePrefix: '',
+		valueSuffix: '',
+		subPopulationLabelBold: false,
+		subPopulationValueBold: false,
+		showSubPopulationValue: true,
+		subPopulationTextAlign: 'left',
+		subPopulationAlign: 'text-right',
+		subPopulationPrefix: '(n = ',
+		subPopulationSuffix: ')',
+		subPopulationIndent: 3,
+		subPopulationNumbering: null,
+		subPopulationMarker: null
+	},
+	stepBox: {
+		tint: 'white',
+		width: 80,
+		deltaLabelBold: false,
+		deltaValueBold: false,
+		deltaTextAlign: 'left',
+		deltaAlign: 'text-left',
+		deltaPrefix: '',
+		deltaSuffix: '',
+		subDeltaLabelBold: false,
+		subDeltaValueBold: false,
+		showSubDeltaValue: true,
+		subDeltaTextAlign: 'left',
+		subDeltaAlign: 'text-left',
+		subDeltaPrefix: '',
+		subDeltaSuffix: '',
+		subDeltaIndent: 3,
+		subDeltaNumbering: null,
+		subDeltaMarker: null
+	},
+	groupBox: {
+		tint: 'green'
+	}
+};
+
+// -------------------------------------------------------------
+// Filling in the gaps
+// -------------------------------------------------------------
+
+/** A configuration with any section, and any field of a section, left out. */
+export type PartialFlowchartConfig = {
+	[K in keyof TypstFlowchartConfig]?: Partial<TypstFlowchartConfig[K]>;
+};
+
+/**
+ * Fills every gap in a partial configuration from the defaults.
+ *
+ * Missing fields are the normal case, not an error: a document written by an
+ * older build simply has fewer of them.
+ */
+export function mergeFlowchartConfig(
+	partial: PartialFlowchartConfig | undefined,
+	defaults: TypstFlowchartConfig = defaultConfig
+): TypstFlowchartConfig {
+	const p = partial ?? {};
+
+	return {
+		page: { ...defaults.page, ...p.page },
+		node: { ...defaults.node, ...p.node },
+		edge: { ...defaults.edge, ...p.edge },
+		mark: { ...defaults.mark, ...p.mark },
+		diagram: { ...defaults.diagram, ...p.diagram },
+		mainBox: { ...defaults.mainBox, ...p.mainBox },
+		stepBox: { ...defaults.stepBox, ...p.stepBox },
+		groupBox: { ...defaults.groupBox, ...p.groupBox }
+	};
+}

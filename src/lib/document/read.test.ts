@@ -1,0 +1,486 @@
+import { describe, expect, it } from 'vitest';
+
+import { readDocument } from './read.ts';
+import { createProjectDocument, emptyProjectDocument } from './project.ts';
+import { createDataDocument, flowchartDataSchema } from './data.ts';
+import { convertFlowchartToTypstFlowchartData } from '@/preview/json/convert';
+import { hydrateGraph } from './graph-schema.ts';
+import { defaultConfig } from '@/preview/style/config';
+import { createIdAllocator } from '@/flow/ids';
+
+import dataV1 from './fixtures/data-v1-legacy.json' with { type: 'json' };
+import dataV2Linear from './fixtures/data-v2-linear.json' with { type: 'json' };
+import dataV2Splits from './fixtures/data-v2-splits.json' with { type: 'json' };
+
+const corpus = {
+	'data v1 legacy': dataV1,
+	'data v2 linear': dataV2Linear,
+	'data v2 splits': dataV2Splits
+};
+
+describe('the frozen corpus', () => {
+	for (const [name, fixture] of Object.entries(corpus)) {
+		it(`reads ${name}`, () => {
+			const result = readDocument(fixture, createIdAllocator());
+
+			expect(result.ok, result.ok ? '' : result.error).toBe(true);
+			if (!result.ok) return;
+
+			expect(result.source).toBe('data');
+			expect(result.needsLayout).toBe(true);
+			expect(result.document.graph.nodes.length).toBeGreaterThan(0);
+		});
+
+		it(`fills the config for ${name}`, () => {
+			const result = readDocument(fixture, createIdAllocator());
+			if (!result.ok) throw new Error(result.error);
+
+			// Every section is present even when the file only carried some.
+			expect(Object.keys(result.document.config).sort()).toEqual(Object.keys(defaultConfig).sort());
+			expect(result.document.config.node.inset).toBe(defaultConfig.node.inset);
+		});
+	}
+
+	it('carries a legacy config through rather than discarding it', () => {
+		const result = readDocument(dataV1, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.title).toBe('Figure 1');
+		expect(result.document.config.stepBox.subDeltaIndent).toBe(
+			defaultConfig.stepBox.subDeltaIndent
+		);
+	});
+
+	it('preserves the semantics of a v2 file through the graph', () => {
+		const result = readDocument(dataV2Splits, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		const recovered = convertFlowchartToTypstFlowchartData(hydrateGraph(result.document.graph));
+		expect(recovered).toEqual(flowchartDataSchema.parse(dataV2Splits.data));
+	});
+
+	it('turns a v1 file into the same semantics as its v2 equivalent', () => {
+		const result = readDocument(dataV1, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		const recovered = convertFlowchartToTypstFlowchartData(hydrateGraph(result.document.graph));
+		expect(recovered).toEqual(flowchartDataSchema.parse(dataV2Linear.data));
+	});
+});
+
+describe('the config allowlist regression', () => {
+	it('imports a full config that the old validator rejected', () => {
+		// `inset`, `outset`, `textAlign` and every stepBox field beyond tint and
+		// width were absent from the old allowlist, so the app silently refused
+		// every file it had itself exported.
+		const result = readDocument(dataV2Splits, createIdAllocator());
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+
+		expect(result.document.config.node.outset).toBe(0);
+		expect(result.document.config.mainBox.textAlign).toBe('left');
+		expect(result.document.config.stepBox.deltaAlign).toBe('text-left');
+	});
+
+	it('keeps the rest of a config when one field is unreadable', () => {
+		const broken = structuredClone(dataV2Linear);
+		broken.config.page.tint = 'not-a-colour';
+
+		const result = readDocument(broken, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		// The bad section falls back to defaults; the good ones survive.
+		expect(result.document.config.page.tint).toBe(defaultConfig.page.tint);
+		expect(result.document.config.mark.markScale).toBe(70);
+	});
+
+	it('defaults the background to filled for a file written before the field existed', () => {
+		// Every fixture predates `page.transparent`, so this is the real case.
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.transparent).toBe(false);
+	});
+
+	it('keeps a transparent background through a round trip', () => {
+		const document = emptyProjectDocument();
+		document.config = {
+			...defaultConfig,
+			page: { ...defaultConfig.page, transparent: true }
+		};
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.transparent).toBe(true);
+	});
+
+	it('defaults the new step box alignments for a file written before they existed', () => {
+		// Adding a field needs no version bump: the schema reads partial configs
+		// and fills gaps from the defaults, in both directions.
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.stepBox.deltaTextAlign).toBe('left');
+		expect(result.document.config.stepBox.subDeltaTextAlign).toBe('left');
+	});
+
+	it('keeps a value alignment that predates the widened options', () => {
+		// `deltaAlign` used to allow only text-left and text-right. Those stay
+		// valid, so nothing has to be rewritten.
+		const legacy = structuredClone(dataV2Linear);
+		(legacy.config.stepBox as Record<string, unknown>).deltaAlign = 'text-right';
+
+		const result = readDocument(legacy, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.stepBox.deltaAlign).toBe('text-right');
+	});
+
+	it('accepts the alignments that were only added later', () => {
+		const widened = structuredClone(dataV2Linear);
+		(widened.config.stepBox as Record<string, unknown>).subDeltaAlign = 'center';
+
+		const result = readDocument(widened, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.stepBox.subDeltaAlign).toBe('center');
+	});
+
+	it('defaults the new weight, font and visibility fields', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		// Defaults chosen to reproduce the previous rendering exactly.
+		expect(result.document.config.page.font).toBe('New Computer Modern');
+		expect(result.document.config.mainBox.labelBold).toBe(false);
+		expect(result.document.config.stepBox.deltaValueBold).toBe(false);
+		expect(result.document.config.stepBox.showSubDeltaValue).toBe(true);
+	});
+
+	it('keeps a chosen font and weights through a round trip', () => {
+		const document = emptyProjectDocument();
+		document.config = {
+			...defaultConfig,
+			page: { ...defaultConfig.page, font: 'Libertinus Serif' },
+			mainBox: { ...defaultConfig.mainBox, labelBold: true },
+			stepBox: { ...defaultConfig.stepBox, deltaLabelBold: true, showSubDeltaValue: false }
+		};
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.font).toBe('Libertinus Serif');
+		expect(result.document.config.mainBox.labelBold).toBe(true);
+		expect(result.document.config.stepBox.deltaLabelBold).toBe(true);
+		expect(result.document.config.stepBox.showSubDeltaValue).toBe(false);
+	});
+
+	it('falls back when a font is not one the compiler has', () => {
+		const wire = structuredClone(createProjectDocument(emptyProjectDocument()));
+		(wire.config.page as unknown as Record<string, unknown>).font = 'Comic Sans MS';
+
+		const result = readDocument(wire);
+		if (!result.ok) throw new Error(result.error);
+
+		// Typst can only use what is embedded, so an unknown family would fail to
+		// render. The section is dropped and the defaults fill in.
+		expect(result.document.config.page.font).toBe('New Computer Modern');
+	});
+
+	it('defaults digit grouping to none, so older figures render unchanged', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.thousandSeparator).toBe('none');
+	});
+
+	it('keeps a chosen thousand separator through a round trip', () => {
+		const document = emptyProjectDocument();
+		document.config = {
+			...defaultConfig,
+			page: { ...defaultConfig.page, thousandSeparator: 'space' }
+		};
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.thousandSeparator).toBe('space');
+	});
+
+	it('defaults to grouping four-digit counts', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.groupFourDigits).toBe(true);
+	});
+
+	it('keeps the SI four-digit exception through a round trip', () => {
+		// SI writes 1000 but 10 000, which is a separate decision from which
+		// character does the grouping.
+		const document = emptyProjectDocument();
+		document.config = {
+			...defaultConfig,
+			page: { ...defaultConfig.page, thousandSeparator: 'space', groupFourDigits: false }
+		};
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.thousandSeparator).toBe('space');
+		expect(result.document.config.page.groupFourDigits).toBe(false);
+	});
+
+	it('falls back when a thousand separator is not one the template knows', () => {
+		// The separator is stored as a name that `figure1.typ` maps to a
+		// character, so a name it has no entry for would silently group nothing.
+		const wire = structuredClone(createProjectDocument(emptyProjectDocument()));
+		(wire.config.page as unknown as Record<string, unknown>).thousandSeparator = 'underscore';
+
+		const result = readDocument(wire);
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.thousandSeparator).toBe('none');
+	});
+
+	it('defaults the caption and title placement', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.caption).toBe('');
+		expect(result.document.config.page.titlePlacement).toBe('top');
+	});
+
+	it('keeps a caption and a bottom placement through a round trip', () => {
+		const document = emptyProjectDocument();
+		document.config.page.caption = 'CONSORT flowchart of participant selection.';
+		document.config.page.titlePlacement = 'bottom';
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.page.caption).toBe('CONSORT flowchart of participant selection.');
+		expect(result.document.config.page.titlePlacement).toBe('bottom');
+	});
+
+	it('defaults the sub-population settings', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.mainBox.showSubPopulationValue).toBe(true);
+		expect(result.document.config.mainBox.subPopulationPrefix).toBe('(n = ');
+		expect(result.document.config.mainBox.subPopulationAlign).toBe('text-right');
+	});
+
+	it('defaults the main box value to shown', () => {
+		const result = readDocument(dataV2Linear, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.mainBox.showValue).toBe(true);
+	});
+
+	it('keeps a hidden main box value through a round trip', () => {
+		// A PRISMA start box lists its sources and shows no total of its own.
+		const document = emptyProjectDocument();
+		document.config.mainBox.showValue = false;
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.mainBox.showValue).toBe(false);
+	});
+
+	it('fills both spacings from a document that had only one', () => {
+		// `spacing` became `spacingX` and `spacingY`. Without the shim it would be
+		// an unknown key, stripped by the schema, and the setting would revert.
+		const legacy = structuredClone(dataV2Linear);
+		(legacy.config.diagram as Record<string, unknown>).spacing = 13;
+
+		const result = readDocument(legacy, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.diagram.spacingX).toBe(13);
+		expect(result.document.config.diagram.spacingY).toBe(13);
+	});
+
+	it('leaves separate spacings alone', () => {
+		const document = emptyProjectDocument();
+		document.config.diagram.spacingX = 4;
+		document.config.diagram.spacingY = 16;
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.diagram.spacingX).toBe(4);
+		expect(result.document.config.diagram.spacingY).toBe(16);
+	});
+
+	it('prefers the split values when a document somehow carries both', () => {
+		const both = structuredClone(dataV2Linear);
+		const diagram = both.config.diagram as Record<string, unknown>;
+		diagram.spacing = 13;
+		diagram.spacingX = 4;
+		diagram.spacingY = 16;
+
+		const result = readDocument(both, createIdAllocator());
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.config.diagram.spacingX).toBe(4);
+		expect(result.document.config.diagram.spacingY).toBe(16);
+	});
+
+	it('ignores fields written by a newer build instead of refusing the file', () => {
+		const future = structuredClone(dataV2Linear);
+		(future.config.page as Record<string, unknown>).somethingNew = 'from the future';
+
+		const result = readDocument(future, createIdAllocator());
+
+		expect(result.ok).toBe(true);
+	});
+});
+
+describe('the defaults are not shared', () => {
+	it('does not let one document rewrite the defaults for the next', () => {
+		const first = emptyProjectDocument();
+		first.config.page.title = 'Edited';
+
+		// A shallow spread of `defaultConfig` shared every section object, so this
+		// used to change the title every later document started from.
+		expect(defaultConfig.page.title).toBe('Figure 1');
+		expect(emptyProjectDocument().config.page.title).toBe('Figure 1');
+	});
+
+	it('gives each document its own section objects', () => {
+		const first = emptyProjectDocument();
+		const second = emptyProjectDocument();
+
+		expect(first.config.page).not.toBe(second.config.page);
+		expect(first.config.page).not.toBe(defaultConfig.page);
+	});
+});
+
+describe('project documents', () => {
+	it('round trips an empty project', () => {
+		const document = emptyProjectDocument();
+		const result = readDocument(createProjectDocument(document));
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+
+		expect(result.source).toBe('project');
+		expect(result.needsLayout).toBe(false);
+		expect(result.document).toEqual(document);
+	});
+
+	it('preserves node ids and positions', () => {
+		const document = emptyProjectDocument();
+		document.graph.nodes.push({
+			id: '7',
+			type: 'step',
+			position: { x: 120, y: -40 },
+			data: {
+				stepLabel: 'Enrolled',
+				droppedLabel: 'Excluded',
+				value: 420,
+				delta: 80
+			}
+		});
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		const step = result.document.graph.nodes.find((n) => n.id === '7');
+		expect(step?.position).toEqual({ x: 120, y: -40 });
+	});
+
+	it('keeps an unconnected node that the semantic form cannot express', () => {
+		const document = emptyProjectDocument();
+		document.graph.nodes.push({
+			id: '99',
+			type: 'step',
+			position: { x: 500, y: 500 },
+			data: {
+				stepLabel: 'Dragged but not wired up yet',
+				droppedLabel: '',
+				value: null,
+				delta: 0
+			}
+		});
+
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.graph.nodes.map((n) => n.id)).toContain('99');
+	});
+
+	it('restores the project name', () => {
+		const document = { ...emptyProjectDocument(), name: 'trial-2026' };
+		const result = readDocument(createProjectDocument(document));
+		if (!result.ok) throw new Error(result.error);
+
+		expect(result.document.name).toBe('trial-2026');
+	});
+});
+
+describe('rejections', () => {
+	it('explains a file that is not an object', () => {
+		const result = readDocument([1, 2, 3]);
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.error).toMatch(/JSON object/);
+	});
+
+	it('explains a file with no version', () => {
+		const result = readDocument({ data: {} });
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.error).toMatch(/no version/);
+	});
+
+	it('explains a file from a newer build', () => {
+		const result = readDocument({ $kind: 'flowchart-data', $version: 99, data: {} });
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.error).toMatch(/newer version/);
+	});
+
+	it('explains an unknown kind', () => {
+		const result = readDocument({ $kind: 'something-else', $version: 1 });
+		expect(result.ok).toBe(false);
+		if (result.ok) return;
+		expect(result.error).toMatch(/Unknown document kind/);
+	});
+
+	it('rejects a node whose type has no component', () => {
+		const document = createProjectDocument(emptyProjectDocument());
+		const nodes = document.graph.nodes as unknown as Record<string, unknown>[];
+		nodes.push({
+			id: '5',
+			type: 'not-a-real-node-type',
+			position: { x: 0, y: 0 },
+			data: {}
+		});
+
+		const result = readDocument(document);
+		expect(result.ok).toBe(false);
+	});
+});
+
+describe('the data export', () => {
+	it('carries no styling', () => {
+		const exported = createDataDocument(dataV2Linear.data as never) as Record<string, unknown>;
+		expect(exported.config).toBeUndefined();
+		expect(exported.$kind).toBe('flowchart-data');
+		expect(exported.$version).toBe(3);
+	});
+
+	it('can be read back in', () => {
+		const exported = createDataDocument(dataV2Linear.data as never);
+		const result = readDocument(exported, createIdAllocator());
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) return;
+		expect(result.source).toBe('data');
+	});
+});

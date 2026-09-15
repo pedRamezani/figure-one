@@ -13,8 +13,13 @@ authors:
   - given-names: Pedram
     family-names: Ramezani
     email: me@pedramramezani.de
+    orcid: https://orcid.org/0009-0007-3692-7149
 repository-code: https://github.com/pedRamezani/figure-one
 license: MIT
+# identifiers:
+#   - type: doi
+#     value: 10.5281/zenodo.XXXXXXX
+#     description: The concept DOI, resolving to the latest version.
 url: https://figureone.app
 keywords:
   - CONSORT

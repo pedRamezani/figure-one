@@ -1,0 +1,23 @@
+{
+	"title": "Figure One",
+	"upload_type": "software",
+	"access_right": "open",
+	"license": "mit",
+	"description": "Figure One is a browser-based editor for CONSORT and PRISMA participant flow diagrams. Boxes and their counts are arranged on a node canvas, and the figure is typeset with Typst for export as PDF, SVG or PNG at a chosen resolution. Styling covers the details journals ask about, including fonts, digit grouping, box fills and arrow forms. A flowchart is stored as a plain JSON project file that can be reopened, shared, or kept alongside the manuscript. The Typst compiler runs in the browser as WebAssembly, so no data leaves the machine.",
+	"creators": [
+		{
+			"name": "Ramezani, Pedram",
+			"orcid": "0009-0007-3692-7149"
+		}
+	],
+	"keywords": [
+		"CONSORT",
+		"PRISMA",
+		"flow diagram",
+		"reporting guidelines",
+		"clinical trial",
+		"systematic review",
+		"Typst",
+		"research software"
+	]
+}

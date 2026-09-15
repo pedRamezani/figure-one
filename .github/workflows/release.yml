@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  verify:
+    name: Verify the tagged commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      # Before anything else: a tag that disagrees with package.json, or a
+      # version with no changelog entry, should stop the run while stopping it
+      # is still free.
+      - name: Check the tag matches the declared version
+        run: node .github/scripts/check-tag.mjs "${GITHUB_REF_NAME#v}"
+
+      - name: Check the changelog has an entry for this version
+        run: node .github/scripts/extract-changelog.mjs "${GITHUB_REF_NAME#v}"
+
+      - name: Typecheck
+        run: npm run check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  github-release:
+    name: Publish the GitHub release
+    runs-on: ubuntu-latest
+    # Everything is verified first, deliberately. Creating the release is what
+    # triggers Zenodo to archive it, and a published Zenodo record cannot be
+    # edited or withdrawn -- so the irreversible step goes last, and only
+    # happens if the tagged commit is actually sound.
+    needs: verify
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The previous tag is needed to bound the generated notes.
+          fetch-depth: 0
+
+      # Composed explicitly rather than passing both --notes-file and
+      # --generate-notes, whose precedence is not documented: the hand-written
+      # section is the part worth keeping, so it must not depend on which flag
+      # gh decides wins.
+      - name: Assemble the release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node .github/scripts/extract-changelog.mjs "${GITHUB_REF_NAME#v}" > notes.md
+
+          # On the first release there is no previous tag, and unbounded
+          # generated notes would list the entire history under the
+          # hand-written section. Skip them rather than drown it.
+          previous=$(git tag --list 'v*' --sort=-v:refname | grep -vx "$GITHUB_REF_NAME" | head -1)
+          if [ -n "$previous" ]; then
+            printf '\n' >> notes.md
+            gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
+              -f tag_name="$GITHUB_REF_NAME" \
+              -f previous_tag_name="$previous" \
+              --jq '.body' >> notes.md
+          fi
+
+          cat notes.md
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file notes.md

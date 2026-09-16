@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0] - 2026-09-16
+
+First stable release. No functional changes from 0.1.0.
+
+### Added
+
+- **A DOI.** Figure One is archived on Zenodo and citable as
+  [doi:10.5281/zenodo.22802169](https://doi.org/10.5281/zenodo.22802169). That DOI resolves to the newest version; each
+  release also has its own.
+- `CITATION.cff` now carries the DOI, version and release date, so GitHub's **Cite this
+  repository** output includes them.
+
 ## [0.1.0] - 2026-09-15
 
 First release.

@@ -1,5 +1,10 @@
 # Figure One
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22802169.svg)](https://doi.org/10.5281/zenodo.22802169)
+[![CI](https://github.com/pedRamezani/figure-one/actions/workflows/ci.yml/badge.svg)](https://github.com/pedRamezani/figure-one/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/pedRamezani/figure-one)](https://github.com/pedRamezani/figure-one/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/pedRamezani/figure-one)](LICENSE)
+
 Build the participant flow diagram your paper needs, and export it print-ready.
 
 **[figureone.app](https://figureone.app)**
@@ -68,4 +73,4 @@ The icon is set in [Magra](https://fonts.google.com/specimen/Magra), also under 
 
 ## Citing
 
-If Figure One produced a figure for your paper, please consider citing this repository. [`CITATION.cff`](CITATION.cff) has the details, and GitHub's **Cite this repository** button will format it for you.
+If Figure One produced a figure for your paper, please consider citing it as [doi:10.5281/zenodo.22802169](https://doi.org/10.5281/zenodo.22802169). That DOI always resolves to the latest version; Zenodo lists a separate DOI for each release if you need to pin one. [`CITATION.cff`](CITATION.cff) has the details, and GitHub's **Cite this repository** button will format it for you.
